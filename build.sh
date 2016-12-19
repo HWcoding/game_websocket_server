@@ -13,7 +13,7 @@
 #		uses weaker warnings while building
 
 
-# build flags, the quotes don't render properly. If you highlight the text, you will see them.
+# build flags
 StrongWarnings=" -Winvalid-pch -fmax-errors=5 -Wall -Wextra -Wformat=2 -Wformat-signedness\
  -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wcast-qual -Wconversion\
  -Wuseless-cast -Wsign-conversion -Wfloat-conversion -Wlogical-op -Wmissing-declarations -pedantic\
@@ -423,18 +423,20 @@ function codeAnalysis() {
 function main() {
 	# set the script to stop on error
 	set -e
-
 	printMajorHeader "Building "${PWD##*/}""
 	printProjectLineCount
 	makeBuildCompatable
 	# cppcheck
+	set +e
 	printMinorHeader "Performing Code Analysis"
 	codeAnalysis
 	printHighlight "Finished"
+	set -e
 	# build program
 	printMinorHeader "Building Production code"
 	compileProductionFiles
 	printHighlight "Finished"
+	set +e
 	# build tests
 	printMinorHeader "Building/Running Tests"
 	compileTestLibs
@@ -447,7 +449,6 @@ function main() {
 	echo ""
 	printHighlight "****Build Complete****"
 	echo ""
-	set +e
 }
 
 main

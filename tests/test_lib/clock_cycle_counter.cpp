@@ -9,7 +9,7 @@ namespace {
 
 namespace profiling{
 
-int64_t cpuCycleTest(void (*func)(void), int64_t iterations)
+int64_t countCpuCycles(void (*func)(void), int64_t iterations)
 {
 	int64_t rdtscpTime = ::runFunctionTest(::emptyFunction,iterations);
 	int64_t cycleCount = ::runFunctionTest(func,iterations);
@@ -43,7 +43,6 @@ int64_t runFunctionTest(void (*func)(void), int64_t iterations)
 
 void emptyFunction(){return;}
 
-//defined here to prevent inlining above
 int64_t getCpuCycles()
 {
 	uint64_t rax,rdx,rcx;

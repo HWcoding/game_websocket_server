@@ -1,5 +1,4 @@
-
-
+#absolute paths are necessary for dependency files to work properly
 LIBRARIES = -lpthread -lstdc++ -lm
 
 # we need to use absolute path for dependency files to work properly

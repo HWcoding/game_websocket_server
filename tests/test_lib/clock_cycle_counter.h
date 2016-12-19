@@ -6,7 +6,7 @@
 
 namespace profiling {
 
-int64_t cpuCycleTest(void (*func)(void), int64_t iterations);
+int64_t countCpuCycles(void (*func)(void), int64_t iterations);
 
 } // profiling
 

@@ -1,6 +1,7 @@
 
 #include "source/math/geometric_math.h"
 #include <cstdint>
+#include <math.h>
 #include <string.h>
 
 double fastInvSqrt(double input)
@@ -18,66 +19,73 @@ double fastInvSqrt(double input)
 
 namespace vector_math{
 
-void normalize(double &x, double &y, double &z)
-{
-	double scalar = x*x+y*y+z*z;
-	scalar = fastInvSqrt(scalar);
-	x *= scalar;
-	y *= scalar;
-	z *= scalar;
-}
-
-void scale(double &x, double &y, double &z, double scalar)
-{
-	x *= scalar;
-	y *= scalar;
-	z *= scalar;
-}
-
-void add(double &x1, double &y1, double &z1,
-                const double &x2, const double &y2, const double &z2)
-{
-	x1 += x2;
-	y1 += y2;
-	z1 += z2;
-}
-
-void subtract(double &x1, double &y1, double &z1,
-               const double &x2, const double &y2, const double &z2)
-{
-	x1 -= x2;
-	y1 -= y2;
-	z1 -= z2;
-}
 
 Point3D normalize(const Point3D &p)
 {
 	Point3D output(p.x, p.y, p.z);
-	normalize(output.x, output.y, output.z);
+
+	double scalar = p.x*p.x+p.y*p.y+p.z*p.z;
+	scalar = fastInvSqrt(scalar);
+	output.x *= scalar;
+	output.y *= scalar;
+	output.z *= scalar;
+
 	return output;
 }
 
 Point3D scale(const Point3D &p, double scalar)
 {
 	Point3D output(p.x, p.y, p.z);
-	scale(output.x, output.y, output.z, scalar);
+	output.x *= scalar;
+	output.y *= scalar;
+	output.z *= scalar;
 	return output;
 }
 
 Point3D add(const Point3D &p1, const Point3D &p2)
 {
 	Point3D output(p1.x, p1.y, p1.z);
-	add(output.x, output.y, output.z, p2.x, p2.y, p2.z);
+	output.x += p2.x;
+	output.y += p2.y;
+	output.z += p2.z;
 	return output;
 }
 
 Point3D subtract(const Point3D &p1, const Point3D &p2)
 {
 	Point3D output(p1.x, p1.y, p1.z);
-	subtract(output.x, output.y, output.z, p2.x, p2.y, p2.z);
+	output.x -= p2.x;
+	output.y -= p2.y;
+	output.z -= p2.z;
 	return output;
 }
 
+double dotProduct(const Point3D &p1, const Point3D &p2)
+{
+	return p1.x*p2.x+p1.y*p2.y+p1.z*p2.z;
+}
+
+Point3D crossProduct(const Point3D &p1, const Point3D &p2)
+{
+	Point3D output;
+	output.x = p1.y*p2.z - p1.z*p2.y;
+	output.y = p1.z*p2.x - p1.x*p2.z;
+	output.z = p1.x*p2.y - p1.y*p2.x;
+	return output;
+}
+
+double squareDistance(const Point3D &p1, const Point3D &p2)
+{
+	double x = p1.x-p2.x;
+	double y = p1.y-p2.y;
+	double z = p1.z-p2.z;
+	return x*x+y*y+z*z;
+}
+
+double distance(const Point3D &p1, const Point3D &p2)
+{
+	return sqrt(squareDistance(p1,p2));
+}
 
 
 } // namespace vector_math

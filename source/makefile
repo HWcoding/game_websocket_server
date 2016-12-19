@@ -1,3 +1,4 @@
+#absolute paths are necessary for dependency files to work properly
 EXECUTABLE_NAME = program
 
 LIBRARIES = -lpthread -lstdc++ -lm

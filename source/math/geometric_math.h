@@ -39,27 +39,24 @@ struct Line
 	Point3D b;
 };
 
+struct Sphere
+{
+	Point3D center {0.0,0.0,0.0};
+	double radius {1.0};
+};
+
 double fastInvSqrt(double input);
 
-namespace vector_math{
-
-void normalize(double &x, double &y, double &z);
-
-void scale(double &x, double &y, double &z, double scalar);
-
-void add(double &x1, double &y1, double &z1,
-                const double &x2, const double &y2, const double &z2);
-
-void subtract(double &x1, double &y1, double &z1,
-               const double &x2, const double &y2, const double &z2);
+namespace vector_math {
 
 Point3D normalize(const Point3D &p);
-
 Point3D scale(const Point3D &p, double scalar);
-
 Point3D add(const Point3D &p1, const Point3D &p2);
-
 Point3D subtract(const Point3D &p1, const Point3D &p2);
+double dotProduct(const Point3D &p1, const Point3D &p2);
+Point3D crossProduct(const Point3D &p1, const Point3D &p2);
+double squareDistance(const Point3D &p1, const Point3D &p2);
+double distance(const Point3D &p1, const Point3D &p2);
 
 } // namespace vector_math
 
