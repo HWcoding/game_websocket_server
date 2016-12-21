@@ -9,5 +9,4 @@ tests/bin/*.bin
 tests/deps/*.d
 tests/objs/*.o
 tests/objs/*.a
-tests/gmock_main.a
-tests/gtest_main.a
+external/*

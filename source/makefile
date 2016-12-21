@@ -1,7 +1,7 @@
 #absolute paths are necessary for dependency files to work properly
 EXECUTABLE_NAME = program
 
-LIBRARIES = -lpthread -lstdc++ -lm
+
 
 # we need to use absolute path for dependency files to work properly
 PROJECT_DIRECTORY = $(abspath ../)/
@@ -14,6 +14,12 @@ OBJ_DIR := $(PROJECT_DIRECTORY)objs/
 DEP_DIR := $(PROJECT_DIRECTORY)deps/
 DEP_TEMP := $(DEP_DIR)temp/
 HEAD_PATH := $(PROJECT_DIRECTORY)
+POCO_HEAD_PATH := $(PROJECT_DIRECTORY)external/poco/include/
+POCO_LIB_PATH := $(PROJECT_DIRECTORY)external/poco/lib/
+
+LIBRARIES =  -lpthread -lstdc++ -lm
+
+POCO_LIBS = $(POCO_LIB_PATH)poco.a
 
 # use the full path of the cpp file in object file names to
 # prevent multiple files with the same name in different
@@ -34,13 +40,13 @@ DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP_TEMP)$*.Td
 # command to move dependencies from the temp folder into the deps folder
 MOV_DEPS = mv -f $(DEP_TEMP)$*.Td $(DEP_DIR)$*.d
 
-CXX = $(COMP) -I $(HEAD_PATH) $(CFLAGS) $(DEPFLAGS) -std=c++17
+CXX = $(COMP) -I $(HEAD_PATH) -isystem $(POCO_HEAD_PATH) $(CFLAGS) $(DEPFLAGS) -std=c++17
 
 DEPFILES = $(patsubst %,$(DEP_DIR)%.d,$(basename $(notdir $(OBJECTS))))
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJECTS)
+$(EXECUTABLE): $(OBJECTS) $(POCO_LIBS)
 	$(CXX) -o $@ $^ $(LIBRARIES)
 
 # in order for this rule to work filenames cannot contain the

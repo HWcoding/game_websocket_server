@@ -17,15 +17,28 @@ double fastInvSqrt(double input)
 
 
 
-namespace vector_math{
+namespace v_math{
 
+
+Point3D fastNormalize(const Point3D &p)
+{
+	Point3D output(p.x, p.y, p.z);
+
+	double scalar = p.x*p.x+p.y*p.y+p.z*p.z;
+	scalar = fastInvSqrt(scalar);
+	output.x *= scalar;
+	output.y *= scalar;
+	output.z *= scalar;
+
+	return output;
+}
 
 Point3D normalize(const Point3D &p)
 {
 	Point3D output(p.x, p.y, p.z);
 
 	double scalar = p.x*p.x+p.y*p.y+p.z*p.z;
-	scalar = fastInvSqrt(scalar);
+	scalar = 1/sqrt(scalar);
 	output.x *= scalar;
 	output.y *= scalar;
 	output.z *= scalar;
@@ -88,4 +101,44 @@ double distance(const Point3D &p1, const Point3D &p2)
 }
 
 
-} // namespace vector_math
+} // namespace v_math
+
+//#include <iostream>
+
+namespace collision {
+
+bool doSpheresCollide(Sphere &a, Sphere &b)
+{
+	double distanceSQ = v_math::squareDistance(a.center, b.center);
+	double radDist = a.radius+b.radius;
+	return distanceSQ <= radDist*radDist;
+}
+
+bool doesSphereCollideWithPlane(Sphere &s, Plane &p)
+{
+	double distance = v_math::dotProduct(s.center, p.planeNormal)-p.distFromOrigin;
+	return fabs(distance) < s.radius;
+}
+
+bool isSphereFullyBehindPlane(Sphere &s, Plane &p)
+{
+	double distance = v_math::dotProduct(s.center, p.planeNormal)-p.distFromOrigin;
+/*	std::cout<<"isSphereFullyBehindPlane"<<std::endl;
+	std::cout<<"distFromOrigin: "<<p.distFromOrigin<<std::endl;
+	std::cout<<"radius: "<<s.radius<<std::endl;
+	std::cout<<"distance: "<< distance<<std::endl;*/
+	return distance < -s.radius;
+}
+
+bool isPartOfSphereBehindPlane(Sphere &s, Plane &p)
+{
+	double distance = v_math::dotProduct(s.center, p.planeNormal)-p.distFromOrigin;
+/*	std::cout<<"isPartOfSphereBehindPlane"<<std::endl;
+	std::cout<<"distFromOrigin: "<<p.distFromOrigin<<std::endl;
+	std::cout<<"radius: "<<s.radius<<std::endl;
+	std::cout<<"distance: "<< distance<<std::endl;*/
+	return distance <= s.radius;
+}
+
+} // namespace collision
+

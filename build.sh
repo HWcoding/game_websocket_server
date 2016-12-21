@@ -411,7 +411,7 @@ function buildDocs() {
 
 function codeAnalysis() {
 	if [ "$(getCleanFlag)" == "false" ]; then
-		./cppcheck/cppcheck "--quiet" "-I./" "--enable=warning,performance,information" "-j8" "--cppcheck-build-dir=./analysis" "./source"
+		./external/cppcheck/cppcheck "--quiet" "-I./" "--enable=warning,performance,information" "-j8" "--cppcheck-build-dir=./analysis" "./source"
 	else
 		cd ./analysis
 		rm ./*
@@ -420,11 +420,217 @@ function codeAnalysis() {
 
 }
 
+
+
+
+
+#fetch and build POCO network library
+function buildPoco() {
+	if [ ! -d "poco" ]; then
+		printMinorHeader "Building portable components (Poco) network library"
+		sudo apt-get install openssl
+		sudo apt-get install libssl-dev
+		sudo apt-get install libpq-dev
+		sudo apt-get install unixodbc unixodbc-dev
+		mkdir poco
+		cd ./poco
+		mkdir lib
+		mkdir include
+		cd ./include
+		mkdir Poco
+		cd ../../
+		echo ""
+		printHighlight "Cloning Poco c++ network library from github"
+			git clone https://github.com/pocoproject/poco.git poco_source
+		cd ./poco_source
+		echo""
+		printHighlight "Compiling Poco"
+		./configure --everything --static --no-tests --poquito --no-samples --typical --omit=Data/MySQL --cflags="-O3 -march=native" &>build.log
+		make -j8 -s &>build.log
+
+		POCOLIB_SOURCE="./lib/Linux/x86_64"
+		POCOLIB_DEST="../poco/lib/"
+
+		cp ${POCOLIB_SOURCE}/libPocoUtil.a ${POCOLIB_DEST}/libPocoUtil.a
+		cp ${POCOLIB_SOURCE}/libPocoCrypto.a ${POCOLIB_DEST}/libPocoCrypto.a
+		cp ${POCOLIB_SOURCE}/libPocoJSON.a ${POCOLIB_DEST}/libPocoJSON.a
+		cp ${POCOLIB_SOURCE}/libPocoNet.a ${POCOLIB_DEST}/libPocoNet.a
+		cp ${POCOLIB_SOURCE}/libPocoNetSSL.a ${POCOLIB_DEST}/libPocoNetSSL.a
+		cp ${POCOLIB_SOURCE}/libPocoXML.a ${POCOLIB_DEST}/libPocoXML.a
+		cp ${POCOLIB_SOURCE}/libPocoFoundation.a ${POCOLIB_DEST}/libPocoFoundation.a
+		cp ${POCOLIB_SOURCE}/libPocoCppParser.a ${POCOLIB_DEST}/libPocoCppParser.a
+		cp ${POCOLIB_SOURCE}/libPocoData.a ${POCOLIB_DEST}/libPocoData.a
+		cp ${POCOLIB_SOURCE}/libPocoDataODBC.a ${POCOLIB_DEST}/libPocoDataODBC.a
+		cp ${POCOLIB_SOURCE}/libPocoDataPostgreSQL.a ${POCOLIB_DEST}/libPocoDataPostgreSQL.a
+		cp ${POCOLIB_SOURCE}/libPocoDataSQLite.a ${POCOLIB_DEST}/libPocoDataSQLite.a
+		cp ${POCOLIB_SOURCE}/libPocoMongoDB.a ${POCOLIB_DEST}/libPocoMongoDB.a
+		cp ${POCOLIB_SOURCE}/libPocoPDF.a ${POCOLIB_DEST}/libPocoPDF.a
+		cp ${POCOLIB_SOURCE}/libPocoRedis.a ${POCOLIB_DEST}/libPocoRedis.a
+		cp ${POCOLIB_SOURCE}/libPocoZip.a ${POCOLIB_DEST}/libPocoZip.a
+
+		cd ${POCOLIB_DEST}
+
+		# create thin archive for linking
+		while read -d $'\0' file; do
+			ar -rT poco.a "${file}" &>build.log
+		done < <(find ./ -type f -name '*.a' -print0)
+
+		cd ../../poco_source
+
+
+		cp ./CONTRIBUTORS ../poco/CONTRIBUTORS
+		cp ./README ../poco/poco_README
+		cp ./README.md ../poco/poco_README.md
+		cp ./LICENSE ../poco/poco_LICENCE
+
+		cd ../
+
+		POCOHEAD_SOURCE="./poco_source"
+		POCOHEAD_DEST="./poco/include"
+
+		cd ./poco/include
+		mkdir openssl
+		cd ./Poco
+		mkdir CppParser
+		mkdir Crypto
+		mkdir Data
+		mkdir JSON
+		mkdir MongoDB
+		mkdir Net
+		mkdir PDF
+		mkdir Redis
+		mkdir SevenZip
+		mkdir Util
+		mkdir XML
+		mkdir Zip
+		cd ../../../
+
+		cp -r ${POCOHEAD_SOURCE}/Foundation/include/Poco/* ${POCOHEAD_DEST}/Poco
+		cp -r ${POCOHEAD_SOURCE}/CppParser/include/Poco/CppParser/* ${POCOHEAD_DEST}/Poco/CppParser
+		cp -r ${POCOHEAD_SOURCE}/Crypto/include/Poco/Crypto/* ${POCOHEAD_DEST}/Poco/Crypto
+		cp -r ${POCOHEAD_SOURCE}/Data/include/Poco/Data/* ${POCOHEAD_DEST}/Poco/Data
+		cp -r ${POCOHEAD_SOURCE}/JSON/include/Poco/JSON/* ${POCOHEAD_DEST}/Poco/JSON
+		cp -r ${POCOHEAD_SOURCE}/MongoDB/include/Poco/MongoDB/* ${POCOHEAD_DEST}/Poco/MongoDB
+		cp -r ${POCOHEAD_SOURCE}/Net/include/Poco/Net/* ${POCOHEAD_DEST}/Poco/Net
+		cp -r ${POCOHEAD_SOURCE}/NetSSL_OpenSSL/include/Poco/Net/* ${POCOHEAD_DEST}/Poco/Net
+		cp -r ${POCOHEAD_SOURCE}/openssl/include/openssl/* ${POCOHEAD_DEST}/openssl
+		cp -r ${POCOHEAD_SOURCE}/PDF/include/Poco/PDF/* ${POCOHEAD_DEST}/Poco/PDF
+		cp -r ${POCOHEAD_SOURCE}/Redis/include/Poco/Redis/* ${POCOHEAD_DEST}/Poco/Redis
+		cp -r ${POCOHEAD_SOURCE}/SevenZip/include/Poco/SevenZip/* ${POCOHEAD_DEST}/Poco/SevenZip
+		cp -r ${POCOHEAD_SOURCE}/Util/include/Poco/Util/* ${POCOHEAD_DEST}/Poco/Util
+		cp -r ${POCOHEAD_SOURCE}/XML/include/Poco/XML/* ${POCOHEAD_DEST}/Poco/XML
+		cp -r ${POCOHEAD_SOURCE}/Zip/include/Poco/Zip/* ${POCOHEAD_DEST}/Poco/Zip
+
+		rm -rf ./poco_source
+		printHighlight "Finished"
+	fi
+}
+
+#fetch and build google test framework
+function buildGoogleTest(){
+	if [ ! -d "google_test" ]; then
+		printMinorHeader "Building Google Test"
+		mkdir google_test
+		cd ./google_test
+		mkdir include
+		cd ../
+		echo ""
+		printHighlight "Cloning googletest from github"
+			git clone https://github.com/google/googletest.git google_test_and_mock
+		cd ./google_test_and_mock/
+		GTEST_DIR="./googletest"
+		GMOCK_DIR="./googlemock"
+
+		echo ""
+		printHighlight "Compiling Google Test"
+		g++ -isystem ${GTEST_DIR}/include -I${GTEST_DIR} \
+			-isystem ${GMOCK_DIR}/include -I${GMOCK_DIR} \
+			-pthread -Ofast -march=native -c ${GTEST_DIR}/src/gtest-all.cc
+		g++ -isystem ${GTEST_DIR}/include -I${GTEST_DIR} \
+			-isystem ${GMOCK_DIR}/include -I${GMOCK_DIR} \
+			-pthread -Ofast -march=native -c ${GMOCK_DIR}/src/gmock-all.cc
+		ar -rv ../google_test/google_test.a gtest-all.o gmock-all.o
+
+		cd ../
+		GLIB_SOURCE="./google_test_and_mock"
+		GLIB_DEST="./google_test"
+
+		cp -r ${GLIB_SOURCE}/googletest/include/* ${GLIB_DEST}/include
+		cp ${GLIB_SOURCE}/README.md ${GLIB_DEST}/googletest_README.md
+		cp ${GLIB_SOURCE}/googletest/LICENSE ${GLIB_DEST}/googletest_LICENSE
+		cp ${GLIB_SOURCE}/googlemock/LICENSE ${GLIB_DEST}/googlemock_LICENSE
+		cp ${GLIB_SOURCE}/googlemock/LICENSE ${GLIB_DEST}/googlemock_LICENSE
+		cp ${GLIB_SOURCE}/googletest/CONTRIBUTORS ${GLIB_DEST}/googletest_CONTRIBUTORS
+		cp ${GLIB_SOURCE}/googlemock/CONTRIBUTORS ${GLIB_DEST}/googlemock_CONTRIBUTORS
+
+		rm -rf ./google_test_and_mock
+		printHighlight "Finished"
+	fi
+}
+
+#fetch and build Cppcheck code analysis tool
+function buildCppcheck(){
+	if [ ! -d "cppcheck" ]; then
+		printMinorHeader "Building Cppcheck"
+		mkdir cppcheck
+		echo ""
+		printHighlight "Cloning Cppcheck code analysis tool from github"
+			git clone https://github.com/danmar/cppcheck.git cppcheck_source
+		cd ./cppcheck_source
+		echo ""
+		printHighlight "Compiling Cppcheck"
+		g++ -Ofast -march=native -DNDEBUG -o cppcheck -std=c++0x \
+			-include lib/cxx11emu.h -Iexternals/simplecpp -Iexternals/tinyxml \
+			-Ilib cli/*.cpp lib/*.cpp externals/tinyxml/*.cpp \
+			externals/simplecpp/*.cpp
+		cd ../
+		cp ./cppcheck_source/cppcheck ./cppcheck/cppcheck
+		cp ./cppcheck_source/AUTHORS ./cppcheck/cppcheck_AUTHORS
+		cp ./cppcheck_source/COPYING ./cppcheck/cppcheck_LICENSE
+		cp ./cppcheck_source/readme.md ./cppcheck/cppcheck_readme.md
+		cp ./cppcheck_source/readme.txt ./cppcheck/cppcheck-readme.txt
+		cp ./cppcheck_source/cfg/std.cfg ./cppcheck/std.cfg
+
+		rm -rf ./cppcheck_source
+		printHighlight "Finished"
+	fi
+}
+
+function installDoxy(){
+	if [ ! -f "doxy" ]; then
+		sudo apt-get install doxygen
+		touch doxy
+	fi
+}
+
+# build external dependencies
+function buildExternals(){
+	if [ ! -d "external" ]; then
+		mkdir external
+	fi
+	cd ./external
+	buildPoco
+	buildGoogleTest
+	buildCppcheck
+	installDoxy
+	cd ../
+}
+
+
+
+
+
 function main() {
 	# set the script to stop on error
-	set -e
+
 	printMajorHeader "Building "${PWD##*/}""
 	printProjectLineCount
+
+	#check for and build missing dependencies
+	printMinorHeader "Checking Externals"
+	buildExternals
+	printHighlight "Finished"
+	set -e
 	makeBuildCompatable
 	# cppcheck
 	set +e

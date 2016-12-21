@@ -14,10 +14,8 @@ DEP_TEMP := $(DEP_DIR)temp/
 EXECUTABLE := $(PROJECT_DIRECTORY)tests/bin/$(EXECUTABLE_NAME).bin
 HEAD_PATH := $(PROJECT_DIRECTORY)
 
-TEST_FRAMEWORK_HEADER := $(abspath $(HOME)/googletest-master/googletest/include)/
-TEST_FRAMEWORK_LIBRARY := gtest_main.a
-MOCK_FRAMEWORK_HEADER := $(abspath $(HOME)/googletest-master/googlemock/include)/
-MOCK_FRAMEWORK_LIBRARY := gtest_main.a
+TEST_FRAMEWORK_HEADER := $(PROJECT_DIRECTORY)external/google_test/include/
+TEST_FRAMEWORK_LIBRARY := $(PROJECT_DIRECTORY)external/google_test/google_test.a
 
 CPP_FILE_NAME = $(abspath $(FILENAME))
 TEST_OBJECTS_NAME = $(subst  /,-!-, $(basename $(CPP_FILE_NAME)))
@@ -28,13 +26,13 @@ OBJECTS = $(addsuffix .o, $(basename $(OBJECT_LIST)))
 OBJECT_FILE_NAMES = $(addprefix $(PROJECT_DIRECTORY)objs/, $(subst  /,-!-,$(addprefix $(PROJECT_DIRECTORY),$(OBJECTS))))
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP_TEMP)$*.Td
 MOV_DEPS = mv -f $(DEP_TEMP)$*.Td $(DEP_DIR)$*.d
-CXX = $(COMP) -I $(HEAD_PATH) -I $(TEST_FRAMEWORK_HEADER) -I $(MOCK_FRAMEWORK_HEADER) $(CFLAGS) -Winvalid-pch $(DEPFLAGS) -std=c++14
+CXX = $(COMP) -I $(HEAD_PATH) -isystem $(TEST_FRAMEWORK_HEADER) $(CFLAGS) -Winvalid-pch $(DEPFLAGS) -std=c++14
 
 DEPFILES := $(patsubst %,$(DEP_DIR)%.d,$(basename $(notdir $(TEST_OBJECTS))))
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): $(TEST_OBJECTS) $(OBJECT_FILE_NAMES) $(TEST_FRAMEWORK_LIBRARY) $(MOCK_FRAMEWORK_LIBRARY) $(TEST_OBJ_DIR)test_lib.a
+$(EXECUTABLE): $(TEST_OBJECTS) $(OBJECT_FILE_NAMES) $(TEST_FRAMEWORK_LIBRARY) $(TEST_OBJ_DIR)test_lib.a
 	$(CXX) -o $@ $^ $(LIBRARIES)
 	{ $(EXECUTABLE); [ $$? -eq 0 ] || touch $(CPP_FILE_NAME); }
 

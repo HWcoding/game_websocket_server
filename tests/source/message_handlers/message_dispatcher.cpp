@@ -1,11 +1,6 @@
 #define TEST_FILE_LINK_DEPENDENCIES "source/message_handlers/message_dispatcher.cpp,\
                                      source/data_types/socket_message.cpp,\
-                                     source/data_types/byte_array.cpp,\
-                                     source/message_handlers/null_handler.cpp,\
-                                     source/message_handlers/move_handler.cpp,\
-                                     source/message_handlers/ability_handler.cpp,\
-                                     source/message_handlers/login_handler.cpp,\
-                                     source/message_handlers/logout_handler.cpp"
+                                     source/data_types/byte_array.cpp"
 
 #include "source/message_handlers/message_dispatcher.h"
 #include "source/message_handlers/listener.h"
@@ -15,6 +10,64 @@
 #include <string>
 
 #include "tests/test.h"
+
+//stubs
+class MoveHandler : public Listener
+{
+public:
+	void callback(SocketMessage &message);
+	MoveHandler();
+	~MoveHandler();
+};
+MoveHandler::MoveHandler(){}
+MoveHandler::~MoveHandler(){}
+void MoveHandler::callback(SocketMessage &message){(void)message;}
+
+class AbilityHandler : public Listener
+{
+public:
+	void callback(SocketMessage &message);
+	AbilityHandler();
+	~AbilityHandler();
+};
+AbilityHandler::AbilityHandler(){}
+AbilityHandler::~AbilityHandler(){}
+void AbilityHandler::callback(SocketMessage &message){(void)message;}
+
+class LogoutHandler : public Listener
+{
+public:
+	void callback(SocketMessage &message);
+	LogoutHandler();
+	~LogoutHandler();
+};
+LogoutHandler::LogoutHandler(){}
+LogoutHandler::~LogoutHandler(){}
+void LogoutHandler::callback(SocketMessage &message){(void)message;}
+
+class LoginHandler : public Listener
+{
+public:
+	void callback(SocketMessage &message);
+	LoginHandler();
+	~LoginHandler();
+};
+LoginHandler::LoginHandler(){}
+LoginHandler::~LoginHandler(){}
+void LoginHandler::callback(SocketMessage &message){(void)message;}
+
+class NullHandler : public Listener
+{
+public:
+	void callback(SocketMessage &message);
+	NullHandler();
+	~NullHandler();
+};
+NullHandler::NullHandler(){}
+NullHandler::~NullHandler(){}
+void NullHandler::callback(SocketMessage &message){(void)message;}
+
+
 
 
 // mocks
@@ -41,6 +94,7 @@ struct MessageDispatcherListenersBase
 	Listener *listeners[MessageType::NumberOfMessageTypes] {};
 	virtual~MessageDispatcherListenersBase()=0;
 };
+MessageDispatcherListenersBase::~MessageDispatcherListenersBase(){}
 
 
 struct MessageDispatcherTestListener : public MessageDispatcherListenersBase

@@ -5,7 +5,6 @@
 #include "tests/test_lib/clock_cycle_counter.h"
 #include <cstdint>
 
-
 #include "source/math/geometric_math.h"
 
 
@@ -23,15 +22,12 @@ void fastInvSqrtProf(){
 
 
 
-
-
-
 TEST(vector_math, scale)
 {
 	Point3D point(3.0, 2.0, 6.0);
 	Point3D expected(3.0*7.0, 2.0*7.0, 6.0*7.0);
 
-	Point3D r = vector_math::scale(point, 7.0);
+	Point3D r = v_math::scale(point, 7.0);
 
 	EXPECT_DOUBLE_EQ(r.x, expected.x);
 	EXPECT_DOUBLE_EQ(r.y, expected.y);
@@ -39,14 +35,14 @@ TEST(vector_math, scale)
 }
 
 
-TEST(vector_math, normalize)
+TEST(vector_math, fastNormalize)
 {
 	// 3^2 +  2^2 + 6^2 = 7^2
 
 	Point3D point(3.0, 2.0, 6.0);
 	Point3D expected(3.0/7.0, 2.0/7.0, 6.0/7.0);
 
-	Point3D r = vector_math::normalize(point);
+	Point3D r = v_math::fastNormalize(point);
 
 	double length = sqrt(r.x*r.x+r.y*r.y+r.z*r.z);
 
@@ -59,6 +55,24 @@ TEST(vector_math, normalize)
 	EXPECT_NEAR(r.z, expected.z, 0.001);
 }
 
+TEST(vector_math, normalize)
+{
+	// 3^2 +  2^2 + 6^2 = 7^2
+
+	Point3D point(3.0, 2.0, 6.0);
+	Point3D expected(3.0/7.0, 2.0/7.0, 6.0/7.0);
+
+	Point3D r = v_math::normalize(point);
+
+	double length = sqrt(r.x*r.x+r.y*r.y+r.z*r.z);
+
+	EXPECT_DOUBLE_EQ(length, 1.0);
+
+	EXPECT_DOUBLE_EQ(r.x, expected.x);
+	EXPECT_DOUBLE_EQ(r.y, expected.y);
+	EXPECT_DOUBLE_EQ(r.z, expected.z);
+}
+
 
 TEST(vector_math, add)
 {
@@ -67,12 +81,13 @@ TEST(vector_math, add)
 
 	Point3D expected(5.0, 7.0, 9.0);
 
-	Point3D r = vector_math::add(a, b);
+	Point3D r = v_math::add(a, b);
 
 	EXPECT_DOUBLE_EQ(r.x, expected.x);
 	EXPECT_DOUBLE_EQ(r.y, expected.y);
 	EXPECT_DOUBLE_EQ(r.z, expected.z);
 }
+
 
 TEST(vector_math, subtract)
 {
@@ -81,7 +96,7 @@ TEST(vector_math, subtract)
 
 	Point3D expected(-3.0, -4.0, -5.0);
 
-	Point3D r = vector_math::subtract(a, b);
+	Point3D r = v_math::subtract(a, b);
 
 	EXPECT_DOUBLE_EQ(r.x, expected.x);
 	EXPECT_DOUBLE_EQ(r.y, expected.y);
@@ -96,7 +111,7 @@ TEST(vector_math, dotProduct)
 
 	double expected = 32.0;
 
-	double r = vector_math::dotProduct(a, b);
+	double r = v_math::dotProduct(a, b);
 
 	EXPECT_DOUBLE_EQ(r, expected);
 }
@@ -109,7 +124,7 @@ TEST(vector_math, crossProduct)
 
 	Point3D expected(4.0, 1.0, -2.0);
 
-	Point3D r = vector_math::crossProduct(a, b);
+	Point3D r = v_math::crossProduct(a, b);
 
 	EXPECT_DOUBLE_EQ(r.x, expected.x);
 	EXPECT_DOUBLE_EQ(r.y, expected.y);
@@ -124,7 +139,7 @@ TEST(vector_math, squareDistance)
 
 	double expected = 49.0;
 
-	double r = vector_math::squareDistance(a, b);
+	double r = v_math::squareDistance(a, b);
 
 	EXPECT_DOUBLE_EQ(r, expected);
 }
@@ -137,10 +152,70 @@ TEST(vector_math, distance)
 
 	double expected = 7.0;
 
-	double r = vector_math::distance(a, b);
+	double r = v_math::distance(a, b);
 
 	EXPECT_DOUBLE_EQ(r, expected);
 }
+
+
+TEST(collision, sphere)
+{
+	Sphere a = {Point3D(3.0,2.0,6.0),3.499};
+	Sphere b = {Point3D(0.0,0.0,0.0),3.499};
+
+	EXPECT_FALSE( collision::doSpheresCollide(a,b) );
+
+	Sphere c = {Point3D(3.0,2.0,6.0),3.501};
+	Sphere d = {Point3D(0.0,0.0,0.0),3.501};
+
+	EXPECT_TRUE( collision::doSpheresCollide(c,d) );
+}
+
+
+TEST(collision, sphereAndPlane)
+{
+	Sphere s1 = {Point3D(0.0,3.5,0.0),3.49};
+	Plane  p1(Point3D(0.0,0.0,0.0),Point3D(0.0,0.0,1.0),Point3D(1.0,0.0,0.0));
+
+	EXPECT_FALSE( collision::doesSphereCollideWithPlane(s1, p1) );
+
+	Sphere s2 = {Point3D(0.0,3.5,0.0),3.51};
+	Plane  p2(Point3D(0.0,0.0,0.0),Point3D(0.0,0.0,1.0),Point3D(1.0,0.0,0.0));
+
+	EXPECT_TRUE( collision::doesSphereCollideWithPlane(s2, p2) );
+}
+
+TEST(collision, sphereFullyBehindPlane)
+{
+	Sphere s1 = {Point3D(0.0,-3.5,0.0),3.51};
+	Plane  p1(Point3D(0.0,0.0,0.0),Point3D(0.0,0.0,1.0),Point3D(1.0,0.0,0.0));
+
+	EXPECT_FALSE( collision::isSphereFullyBehindPlane(s1, p1) );
+
+	Sphere s2 = {Point3D(0.0,-3.5,0.0),3.49};
+	Plane  p2(Point3D(0.0,0.0,0.0),Point3D(0.0,0.0,1.0),Point3D(1.0,0.0,0.0));
+
+	EXPECT_TRUE( collision::isSphereFullyBehindPlane(s2, p2) );
+}
+
+TEST(collision, partOfSphereBehindPlane)
+{
+	Sphere s1 = {Point3D(0.0,3.5,0.0),3.49};
+	Plane  p1(Point3D(0.0,0.0,0.0),Point3D(0.0,0.0,1.0),Point3D(1.0,0.0,0.0));
+
+	EXPECT_FALSE( collision::isPartOfSphereBehindPlane(s1, p1) );
+
+	Sphere s2 = {Point3D(0.0,3.5,0.0),3.51};
+	Plane  p2(Point3D(0.0,0.0,0.0),Point3D(0.0,0.0,1.0),Point3D(1.0,0.0,0.0));
+
+	EXPECT_TRUE( collision::isPartOfSphereBehindPlane(s2, p2) );
+
+	Sphere s3 = {Point3D(0.0,-3.5,0.0),3.49};
+	Plane  p3(Point3D(0.0,0.0,0.0),Point3D(0.0,0.0,1.0),Point3D(1.0,0.0,0.0));
+
+	EXPECT_TRUE( collision::isPartOfSphereBehindPlane(s3, p3) );
+}
+
 
 
 int main(int argc, char *argv[])
