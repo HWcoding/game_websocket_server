@@ -17,7 +17,7 @@ HEAD_PATH := $(PROJECT_DIRECTORY)
 POCO_HEAD_PATH := $(PROJECT_DIRECTORY)external/poco/include/
 POCO_LIB_PATH := $(PROJECT_DIRECTORY)external/poco/lib/
 
-LIBRARIES =  -lpthread -lstdc++ -lm
+LIBRARIES =  -lpthread -lstdc++ -lm -lcrypto -lssl
 
 POCO_LIBS = $(POCO_LIB_PATH)poco.a
 

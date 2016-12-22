@@ -23,6 +23,11 @@ void ByteArray::append(const std::string &str)
 	appendBytes(str.c_str(), strSize);
 }
 
+void ByteArray::appendWithNoSize(const std::string &str)
+{
+	appendBytes(str.c_str(), str.size() );
+}
+
 std::string ByteArray::getNextString() const
 {
 	std::string output;

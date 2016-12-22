@@ -110,6 +110,9 @@ public:
 	{
 		return message.getNextString();
 	}
+	ByteArray getMessage(){
+		return message;
+	}
 
 
 	// constructors

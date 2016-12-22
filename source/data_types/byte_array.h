@@ -20,6 +20,7 @@ public:
 
 	template<class T>
 	void append(const T &num);
+	void appendWithNoSize(const std::string &str);
 	///@}
 
 	/// Sets currentIndex to pos
@@ -87,7 +88,6 @@ public:
 	ByteArray& operator=( std::initializer_list<uint8_t> ilist );
 	///@}
 
-private:
 	/// Adds bytes of length sizeOfBytes to end of vector
 	void appendBytes(const void* bytes, size_t sizeOfBytes);
 
@@ -97,6 +97,7 @@ private:
 	/// read. It throws an exception if an attempt is made to read past the end
 	/// of the buffer.
 	void getBytes(void* bytes, size_t sizeOfBytes) const;
+private:
 	/// Position in array from which values will be read.
 	mutable size_t currentIndex {0};
 };

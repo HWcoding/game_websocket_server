@@ -426,12 +426,14 @@ function codeAnalysis() {
 
 #fetch and build POCO network library
 function buildPoco() {
-	if [ ! -d "poco" ]; then
+	if [ ! -f "poco_built" ]; then
 		printMinorHeader "Building portable components (Poco) network library"
-		sudo apt-get install openssl
-		sudo apt-get install libssl-dev
-		sudo apt-get install libpq-dev
-		sudo apt-get install unixodbc unixodbc-dev
+		printHighlight "Installing openssl, libssl-dev, libpq-dev, unixodbc, and unixodbc-dev"
+		sudo apt-get install openssl libssl-dev libpq-dev unixodbc unixodbc-dev
+
+		if [ -d "poco" ]; then
+			rm -rf ./poco
+		fi
 		mkdir poco
 		cd ./poco
 		mkdir lib
@@ -439,9 +441,16 @@ function buildPoco() {
 		cd ./include
 		mkdir Poco
 		cd ../../
-		echo ""
-		printHighlight "Cloning Poco c++ network library from github"
-			git clone https://github.com/pocoproject/poco.git poco_source
+		if [ ! -f "poco_downloaded" ]; then
+			if [ -d "poco_source" ]; then
+				rm -rf ./poco_source
+			fi
+			echo ""
+			printHighlight "Cloning Poco c++ network library from github at:\nhttps://github.com/pocoproject/poco.git"
+				git clone https://github.com/pocoproject/poco.git poco_source
+			touch poco_downloaded
+		fi
+
 		cd ./poco_source
 		echo""
 		printHighlight "Compiling Poco"
@@ -476,7 +485,6 @@ function buildPoco() {
 		done < <(find ./ -type f -name '*.a' -print0)
 
 		cd ../../poco_source
-
 
 		cp ./CONTRIBUTORS ../poco/CONTRIBUTORS
 		cp ./README ../poco/poco_README
@@ -521,23 +529,38 @@ function buildPoco() {
 		cp -r ${POCOHEAD_SOURCE}/XML/include/Poco/XML/* ${POCOHEAD_DEST}/Poco/XML
 		cp -r ${POCOHEAD_SOURCE}/Zip/include/Poco/Zip/* ${POCOHEAD_DEST}/Poco/Zip
 
+		rm poco_downloaded
 		rm -rf ./poco_source
+		touch poco_built
+
 		printHighlight "Finished"
 	fi
 }
 
+
+
 #fetch and build google test framework
 function buildGoogleTest(){
-	if [ ! -d "google_test" ]; then
+	if [ ! -f "google_test_built" ]; then
 		printMinorHeader "Building Google Test"
+		if [ -d "google_test" ]; then
+			rm -rf ./google_test
+		fi
 		mkdir google_test
 		cd ./google_test
 		mkdir include
 		cd ../
-		echo ""
-		printHighlight "Cloning googletest from github"
-			git clone https://github.com/google/googletest.git google_test_and_mock
+		if [ ! -f "google_test_and_mock_downloaded" ]; then
+			if [ -d "google_test_and_mock" ]; then
+				rm -rf ./google_test_and_mock
+			fi
+			echo ""
+			printHighlight "Cloning googletest from github at:\nhttps://github.com/google/googletest.git"
+				git clone https://github.com/google/googletest.git google_test_and_mock
+			touch google_test_and_mock_downloaded
+		fi
 		cd ./google_test_and_mock/
+
 		GTEST_DIR="./googletest"
 		GMOCK_DIR="./googlemock"
 
@@ -563,20 +586,33 @@ function buildGoogleTest(){
 		cp ${GLIB_SOURCE}/googletest/CONTRIBUTORS ${GLIB_DEST}/googletest_CONTRIBUTORS
 		cp ${GLIB_SOURCE}/googlemock/CONTRIBUTORS ${GLIB_DEST}/googlemock_CONTRIBUTORS
 
+		rm google_test_and_mock_downloaded
 		rm -rf ./google_test_and_mock
+		touch google_test_built
 		printHighlight "Finished"
 	fi
 }
 
 #fetch and build Cppcheck code analysis tool
 function buildCppcheck(){
-	if [ ! -d "cppcheck" ]; then
+	if [ ! -f "cppcheck_built" ]; then
 		printMinorHeader "Building Cppcheck"
+		if [ -d "cppcheck" ]; then
+			rm -rf ./cppcheck
+		fi
 		mkdir cppcheck
-		echo ""
-		printHighlight "Cloning Cppcheck code analysis tool from github"
+
+		if [ ! -f "cppcheck_downloaded" ]; then
+			if [ -d "cppcheck_source" ]; then
+				rm -rf ./cppcheck_source
+			fi
+			echo ""
+			printHighlight "Cloning Cppcheck code analysis tool from github at:\nhttps://github.com/danmar/cppcheck.git"
 			git clone https://github.com/danmar/cppcheck.git cppcheck_source
+			touch cppcheck_downloaded
+		fi
 		cd ./cppcheck_source
+
 		echo ""
 		printHighlight "Compiling Cppcheck"
 		g++ -Ofast -march=native -DNDEBUG -o cppcheck -std=c++0x \
@@ -588,18 +624,21 @@ function buildCppcheck(){
 		cp ./cppcheck_source/AUTHORS ./cppcheck/cppcheck_AUTHORS
 		cp ./cppcheck_source/COPYING ./cppcheck/cppcheck_LICENSE
 		cp ./cppcheck_source/readme.md ./cppcheck/cppcheck_readme.md
-		cp ./cppcheck_source/readme.txt ./cppcheck/cppcheck-readme.txt
+		cp ./cppcheck_source/readme.txt ./cppcheck/cppcheck_readme.txt
 		cp ./cppcheck_source/cfg/std.cfg ./cppcheck/std.cfg
 
+		rm cppcheck_downloaded
 		rm -rf ./cppcheck_source
+		touch cppcheck_built
+
 		printHighlight "Finished"
 	fi
 }
 
 function installDoxy(){
-	if [ ! -f "doxy" ]; then
+	if [ ! -f "doxy_installed" ]; then
 		sudo apt-get install doxygen
-		touch doxy
+		touch doxy_installed
 	fi
 }
 
@@ -622,7 +661,7 @@ function buildExternals(){
 
 function main() {
 	# set the script to stop on error
-
+	set -e
 	printMajorHeader "Building "${PWD##*/}""
 	printProjectLineCount
 
@@ -630,7 +669,7 @@ function main() {
 	printMinorHeader "Checking Externals"
 	buildExternals
 	printHighlight "Finished"
-	set -e
+
 	makeBuildCompatable
 	# cppcheck
 	set +e
