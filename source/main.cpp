@@ -1,3 +1,6 @@
+
+
+
 #include "Poco/Net/HTTPServer.h"
 #include "Poco/Net/HTTPRequestHandler.h"
 #include "Poco/Net/HTTPRequestHandlerFactory.h"
@@ -57,12 +60,13 @@ using Poco::Util::OptionSet;
 using Poco::Util::OptionCallback;
 using Poco::Util::HelpFormatter;
 
-class TimeRequestHandler: public HTTPRequestHandler
+class IndexPageRequestHandler: public HTTPRequestHandler
 {
 public:
-	TimeRequestHandler(const std::string& format): _format(format)
-	{
-	}
+	IndexPageRequestHandler(const std::string& format):
+		responseString(loadFileToString("./client/Testindex.html")),
+		_format(format)
+	{}
 
 	void handleRequest(HTTPServerRequest& request,
 					   HTTPServerResponse& response)
@@ -70,7 +74,6 @@ public:
 		Application& app = Application::instance();
 		app.logger().information("Request from "
 		    + request.clientAddress().toString());
-
 
 		response.setChunkedTransferEncoding(true);
 		response.setContentType("text/html");
@@ -82,31 +85,25 @@ public:
 		cookie.setMaxAge(3600); // 1 hour
 		response.addCookie(cookie);
 
-		std::string responseString = loadFileToString("./client/Testindex.html");
-
-
-
 		std::ostream& ostr = response.send();
 		ostr << responseString;
 	}
 
 private:
+	std::string responseString {};
 	std::string _format;
 };
 
-class TimeRequestHandlerFactory: public HTTPRequestHandlerFactory
+class IndexPageRequestHandlerFactory: public HTTPRequestHandlerFactory
 {
 public:
-	TimeRequestHandlerFactory(const std::string& format):
-		_format(format)
-	{
-	}
+	IndexPageRequestHandlerFactory(const std::string& format): _format(format) {}
 
 	HTTPRequestHandler* createRequestHandler(
 		const HTTPServerRequest& request)
 	{
 		if (request.getURI() == "/")
-			return new TimeRequestHandler(_format);
+			return new IndexPageRequestHandler(_format);
 		else
 			return 0;
 	}
@@ -115,16 +112,11 @@ private:
 	std::string _format;
 };
 
-class HTTPTimeServer: public Poco::Util::ServerApplication
+class HTTPGameServer: public Poco::Util::ServerApplication
 {
 public:
-	HTTPTimeServer(): _helpRequested(false)
-	{
-	}
-
-	~HTTPTimeServer()
-	{
-	}
+	HTTPGameServer(): _helpRequested(false)	{}
+	~HTTPGameServer() {}
 
 protected:
 	void initialize(Application& self)
@@ -146,8 +138,8 @@ protected:
 		Option("help", "h", "display argument help information")
 			.required(false)
 			.repeatable(false)
-			.callback(OptionCallback<HTTPTimeServer>(
-				this, &HTTPTimeServer::handleHelp)));
+			.callback(OptionCallback<HTTPGameServer>(
+				this, &HTTPGameServer::handleHelp)));
 	}
 
 	void handleHelp(const std::string& name,
@@ -159,7 +151,7 @@ protected:
 		helpFormatter.setCommand(commandName());
 		helpFormatter.setUsage("OPTIONS");
 		helpFormatter.setHeader(
-			"A web server that serves the current date and time.");
+			"A websocket game server.");
 		helpFormatter.format(std::cout);
 		stopOptionsProcessing();
 		_helpRequested = true;
@@ -171,13 +163,13 @@ protected:
 		if (!_helpRequested)
 		{
 			unsigned short port = (unsigned short)
-				config().getInt("HTTPTimeServer.port", 8080);
+				config().getInt("HTTPGameServer.port", 8080);
 			std::string format(
-				config().getString("HTTPTimeServer.format",
+				config().getString("HTTPGameServer.format",
 								   DateTimeFormat::SORTABLE_FORMAT));
 
 			ServerSocket svs(port);
-			HTTPServer srv(new TimeRequestHandlerFactory(format),
+			HTTPServer srv(new IndexPageRequestHandlerFactory(format),
 				svs, new HTTPServerParams);
 			srv.start();
 			waitForTerminationRequest();
@@ -197,7 +189,7 @@ void serverThread(int argc, char** argv)
 {
 	try{
 
-		HTTPTimeServer app;
+		HTTPGameServer app;
 		int ret = app.run(argc, argv);
 		std::cout<<"serverThread returned "<<ret<<std::endl;
 	}
@@ -210,7 +202,7 @@ void serverThread(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-	std::thread t1;
+	std::thread HTTP_ServerThread;
 	try{
 		std::cout<<"work in progress"<<std::endl;
 
@@ -220,8 +212,7 @@ int main(int argc, char** argv)
 		MessageDispatcher dispatcher;
 		Socket gameSocket(config);
 
-
-		t1 = std::thread(serverThread, argc, argv);
+		HTTP_ServerThread = std::thread(serverThread, argc, argv);
 
 
 		for(;;) {
@@ -234,7 +225,7 @@ int main(int argc, char** argv)
 	catch(...) {
 		BACKTRACE_PRINT();
 	}
-	t1.join();
+	HTTP_ServerThread.join();
 
 	return 0;
 }
