@@ -1,6 +1,7 @@
 #include "source/server/socket/websocket/websocket_read_buffer.h"
 #include "source/server/socket/set_of_file_descriptors.h"
 #include <string.h>
+#include "source/logging/exception_handler.h"
 
 
 void WebsocketReadBuffers::addMessage(int index, ByteArray &in){
@@ -12,7 +13,7 @@ void WebsocketReadBuffers::addMessage(int index, ByteArray &in){
 			tempBuff.buffer.push_back(std::move(in));
 		}
 		else{
-			throw -1;//throwInt("Message expected size too large. Expectedsize: "<<tempBuff.expectedSize);
+			throwInt("Message expected size too large. Expectedsize: "<<tempBuff.expectedSize);
 		}
 	}
 }
@@ -35,7 +36,7 @@ bool WebsocketReadBuffers::extractMessage(ByteArray &out, size_t position, int i
 		PartialMessage& tempBuff = messageBuffer[index];
 		if(!tempBuff.buffer.empty()){
 			if(out.size()+tempBuff.size() <= maxMessageSize){
-				if( tempBuff.expectedSize > static_cast<int64_t>(maxMessageSize) ) throw -1; //throwInt("Message expected size too large. Expectedsize: "<<tempBuff.expectedSize);
+				if( tempBuff.expectedSize > static_cast<int64_t>(maxMessageSize) ) throwInt("Message expected size too large. Expectedsize: "<<tempBuff.expectedSize);
 				if( static_cast<int64_t>( out.size()+tempBuff.size() ) >= tempBuff.expectedSize ){
 					ByteArray message;
 					if(tempBuff.expectedSize > 0)message.reserve( static_cast<size_t>(tempBuff.expectedSize) );
@@ -51,7 +52,7 @@ bool WebsocketReadBuffers::extractMessage(ByteArray &out, size_t position, int i
 				}
 			}
 			else {
-				throw -1;//throwInt("Client sent too much data.  Size: "<<(out.size()+messageBuffer[index].size()) );
+				throwInt("Client sent too much data.  Size: "<<(out.size()+messageBuffer[index].size()) );
 			}
 		}
 	}

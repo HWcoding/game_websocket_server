@@ -6,6 +6,7 @@
 #include <string>
 #include <stdint.h>
 
+
 /// Vector to hold serialized data structures for network transmission.
 class ByteArray : public std::vector<uint8_t>
 {
@@ -97,6 +98,8 @@ public:
 	/// read. It throws an exception if an attempt is made to read past the end
 	/// of the buffer.
 	void getBytes(void* bytes, size_t sizeOfBytes) const;
+
+	std::string toString();
 private:
 	/// Position in array from which values will be read.
 	mutable size_t currentIndex {0};
@@ -205,12 +208,6 @@ inline bool ByteArray::getNextBool() const
 	return flag != 0;
 }
 
-inline void ByteArray::seek(size_t pos)
-{
-	if( pos < std::vector<uint8_t>::size() ) currentIndex = pos;
-	else{ throw -1; } //tried to seek past the end of the vector
-}
-
 inline size_t ByteArray::tell() const
 {
 	return currentIndex;
@@ -246,28 +243,6 @@ inline ByteArray::ByteArray( InputIt first, InputIt last,
 	currentIndex(0)
 {}
 
-inline ByteArray::ByteArray( const ByteArray& other ) :
-	std::vector<uint8_t>(other),
-	currentIndex(0)
-{}
-
-inline ByteArray::ByteArray( const ByteArray& other,
-	                         const std::allocator<int8_t>& alloc ) :
-	std::vector<uint8_t> (other, alloc),
-	currentIndex(0)
-{}
-
-inline ByteArray::ByteArray( ByteArray&& other ) :
-	std::vector<uint8_t>( std::move(other) ),
-	currentIndex(0)
-{}
-
-inline ByteArray::ByteArray( ByteArray&& other,
-	                         const std::allocator<int8_t>& alloc ) :
-	std::vector<uint8_t>( std::move(other), alloc ),
-	currentIndex(0)
-{}
-
 inline ByteArray::ByteArray( std::initializer_list<uint8_t> &init,
             const std::allocator<int8_t>& alloc ) :
 	std::vector<uint8_t>(init, alloc),
@@ -279,6 +254,31 @@ inline ByteArray::ByteArray(std::string str) :
 {
 	this->append(str);
 }
+
+//copy constructors
+inline ByteArray::ByteArray( const ByteArray& other ) :
+	std::vector<uint8_t>(other),
+	currentIndex(other.currentIndex)
+{}
+
+inline ByteArray::ByteArray( const ByteArray& other,
+	                         const std::allocator<int8_t>& alloc ) :
+	std::vector<uint8_t> (other, alloc),
+	currentIndex(other.currentIndex)
+{}
+
+inline ByteArray::ByteArray( ByteArray&& other ) :
+	std::vector<uint8_t>( std::move(other) ),
+	currentIndex(other.currentIndex)
+{}
+
+inline ByteArray::ByteArray( ByteArray&& other,
+	                         const std::allocator<int8_t>& alloc ) :
+	std::vector<uint8_t>( std::move(other), alloc ),
+	currentIndex(other.currentIndex)
+{}
+
+
 
 //assignment
 inline ByteArray& ByteArray::operator=( const ByteArray& other )

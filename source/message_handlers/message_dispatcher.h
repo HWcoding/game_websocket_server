@@ -5,7 +5,7 @@
 #include <vector>
 
 class SocketMessage;
-class MessageDispatcherListenersBase;
+struct MessageDispatcherListenersBase;
 
 class MessageDispatcher
 {
@@ -15,7 +15,8 @@ public:
 	MessageDispatcher();
 	~MessageDispatcher();
 
-	void dispatchMessages(std::vector<SocketMessage> &messages);
+	void dispatchMessages(const std::vector<SocketMessage> &messages);
+	void dispatchMessage(const SocketMessage &message);
 
 
 

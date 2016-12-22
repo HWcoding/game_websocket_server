@@ -3,6 +3,7 @@
 #include "source/data_types/mapped_vector.h"
 #include "source/math/geometric_math.h"
 #include <iostream>
+#include "source/logging/exception_handler.h"
 
 struct PositionData
 {
@@ -10,20 +11,20 @@ struct PositionData
 	Point3D vel {0.0, 0.0, 0.0};
 	Point3D rot {0.0, 0.0, 0.0};
 
-	void loadStateFromMessage(SocketMessage &message)
+	void loadStateFromMessage( const SocketMessage &message)
 	{
 		pos.x = message.getNextDouble();
 		pos.y = message.getNextDouble();
 		pos.z = message.getNextDouble();
-		vel.x = message.getNextDouble();
-		vel.y = message.getNextDouble();
-		vel.z = message.getNextDouble();
-		rot.x = message.getNextDouble();
-		rot.y = message.getNextDouble();
-		rot.z = message.getNextDouble();
+		//vel.x = message.getNextDouble();
+		//vel.y = message.getNextDouble();
+		//vel.z = message.getNextDouble();
+		//rot.x = message.getNextDouble();
+		//rot.y = message.getNextDouble();
+		//rot.z = message.getNextDouble();
 
 		if(isValid() == false){
-			throw -1;
+			throwInt("Position Data was invalid");
 		}
 	}
 
@@ -56,12 +57,12 @@ struct MoveMessage
 
 	MoveMessage(){}
 
-	explicit MoveMessage(SocketMessage &message)
+	explicit MoveMessage( const SocketMessage &message)
 	{
 		loadStateFromMessage(message);
 	}
 
-	void loadStateFromMessage(SocketMessage &message)
+	void loadStateFromMessage( const SocketMessage &message)
 	{
 		pos.loadStateFromMessage(message);
 	}
@@ -97,11 +98,14 @@ struct MoveHandler::MoveHandlerData
 
 
 
-void MoveHandler::callback(SocketMessage &message)
+void MoveHandler::callback( const SocketMessage &message)
 {
 	int playerID = message.getFD();
-	d->setPosition(playerID, MoveMessage(message));
+	MoveMessage mv(message);
+
+	d->setPosition(playerID, mv);
 	std::cout<<d->positions[playerID].pos.x<<", "<<d->positions[playerID].pos.y<<std::endl;
+	std::cout<<"moved"<<std::endl;
 	return;
 }
 

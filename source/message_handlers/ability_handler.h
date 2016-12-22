@@ -9,7 +9,7 @@ class SocketMessage;
 class AbilityHandler : public Listener
 {
 public:
-	void callback(SocketMessage &message);
+	void callback( const SocketMessage &message);
 
 };
 

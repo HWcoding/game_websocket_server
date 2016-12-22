@@ -15,57 +15,57 @@
 class MoveHandler : public Listener
 {
 public:
-	void callback(SocketMessage &message);
+	void callback( const SocketMessage &message);
 	MoveHandler();
 	~MoveHandler();
 };
 MoveHandler::MoveHandler(){}
 MoveHandler::~MoveHandler(){}
-void MoveHandler::callback(SocketMessage &message){(void)message;}
+void MoveHandler::callback( const SocketMessage &message){(void)message;}
 
 class AbilityHandler : public Listener
 {
 public:
-	void callback(SocketMessage &message);
+	void callback( const SocketMessage &message);
 	AbilityHandler();
 	~AbilityHandler();
 };
 AbilityHandler::AbilityHandler(){}
 AbilityHandler::~AbilityHandler(){}
-void AbilityHandler::callback(SocketMessage &message){(void)message;}
+void AbilityHandler::callback( const SocketMessage &message){(void)message;}
 
 class LogoutHandler : public Listener
 {
 public:
-	void callback(SocketMessage &message);
+	void callback( const SocketMessage &message);
 	LogoutHandler();
 	~LogoutHandler();
 };
 LogoutHandler::LogoutHandler(){}
 LogoutHandler::~LogoutHandler(){}
-void LogoutHandler::callback(SocketMessage &message){(void)message;}
+void LogoutHandler::callback( const SocketMessage &message){(void)message;}
 
 class LoginHandler : public Listener
 {
 public:
-	void callback(SocketMessage &message);
+	void callback( const SocketMessage &message);
 	LoginHandler();
 	~LoginHandler();
 };
 LoginHandler::LoginHandler(){}
 LoginHandler::~LoginHandler(){}
-void LoginHandler::callback(SocketMessage &message){(void)message;}
+void LoginHandler::callback( const SocketMessage &message){(void)message;}
 
 class NullHandler : public Listener
 {
 public:
-	void callback(SocketMessage &message);
+	void callback( const SocketMessage &message);
 	NullHandler();
 	~NullHandler();
 };
 NullHandler::NullHandler(){}
 NullHandler::~NullHandler(){}
-void NullHandler::callback(SocketMessage &message){(void)message;}
+void NullHandler::callback( const SocketMessage &message){(void)message;}
 
 
 
@@ -75,7 +75,7 @@ class TestListener : public Listener
 {
 	std::string exceptionName;
 
-	void callback(SocketMessage &message)
+	void callback( const SocketMessage &message)
 	{
 		// throw an exception to let caller know
 		// which function was called

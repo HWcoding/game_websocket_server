@@ -3,7 +3,9 @@
 #include "source/server/socket/message_queue.h"
 #include "source/server/socket/set_of_file_descriptors.h"
 #include "source/data_types/socket_message.h"
+#include "source/data_types/message_type.h"
 #include <string.h>
+#include "source/logging/exception_handler.h"
 
 WebsocketMessageProcessor::WebsocketMessageProcessor(SetOfFileDescriptors *_FDs) : readerQueue(NULL), MaxReadBufferSize(999999999), ReadBuffers( new WebsocketReadBuffers(_FDs, MaxReadBufferSize) ), fileDescriptors(_FDs){}
 WebsocketMessageProcessor::~WebsocketMessageProcessor(){}
@@ -21,7 +23,7 @@ void WebsocketMessageProcessor::closeFDHandler(int FD){
 	ByteArray key = fileDescriptors->getCSRFkey(FD);
 	ByteArray IP = fileDescriptors->getIP(FD);
 	ByteArray port = fileDescriptors->getPort(FD);
-	uint32_t type = 2; //logout
+	uint32_t type = MessageType::logout;
 	uint32_t priority = 0;
 	ByteArray mess;
 	newMessage.setMessage( FD, type, priority, IP, port, key, std::move(mess) );
@@ -41,18 +43,16 @@ void WebsocketMessageProcessor::processSockMessage (ByteArray &in,  int FD){
 				ByteArray key = fileDescriptors->getCSRFkey(FD);
 				ByteArray IP = fileDescriptors->getIP(FD);
 				ByteArray port = fileDescriptors->getPort(FD);
-				uint32_t type =0;
+				uint32_t type = messages[i].getNextUint32();
 				uint32_t priority = 0;
-				memcpy(&type, &messages[i][0], 4);
-
 				newMessage.setMessage( FD, type, priority, IP, port, key, std::move(messages[i]) );
 				readerQueue->pushMessage(newMessage);
 			}
 			else if (messageTypes[i] == 8){ //client closed connection (close control opcode)
-				//LOG_INFO("WebsocketMessageProcessor::processSockMessage", "Client closed connection on FD " << FD );
+				LOG_INFO("WebsocketMessageProcessor::processSockMessage", "Client closed connection on FD " << FD );
 				fileDescriptors->removeFD(FD); 	//remove player and buffers
 			}
-			//else LOG_ERROR("WebsocketMessageProcessor::processSockMessage", "!!!!*****message type was " << messageTypes[i] << " on FD " << FD );
+			else LOG_ERROR("WebsocketMessageProcessor::processSockMessage", "!!!!*****message type was " << messageTypes[i] << " on FD " << FD );
 		}
 	}
 }
@@ -132,7 +132,7 @@ size_t WebsocketMessageProcessor::extractMessage (ByteArray &in, std::vector< By
 uint64_t WebsocketMessageProcessor::getMessageSize (ByteArray &in, uint64_t &messageStart, const uint64_t &start, int FD){
 	uint64_t size = in[start+1]^128;
 	if(size >= 128){
-		throw -1;//throwInt("maskbit was not set on descriptor "<<FD<<" start: "<<start<<" in.size(): "<<in.size()<<". First bit "<<  static_cast<unsigned int>( in[start] ) ); //maskbit was not set
+		throwInt("maskbit was not set on descriptor "<<FD<<" start: "<<start<<" in.size(): "<<in.size()<<". First bit "<<  static_cast<unsigned int>( in[start] ) ); //maskbit was not set
 	}
 	messageStart = start+6; //start of mask start
 	if(size == 126){
@@ -160,7 +160,7 @@ uint64_t WebsocketMessageProcessor::getMessageSize (ByteArray &in, uint64_t &mes
 		size = getNet64bit(&in[start+2]);
 	}
 	if(size>MaxReadBufferSize){
-		throw -1;//throwInt("Message too large on on descriptor "<< FD <<".  Size: "<<size );
+		throwInt("Message too large on on descriptor "<< FD <<".  Size: "<<size );
 	}
 	return size;
 }
@@ -185,7 +185,7 @@ void WebsocketMessageProcessor::handleFragment (ByteArray &in, uint8_t opcode, i
 		ReadBuffers->addFracture(FD,in);
 	}
 	else{
-		throw -1;//throwInt("bad Opcode "<< static_cast<int>(opcode) <<" on descriptor "<<FD);
+		throwInt("bad Opcode "<< static_cast<int>(opcode) <<" on descriptor "<<FD);
 	}
 }
 

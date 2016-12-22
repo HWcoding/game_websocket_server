@@ -1,154 +1,240 @@
-
-
-/*#include "Poco/Net/DNS.h"
-#include <iostream>
-using Poco::Net::DNS;
-using Poco::Net::IPAddress;
-using Poco::Net::HostEntry;
-
-int main()
-{
-	const HostEntry& entry = DNS::hostByName("www.hwcoding.com");
-	std::cout << "Canonical Name: " << entry.name() << std::endl;
-
-	const HostEntry::AliasList& aliases = entry.aliases();
-	for (auto it = aliases.begin(); it != aliases.end(); ++it)
-		std::cout << "Alias: " << *it << std::endl;
-
-	const HostEntry::AddressList& addrs = entry.addresses();
-	for (auto it = addrs.begin(); it != addrs.end(); ++it)
-		std::cout << "Address: " << it->toString() << std::endl;
-}
-*/
-/*
-#include "Poco/Net/SocketAddress.h"
-#include "Poco/Net/StreamSocket.h"
-#include "Poco/Net/SocketStream.h"
-#include "Poco/StreamCopier.h"
-#include <iostream>
-#include <thread>
-#include <chrono>
-
-
-
-
-
-
+#include "Poco/Net/HTTPServer.h"
+#include "Poco/Net/HTTPRequestHandler.h"
+#include "Poco/Net/HTTPRequestHandlerFactory.h"
+#include "Poco/Net/HTTPServerParams.h"
+#include "Poco/Net/HTTPServerRequest.h"
+#include "Poco/Net/HTTPServerResponse.h"
+#include "Poco/Net/HTTPServerParams.h"
 #include "Poco/Net/ServerSocket.h"
-
-
-
-void serverThread(Poco::Net::ServerSocket srv);
-void clientThread();
-
-void serverThread(Poco::Net::ServerSocket srv)
-{
-	//Poco::Net::ServerSocket srv(8080); // does bind + listen
-
-	for (;;)
-	{
-		using namespace std::chrono_literals;
-		//std::this_thread::sleep_for(1000ms);
-		Poco::Net::StreamSocket ss = srv.acceptConnection();
-		Poco::Net::SocketStream str(ss);
-		std::string response("HTTP/1.1 200 OK\r\n"
-		                      "Content-Type: text/html\r\n"
-		                      "\r\n");
-		for(int i = 1; i != 0; i--){
-			response.append("<html><head><title>My 1st Web Server</title></head>"
-			                 "<body><h1>Hello, world!</h1></body></html>");
-		}
-		str <<response<<std::flush;
-
-		//str << "HTTP/1.1 200 OK\r\n"
-		//	"Content-Type: text/html\r\n"
-		//	"\r\n"
-
-		//	"<html><head><title>My 1st Web Server</title></head>"
-		//	"<body><h1>Hello, world!</h1></body></html>"
-		//	<< std::flush;
-	}
-
-}
-
-
-void clientThread()
-{
-
-	//for(;;){
-		using namespace std::chrono_literals;
-		std::this_thread::sleep_for(120ms);
-		Poco::Net::SocketAddress sa("localhost", 8080);
-		Poco::Net::StreamSocket socket(sa);
-		Poco::Net::SocketStream str(socket);
-		str << "GET / HTTP/1.1\r\n"
-			"Host: localhost\r\n"
-			"\r\n"
-			<< std::flush;
-		//str.flush();
-		std::string test;
-		while (Poco::StreamCopier::copyToString(str, test)>0){}
-		if(test.size()>0) {
-			std::cout<<test<<"     size "<<test.size()<<std::endl;
-		//	break;
-		}
-		//std::string test;
-		//str>>test;
-		//std::string test(std::istreambuf_iterator<char>(str), {});
-		//std::cout<<test;
-	//}
-}
-
-
-
-
-
-
-
-
-
-
-
-
-int main()
-{
-	Poco::Net::ServerSocket srv(8080); // does bind + listen
-	std::thread t1(serverThread, srv);
-	std::thread t2(clientThread);
-	//Join the thread with the main thread
-	t1.join();
-	t2.join();
-	//Poco::StreamCopier::copyStream(str, std::cout);
-}
-*/
-
-/*struct ServerConfig {
-	std::string port = std::string();
-	int64_t loopSpeed = 100;
-	int MAXEVENTS = 200;
-	size_t MaxReaderSocketBufferSize = 32760;
-	size_t MaxWebsocketReadBufferSize = 262144;
-	int maxWaitTime = 1000;
-	size_t maxHandshakeSize = 2048;
-	ServerConfig() {}
-};*/
-
+#include "Poco/Timestamp.h"
+#include "Poco/DateTimeFormatter.h"
+#include "Poco/DateTimeFormat.h"
+#include "Poco/Exception.h"
+#include "Poco/ThreadPool.h"
+#include "Poco/Util/ServerApplication.h"
+#include "Poco/Util/Option.h"
+#include "Poco/Util/OptionSet.h"
+#include "Poco/Util/HelpFormatter.h"
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <fstream>
 #include "source/server/socket/socket_node.h"
-int main(){
-	std::cout<<"work in progress"<<std::endl;
+#include "source/message_handlers/message_dispatcher.h"
+#include "source/data_types/socket_message.h"
+#include "source/logging/exception_handler.h"
 
-	ServerConfig config;
-	config.port = std::string("5600");
+std::string loadFileToString(std::string filename);
+std::string loadFileToString(std::string filename)
+{
+	std::ifstream t( filename.c_str() );
+	t.seekg(0, std::ios::end);
+	int64_t size = t.tellg();
+	if(size == -1) throw -1;
+	std::string buffer(static_cast<size_t>(size), ' ');
+	t.seekg(0);
+	if(t.fail()) throw -1;
+	t.read(&buffer[0], size);
+	if(t.fail()) throw -1;
+	return buffer;
+}
 
-	Socket gameSocket(config);
+using Poco::Net::ServerSocket;
+using Poco::Net::HTTPRequestHandler;
+using Poco::Net::HTTPRequestHandlerFactory;
+using Poco::Net::HTTPServer;
+using Poco::Net::HTTPServerRequest;
+using Poco::Net::HTTPServerResponse;
+using Poco::Net::HTTPServerParams;
+using Poco::Timestamp;
+using Poco::DateTimeFormatter;
+using Poco::DateTimeFormat;
+using Poco::ThreadPool;
+using Poco::Util::ServerApplication;
+using Poco::Util::Application;
+using Poco::Util::Option;
+using Poco::Util::OptionSet;
+using Poco::Util::OptionCallback;
+using Poco::Util::HelpFormatter;
 
-	for(;;) {
-		using namespace std::chrono_literals;
-		std::this_thread::sleep_for(5s);
+class TimeRequestHandler: public HTTPRequestHandler
+{
+public:
+	TimeRequestHandler(const std::string& format): _format(format)
+	{
 	}
+
+	void handleRequest(HTTPServerRequest& request,
+					   HTTPServerResponse& response)
+	{
+		Application& app = Application::instance();
+		app.logger().information("Request from "
+		    + request.clientAddress().toString());
+
+
+		response.setChunkedTransferEncoding(true);
+		response.setContentType("text/html");
+		response.setKeepAlive(true);
+
+		// set cookie in response
+		Poco::Net::HTTPCookie cookie("name", "TEST_COOKIE");
+		cookie.setPath("/");
+		cookie.setMaxAge(3600); // 1 hour
+		response.addCookie(cookie);
+
+		std::string responseString = loadFileToString("./client/Testindex.html");
+
+
+
+		std::ostream& ostr = response.send();
+		ostr << responseString;
+	}
+
+private:
+	std::string _format;
+};
+
+class TimeRequestHandlerFactory: public HTTPRequestHandlerFactory
+{
+public:
+	TimeRequestHandlerFactory(const std::string& format):
+		_format(format)
+	{
+	}
+
+	HTTPRequestHandler* createRequestHandler(
+		const HTTPServerRequest& request)
+	{
+		if (request.getURI() == "/")
+			return new TimeRequestHandler(_format);
+		else
+			return 0;
+	}
+
+private:
+	std::string _format;
+};
+
+class HTTPTimeServer: public Poco::Util::ServerApplication
+{
+public:
+	HTTPTimeServer(): _helpRequested(false)
+	{
+	}
+
+	~HTTPTimeServer()
+	{
+	}
+
+protected:
+	void initialize(Application& self)
+	{
+		loadConfiguration();
+		ServerApplication::initialize(self);
+	}
+
+	void uninitialize()
+	{
+		ServerApplication::uninitialize();
+	}
+
+	void defineOptions(OptionSet& options)
+	{
+		ServerApplication::defineOptions(options);
+
+		options.addOption(
+		Option("help", "h", "display argument help information")
+			.required(false)
+			.repeatable(false)
+			.callback(OptionCallback<HTTPTimeServer>(
+				this, &HTTPTimeServer::handleHelp)));
+	}
+
+	void handleHelp(const std::string& name,
+					const std::string& value)
+	{
+		(void)name;
+		(void)value;
+		HelpFormatter helpFormatter(options());
+		helpFormatter.setCommand(commandName());
+		helpFormatter.setUsage("OPTIONS");
+		helpFormatter.setHeader(
+			"A web server that serves the current date and time.");
+		helpFormatter.format(std::cout);
+		stopOptionsProcessing();
+		_helpRequested = true;
+	}
+
+	int main(const std::vector<std::string>& args)
+	{
+		(void)args;
+		if (!_helpRequested)
+		{
+			unsigned short port = (unsigned short)
+				config().getInt("HTTPTimeServer.port", 8080);
+			std::string format(
+				config().getString("HTTPTimeServer.format",
+								   DateTimeFormat::SORTABLE_FORMAT));
+
+			ServerSocket svs(port);
+			HTTPServer srv(new TimeRequestHandlerFactory(format),
+				svs, new HTTPServerParams);
+			srv.start();
+			waitForTerminationRequest();
+			srv.stop();
+		}
+		return Application::EXIT_OK;
+	}
+
+private:
+	bool _helpRequested;
+};
+
+
+
+void serverThread(int argc, char** argv);
+void serverThread(int argc, char** argv)
+{
+	try{
+
+		HTTPTimeServer app;
+		int ret = app.run(argc, argv);
+		std::cout<<"serverThread returned "<<ret<<std::endl;
+	}
+	catch (...) {
+		std::cout<<"exception thrown"<<std::endl;
+		BACKTRACE_PRINT();
+	}
+
+}
+
+int main(int argc, char** argv)
+{
+	std::thread t1;
+	try{
+		std::cout<<"work in progress"<<std::endl;
+
+		ServerConfig config;
+		config.port = std::string("5600");
+
+		MessageDispatcher dispatcher;
+		Socket gameSocket(config);
+
+
+		t1 = std::thread(serverThread, argc, argv);
+
+
+		for(;;) {
+			if(gameSocket.isRunning()){
+				dispatcher.dispatchMessage( gameSocket.getNextMessage() );
+			}
+		}
+
+	}
+	catch(...) {
+		BACKTRACE_PRINT();
+	}
+	t1.join();
 
 	return 0;
 }

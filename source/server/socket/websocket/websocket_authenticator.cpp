@@ -6,15 +6,20 @@
 #include "source/server/socket/set_of_file_descriptors.h"
 #include "source/server/socket/websocket/websocket_handshake.h"
 #include "source/server/socket/system_wrapper.h"
+#include "source/logging/exception_handler.h"
 
 
 
 AuthenticatorInterface::~AuthenticatorInterface(){}
 
 
-WebsocketAuthenticator::WebsocketAuthenticator(SystemInterface *_systemWrap, SetOfFileDescriptors*FDs) : systemWrap(_systemWrap), handshakeReadBuffer(), handshakeWriteBuffer(), maxHandshakeSize(2048), fileDescriptors(FDs){}
+WebsocketAuthenticator::WebsocketAuthenticator(SystemInterface *_systemWrap, SetOfFileDescriptors*FDs) :
+                                                  systemWrap(_systemWrap), handshakeReadBuffer(),
+                                                  handshakeWriteBuffer(), maxHandshakeSize(2048),
+                                                  fileDescriptors(FDs){}
 
-bool WebsocketAuthenticator::isNotValidConnection(int newConnection, const ByteArray &hbuf, const ByteArray &sbuf) const{
+bool WebsocketAuthenticator::isNotValidConnection(int newConnection, const ByteArray &hbuf, const ByteArray &sbuf) const
+{
 
 	//place holder to silence unused warnings //TODO: check IP and port info
 	newConnection ++;
@@ -29,44 +34,48 @@ bool WebsocketAuthenticator::isNotValidConnection(int newConnection, const ByteA
 }
 
 
-void WebsocketAuthenticator::closeFD(int FD){
+void WebsocketAuthenticator::closeFD(int FD)
+{
 	if(handshakeReadBuffer.count(FD) != 0)handshakeReadBuffer.erase(FD);
 	if(handshakeWriteBuffer.count(FD) != 0)handshakeWriteBuffer.erase(FD);
 }
 
-void WebsocketAuthenticator::processHandshake(const ByteArray &in, int FD){
+void WebsocketAuthenticator::processHandshake(const ByteArray &in, int FD)
+{
 	if(in.size()+handshakeReadBuffer[FD].size() > maxHandshakeSize){
-		throw -1;//throwInt("Client sent too much data.  Size: "<<(in.size()+handshakeReadBuffer[FD].size()) );
+		throwInt("Client sent too much data.  Size: "<<(in.size()+handshakeReadBuffer[FD].size()) );
 	}
 	handshakeReadBuffer[FD].append(in);
 	if(in.size()>=20){
 		if(!isHandshake(in)){
-			throw -1;//throwInt("Message is not a handshake");
+			throwInt("Message is not a handshake");
 		}
 	}
-	if(!isCompleteHandshake(handshakeReadBuffer[FD]))return;
+	if(!isCompleteHandshake(handshakeReadBuffer[FD])) return;
 	HandshakeHeaders headers = getHandshakeHeaders(handshakeReadBuffer[FD]);
 	fileDescriptors->setCSRFkey(FD, headers.getSecWebSocketProtocol() );
 	handshakeWriteBuffer[FD] = createHandshake(headers);
 	handshakeReadBuffer.erase(FD);
 
 	if(handshakeWriteBuffer[FD].empty()){ //error creating handshake
-		throw -1;//throwInt("createHandshake failed");
+		throwInt("createHandshake failed");
 	}
 }
 
-bool WebsocketAuthenticator::isHandshake(const ByteArray &in) const{
+bool WebsocketAuthenticator::isHandshake(const ByteArray &in) const
+{
 	std::string requestType("GET ");
 	bool ret = memcmp(&in[0], &requestType[0], 4) == 0;
 	//ws://192.168.1.3//socket HTTP/1.1
 	if(!ret){
 	 	std::string temp( reinterpret_cast<const char*>(&in[0]), 4);
-		//LOG_ERROR("WebsocketAuthenticator::isHandshake", temp<< " is not == "<< "GET " );
+		LOG_ERROR("WebsocketAuthenticator::isHandshake", temp<< " is not == "<< "GET " );
 	}
 	return ret;
 }
 
-bool WebsocketAuthenticator::isCompleteHandshake(const ByteArray &in) const{
+bool WebsocketAuthenticator::isCompleteHandshake(const ByteArray &in) const
+{
 	if(in.size()<4)return false;
 	size_t end = in.size()-1;
 	uint8_t carriageReturn = static_cast<uint8_t>('\r');
@@ -76,7 +85,8 @@ bool WebsocketAuthenticator::isCompleteHandshake(const ByteArray &in) const{
 	return true;
 }
 
-HandshakeHeaders WebsocketAuthenticator::getHandshakeHeaders(const ByteArray &in) const{
+HandshakeHeaders WebsocketAuthenticator::getHandshakeHeaders(const ByteArray &in) const
+{
 	HandshakeHeaders empty;
 	HandshakeHeaders headers;
 	if(isHandshakeInvalid(in))return empty;
@@ -85,7 +95,8 @@ HandshakeHeaders WebsocketAuthenticator::getHandshakeHeaders(const ByteArray &in
 	return headers;
 }
 
-ByteArray WebsocketAuthenticator::createHandshake(const HandshakeHeaders &headers) const{
+ByteArray WebsocketAuthenticator::createHandshake(const HandshakeHeaders &headers) const
+{
 	ByteArray output;
 	output.reserve(195);
 
@@ -98,7 +109,8 @@ ByteArray WebsocketAuthenticator::createHandshake(const HandshakeHeaders &header
 	return output;
 }
 
-ByteArray WebsocketAuthenticator::createSecWebSocketAccept(const ByteArray &SecWebSocketKey) const{
+ByteArray WebsocketAuthenticator::createSecWebSocketAccept(const ByteArray &SecWebSocketKey) const
+{
 	ByteArray magicKey = SecWebSocketKey;
 	magicKey.appendWithNoSize( std::string("258EAFA5-E914-47DA-95CA-C5AB0DC85B11", 36) ); //append magic number spec requires
 
@@ -110,9 +122,10 @@ ByteArray WebsocketAuthenticator::createSecWebSocketAccept(const ByteArray &SecW
 	return SocketAccept;
 }
 
-bool WebsocketAuthenticator::isHandshakeInvalid(const ByteArray &handShake) const{
+bool WebsocketAuthenticator::isHandshakeInvalid(const ByteArray &handShake) const
+{
 	if(handShake.size() > 2048){
-		//writeError("handshake header too large");
+		writeError("handshake header too large");
 		return true;
 	}
 	else if(isHandshake(handShake))return false;
@@ -120,27 +133,31 @@ bool WebsocketAuthenticator::isHandshakeInvalid(const ByteArray &handShake) cons
 	else return true;
 }
 
-uint8_t WebsocketAuthenticator::convertTo64(uint8_t in) const{ //converts an 8bit int less than 64 into a base64 char
+//converts an 8bit int less than 64 into a base64 char
+uint8_t WebsocketAuthenticator::convertTo64(uint8_t in) const
+{
 	if(in < 26)  		return static_cast<uint8_t>(in+65);
 	else if(in < 52)  	return static_cast<uint8_t>(in+71);
 	else if(in < 62)  	return static_cast<uint8_t>(in-4);
 	else if(in == 62)	return 43;
 	else if(in == 63)	return 47;
-	//LOG_ERROR("WebsocketAuthenticator::convertTo64: ", "input out of range: "<<static_cast<int>(in)<<" should be less than 64" );
+	LOG_ERROR("WebsocketAuthenticator::convertTo64: ", "input out of range: "<<static_cast<int>(in)<<" should be less than 64" );
 	return static_cast<uint8_t>('\\');	//return an invalid base64 char on error
 }
 
-void WebsocketAuthenticator::toBase64(const ByteArray &input, ByteArray &out) const{ //converts an array of data into a base64 string for calculating the Sec-WebSocket-Accept header field (won't work for general conversion)
+//converts an array of data into a base64 string for calculating the Sec-WebSocket-Accept header field (won't work for general conversion)
+void WebsocketAuthenticator::toBase64(const ByteArray &input, ByteArray &out) const
+{
 	out = ByteArray();
-	if(input.size() != 20){ //the incoming SHA-1 hash should be exactly 20 long.  This simplified function breaks for other lengths
-		//LOG_ERROR("WebSocket::toBase64: ", "wrong input length: "<<input.size()<<" should be 20" );
+	if(input.size() != 20) { //the incoming SHA-1 hash should be exactly 20 long.  This simplified function breaks for other lengths
+		LOG_ERROR("WebSocket::toBase64: ", "wrong input length: "<<input.size()<<" should be 20" );
 		return;
 	}
 	out.resize(28);
 	uint8_t temp;
 
 	//splits bytes on 6bit bounderies in network byte order (assuming little endian on machine), converts the 6 bits to base64, then stores each in a char
-	for(size_t i = 0, j = 0; i< 18; i+=3, j+=4){	//process first 18bytes of 'in' 3 bytes at a time.
+	for(size_t i = 0, j = 0; i< 18; i+=3, j+=4) {	//process first 18bytes of 'in' 3 bytes at a time.
 
 		//out[0] will be the top 6 bits of in[0]
 		temp = static_cast <uint8_t>(input[i]>>2);	//take top 6 bits of first byte
@@ -181,9 +198,10 @@ void WebsocketAuthenticator::toBase64(const ByteArray &input, ByteArray &out) co
 	out[27] = '=';								//cap with '=' in 28th char to signify the last group only has 2 bytes instead of 3
 }
 
-bool WebsocketAuthenticator::sendHandshake(int FD){
+bool WebsocketAuthenticator::sendHandshake(int FD)
+{
 	size_t retSize = systemWrap->writeFD( FD, &handshakeWriteBuffer[FD][0], handshakeWriteBuffer[FD].size() );
-	if(retSize< handshakeWriteBuffer[FD].size()){ //we didn't write all our data
+	if(retSize< handshakeWriteBuffer[FD].size()) { //we didn't write all our data
 		handshakeWriteBuffer[FD] = ByteArray( handshakeWriteBuffer[FD].begin()+static_cast<int64_t>(retSize), handshakeWriteBuffer[FD].end() );
 		return false;
 	}

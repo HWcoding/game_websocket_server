@@ -1,6 +1,6 @@
 #include "source/data_types/socket_message.h"
 
-bool SocketMessage::isNotEmpty()
+bool SocketMessage::isNotEmpty()  const
 {
 	return !(message.empty() || FD == -1);
 }

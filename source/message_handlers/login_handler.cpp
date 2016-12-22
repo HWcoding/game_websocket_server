@@ -2,7 +2,7 @@
 #include "source/data_types/socket_message.h"
 #include <iostream>
 
-void LoginHandler::callback(SocketMessage &message){
+void LoginHandler::callback(  const SocketMessage &message){
 	std::cout<<"used login"<<std::endl;
 	while(false){ (void)message; }
 	return;

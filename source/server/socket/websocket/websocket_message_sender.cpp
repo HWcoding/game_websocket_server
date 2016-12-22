@@ -3,6 +3,7 @@
 #include "source/server/socket/websocket/websocket_write_buffer.h"
 #include "source/data_types/socket_message.h"
 #include "source/server/socket/system_wrapper.h"
+#include "source/logging/exception_handler.h"
 
 MessageSenderInterface::~MessageSenderInterface(){}
 
@@ -22,7 +23,7 @@ bool WebsocketMessageSender::writeData(int FD){
 	size_t writeAmount = writeBuffers->messageSize(FD);
 
 	if(writeAmount>MaxWriteBufferSize){
-		throw -1;//throwInt("writeAmount > MaxWriteBufferSize on descriptor "<< static_cast<unsigned int>(FD)<< ". MaxWriteBufferSize: "<<MaxWriteBufferSize);
+		throwInt("writeAmount > MaxWriteBufferSize on descriptor "<< static_cast<unsigned int>(FD)<< ". MaxWriteBufferSize: "<<MaxWriteBufferSize);
 	}
 	return writeBuffers->writeData(FD);
 }

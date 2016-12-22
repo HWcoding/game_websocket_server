@@ -2,7 +2,7 @@
 #include "source/data_types/socket_message.h"
 #include <iostream>
 
-void LogoutHandler::callback(SocketMessage &message){
+void LogoutHandler::callback( const SocketMessage &message){
 	std::cout<<"used logout"<<std::endl;
 	while(false){ (void)message; }
 	return;

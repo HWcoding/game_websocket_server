@@ -1,5 +1,6 @@
 #include <string.h>
 #include "source/server/socket/websocket/websocket_handshake.h"
+#include "source/logging/logger.h"
 
 namespace HeaderHelpers {
 	bool isHeaderValid(const ByteArray &vec, const std::string &expectedValue);
@@ -39,7 +40,7 @@ HandshakeHeadersInterface::~HandshakeHeadersInterface(){}
 bool HandshakeHeaders::fillHeaders(const ByteArray &input){
 	std::vector< ByteArray > headers = HeaderHelpers::splitStringIntoLines(input);
 
-	for(size_t i =1; i<headers.size(); ++i){ //skip first line because it
+	for(size_t i =1; i<headers.size(); ++i){ //skip first line
 		if ( HeaderHelpers::isUpgradeHeader(headers[i])) {
 			Upgrade = HeaderHelpers::getUpgradeHeader(headers[i]);
 		}
@@ -57,7 +58,8 @@ bool HandshakeHeaders::fillHeaders(const ByteArray &input){
 		}
 
 		else if	( HeaderHelpers::isCookieHeader(headers[i])) {
-			Cookie = HeaderHelpers::getCookieHeader(headers[i]);
+			//TODO:
+			Cookie = ByteArray(std::string("Peter") );//HeaderHelpers::getCookieHeader(headers[i]);
 		}
 	}
 	filled = checkHeaders();
@@ -78,17 +80,18 @@ bool HandshakeHeaders::checkHeaders() const{
 	else return false;
 
 	if(SecWebSocketKey.empty()){
-		//writeError("No Sec-WebSocket-Key header");
+		writeError("No Sec-WebSocket-Key header");
 		return false;
 	}
 	else if(SecWebSocketProtocol.empty()){
-		//writeError("No Sec-WebSocket-Protocol header");
+		writeError("No Sec-WebSocket-Protocol header");
 		return false;
 	}
-	else if(Cookie.empty()){
-		//writeError("No cookie header");
+	//TODO:
+	/*else if(Cookie.empty()){
+		writeError("No cookie header");
 		return false;
-	}
+	}*/
 	return true;
 }
 

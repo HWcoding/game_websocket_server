@@ -1,5 +1,6 @@
 #include "source/data_types/byte_array.h"
 #include <string.h> //memcopy
+#include "source/logging/exception_handler.h"
 
 void ByteArray::appendBytes(const void* bytes, size_t sizeOfBytes)
 {
@@ -10,9 +11,13 @@ void ByteArray::appendBytes(const void* bytes, size_t sizeOfBytes)
 
 void ByteArray::getBytes(void* bytes, size_t sizeOfBytes) const
 {
-	if(currentIndex+sizeOfBytes > std::vector<uint8_t>::size())throw -1; //out of bounds
-	memcpy(bytes, &std::vector<uint8_t>::operator[](currentIndex), sizeOfBytes );
-	currentIndex += sizeOfBytes;
+	if(currentIndex+sizeOfBytes <= std::vector<uint8_t>::size()) {
+		memcpy(bytes, &std::vector<uint8_t>::operator[](currentIndex), sizeOfBytes );
+		currentIndex += sizeOfBytes;
+	}
+	else {
+		throwInt("ByteArray::getBytes tried to read past end of buffer");
+	}
 }
 
 void ByteArray::append(const std::string &str)
@@ -35,4 +40,21 @@ std::string ByteArray::getNextString() const
 	output.resize(strSize);
 	getBytes(&output[0], strSize);
 	return output;
+}
+
+
+std::string ByteArray::toString()
+{
+	std::string output;
+	output.resize(std::vector<uint8_t>::size());
+	getBytes(&output[0], std::vector<uint8_t>::size());
+	return output;
+}
+
+void ByteArray::seek(size_t pos)
+{
+	if( pos < std::vector<uint8_t>::size() ) currentIndex = pos;
+	else {
+		throwInt("ByteArray::seek tried to seek past end of buffer");
+	}
 }

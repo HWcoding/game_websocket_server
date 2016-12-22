@@ -16,7 +16,7 @@ public:
 
 	MoveHandler();
 	~MoveHandler();
-	void callback(SocketMessage &message);
+	void callback( const SocketMessage &message);
 };
 
 #endif /* SOURCE_MESSAGE_HANDLERS_MOVE_HANDLER_H */

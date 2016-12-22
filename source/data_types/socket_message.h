@@ -14,103 +14,104 @@ public:
 
 	void setMessage(const ByteArray & _message);
 
-	bool isNotEmpty();
+	bool isNotEmpty() const;
 
-	int getFD()
+	int getFD() const
 	{
 		return FD;
 	}
 
-	uint32_t getType()
+	uint32_t getType() const
 	{
 		return type;
 	}
 
-	uint32_t getPriority()
+	uint32_t getPriority() const
 	{
 		return priority;
 	}
 
-	std::chrono::system_clock::time_point getSentTime()
+	std::chrono::system_clock::time_point getSentTime() const
 	{
 		return sentTime;
 	}
 
-	ByteArray getIP()
+	ByteArray getIP() const
 	{
 		return IP;
 	}
 
-	ByteArray getPort()
+	ByteArray getPort() const
 	{
 		return port;
 	}
 
-	ByteArray getCSRFkey()
+	ByteArray getCSRFkey() const
 	{
 		return CSRFkey;
 	}
 
-	int8_t getNextInt8()
+	int8_t getNextInt8() const
 	{
 		return message.getNextInt8();
 	}
 
-	int16_t getNextInt16()
+	int16_t getNextInt16() const
 	{
 		return message.getNextInt16();
 	}
 
-	int32_t getNextInt32()
+	int32_t getNextInt32() const
 	{
 		return message.getNextInt32();
 	}
 
-	int64_t getNextInt64()
+	int64_t getNextInt64() const
 	{
 		return message.getNextInt64();
 	}
 
-	uint8_t getNextUint8()
+	uint8_t getNextUint8() const
 	{
 		return message.getNextUint8();
 	}
 
-	uint16_t getNextUint16()
+	uint16_t getNextUint16() const
 	{
 		return message.getNextUint16();
 	}
 
-	uint32_t getNextUint32()
+	uint32_t getNextUint32() const
 	{
 		return message.getNextUint32();
 	}
 
-	uint64_t getNextUint64()
+	uint64_t getNextUint64() const
 	{
 		return message.getNextUint64();
 	}
 
-	float getNextFloat()
+	float getNextFloat() const
 	{
 		return message.getNextFloat();
 	}
 
-	double getNextDouble()
+	double getNextDouble() const
 	{
 		return message.getNextDouble();
 	}
 
-	bool getNextBool()
+	bool getNextBool() const
 	{
 		return message.getNextBool();
 	}
 
-	std::string getNextString()
+	std::string getNextString() const
 	{
 		return message.getNextString();
 	}
-	ByteArray getMessage(){
+	ByteArray getMessage() const
+	{
 		return message;
 	}
 

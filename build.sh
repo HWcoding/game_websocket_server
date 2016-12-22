@@ -14,6 +14,7 @@
 
 
 # build flags
+#" -Weverything -Wno-padded -Wno-c++98-compat -Wno-weak-vtables -Wno-unused-exception-parameter"
 StrongWarnings=" -Winvalid-pch -fmax-errors=5 -Wall -Wextra -Wformat=2 -Wformat-signedness\
  -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wcast-qual -Wconversion\
  -Wuseless-cast -Wsign-conversion -Wfloat-conversion -Wlogical-op -Wmissing-declarations -pedantic\

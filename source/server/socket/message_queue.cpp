@@ -1,5 +1,6 @@
 #include "source/server/socket/message_queue.h"
 #include "source/data_types/socket_message.h"
+#include "source/logging/exception_handler.h"
 
 MessageQueue::MessageQueue(bool *run) : mut(), Queue(), bufferReady(), running(run){}
 MessageQueue::~MessageQueue(){
@@ -57,7 +58,7 @@ int MessageQueue::pushMessage(SocketMessage &message){
 		return 0;
 	}
 	catch(...){
-		//BACKTRACE_PRINT();
+		BACKTRACE_PRINT();
 		return -1;
 	}
 }

@@ -7,7 +7,7 @@ EXECUTABLE_NAME = program
 PROJECT_DIRECTORY = $(abspath ../)/
 
 COMP = g++
-CFLAGS = -DDEBUG -O0 -g3 -fno-omit-frame-pointer -fno-inline
+CFLAGS = -DDEBUG -Og -g3 -fno-omit-frame-pointer -fno-inline
 
 EXECUTABLE := $(PROJECT_DIRECTORY)$(EXECUTABLE_NAME)
 OBJ_DIR := $(PROJECT_DIRECTORY)objs/
@@ -17,7 +17,7 @@ HEAD_PATH := $(PROJECT_DIRECTORY)
 POCO_HEAD_PATH := $(PROJECT_DIRECTORY)external/poco/include/
 POCO_LIB_PATH := $(PROJECT_DIRECTORY)external/poco/lib/
 
-LIBRARIES =  -lpthread -lstdc++ -lm -lcrypto -lssl
+LIBRARIES =  -lpthread -lstdc++ -lm -lcrypto -lssl -ldl
 
 POCO_LIBS = $(POCO_LIB_PATH)poco.a
 
@@ -40,7 +40,7 @@ DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP_TEMP)$*.Td
 # command to move dependencies from the temp folder into the deps folder
 MOV_DEPS = mv -f $(DEP_TEMP)$*.Td $(DEP_DIR)$*.d
 
-CXX = $(COMP) -I $(HEAD_PATH) -isystem $(POCO_HEAD_PATH) $(CFLAGS) $(DEPFLAGS) -std=c++17
+CXX = $(COMP) -I $(HEAD_PATH) -isystem $(POCO_HEAD_PATH) $(CFLAGS) $(DEPFLAGS) -std=c++14
 
 DEPFILES = $(patsubst %,$(DEP_DIR)%.d,$(basename $(notdir $(OBJECTS))))
 
