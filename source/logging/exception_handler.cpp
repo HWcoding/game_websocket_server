@@ -48,15 +48,7 @@ void debugBackTrace(){
 		while(--i){
 			Dl_info info;
 			dladdr(::last_frames[i], &info);
-			//char *demangled = NULL;
 			int status;
-			/*demangled = abi::__cxa_demangle(info.dli_sname, NULL, 0, &status);
-			debugBacktrace.append("\t");
-			if(demangled != NULL){
-				if(status == 0) debugBacktrace.append(demangled);
-				else{ debugBacktrace.append(info.dli_sname); }
-				free(demangled);
-			}*/
 			debugBacktrace.append("\t");
 			mallocCharArraySmartPointer demangled( abi::__cxa_demangle(info.dli_sname, NULL, 0, &status) );
 
@@ -73,6 +65,7 @@ void debugBackTrace(){
 }
 
 }
+
 extern "C" {
 	void __cxa_throw(void *ex, void *info, void (*dest)(void *))
 	{
