@@ -1,6 +1,7 @@
 analysis/*.txt
 analysis/*.a1
 deps/*d
+deps/lastBuildType.txt
 docs/html
 objs/*.o
 program

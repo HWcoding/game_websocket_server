@@ -24,7 +24,8 @@ WeakWarnings=" -Wall -Wextra -pedantic -ansi -Weffc++"
 TestWarnings=" -Wall"
 DebugBuild="CFLAGS=-DDEBUG -Og -g3 -fno-omit-frame-pointer -fno-inline"
 ReleaseBuild="CFLAGS=-DNDEBUG -Ofast -march=native"
-ProfileBuild="CFLAGS=-DDEBUG -Ofast -g3 -fno-omit-frame-pointer -march=native"
+ProfileBuild="CFLAGS=-DNDEBUG -Ofast -g3 -fno-omit-frame-pointer -march=native"
+TestBuild="CFLAGS=-DDEBUG -DTESTING -Ofast -g3 -fno-omit-frame-pointer -march=native"
 
 # convert arguments to lower case
 FirstArg=$( echo "${1}" | tr '[:upper:]' '[:lower:]')
@@ -224,7 +225,7 @@ function getProductionBuildFlag() {
 TestBuildFlag=""
 function getTestBuildFlag() {
 	if [ "${TestBuildFlag}" = "" ]; then
-		TestBuildFlag="$(getBuildFlag)"
+		TestBuildFlag="${TestBuild}"
 		TestBuildFlag+="${TestWarnings}"
 	fi
 	echo "${TestBuildFlag}"
@@ -250,10 +251,10 @@ CompatableBuild=""
 function checkBuildCompatabilty() {
 	if [ "${CompatableBuild}" = "" ]; then
 		local previousBuildType=""
-		if [ -f "./lastBuildType.txt" ]; then
+		if [ -f "./deps/lastBuildType.txt" ]; then
 			while read -r line;	do
 				previousBuildType="${line}"
-			done < "./lastBuildType.txt"
+			done < "./deps/lastBuildType.txt"
 		fi
 		if [ "${previousBuildType}" = "$(getBuildType)" ]; then
 			CompatableBuild="true"
@@ -266,7 +267,7 @@ function checkBuildCompatabilty() {
 
 # writes the current build type to file.
 function writeBuildType() {
-	echo "$(getBuildType)" > "./lastBuildType.txt"
+	echo "$(getBuildType)" > "./deps/lastBuildType.txt"
 }
 
 # takes a test .cpp filename as an argument and returns dependencies listed in it
@@ -399,7 +400,9 @@ function printProjectLineCount() {
 
 function buildDocs() {
 	if [ "$(getCleanFlag)" == "false" ]; then
+		cd ./doxy
 		doxygen Doxyfile
+		cd ../
 	else
 
 		#clean docs

@@ -30,11 +30,7 @@ void SocketMessage::setMessage(	const ByteArray & _message)
 	message = _message;
 }
 
-
-
-
 // constructors
-
 SocketMessage::SocketMessage() noexcept :
 	FD(-1), type(0),
 	priority(0),

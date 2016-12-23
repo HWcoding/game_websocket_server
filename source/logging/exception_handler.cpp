@@ -60,7 +60,7 @@ void debugBackTrace(){
 			debugBacktrace.append("\n");
 		}
 		free(backTraceArray);
-		PRINT_LOG("", "Exception of type "<<exception_name<<" caught. Backtrace: \n"<<debugBacktrace << std::endl);
+		PRINT_LOG("", "Exception of type "<<exception_name<<" caught. Backtrace: \n"<<debugBacktrace);
 	}
 }
 

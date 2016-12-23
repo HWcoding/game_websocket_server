@@ -6,7 +6,6 @@
 #include <string>
 #include <stdint.h>
 
-
 /// Vector to hold serialized data structures for network transmission.
 class ByteArray : public std::vector<uint8_t>
 {
@@ -53,7 +52,7 @@ public:
 	///@}
 	/// @name Constructors
 	///@{
-	ByteArray();
+	ByteArray() noexcept;
 
 	explicit ByteArray(std::string str);
 
@@ -214,7 +213,7 @@ inline size_t ByteArray::tell() const
 }
 
 //constructors
-inline ByteArray::ByteArray() :
+inline ByteArray::ByteArray() noexcept :
 	std::vector<uint8_t>( std::allocator<int8_t>() ),
 	currentIndex(0)
 {}

@@ -34,7 +34,7 @@ all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(TEST_OBJECTS) $(OBJECT_FILE_NAMES) $(TEST_FRAMEWORK_LIBRARY) $(TEST_OBJ_DIR)test_lib.a
 	$(CXX) -o $@ $^ $(LIBRARIES)
-	{ $(EXECUTABLE); [ $$? -eq 0 ] || touch $(CPP_FILE_NAME); }
+	{ $(EXECUTABLE) 2> /dev/null ; [ $$? -eq 0 ] || touch $(CPP_FILE_NAME); }
 
 .SECONDEXPANSION:
 $(TEST_OBJ_DIR)%.o: $$(subst  -!-,/, %.cpp) $(DEP_DIR)%.d
