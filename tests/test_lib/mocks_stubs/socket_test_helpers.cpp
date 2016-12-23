@@ -1,7 +1,7 @@
-/*#include "tests/server/mocks_stubs/socket_test_helpers.h"
+#include "tests/test_lib/mocks_stubs/socket_test_helpers.h"
 
 #include <cstring> //for memset/memcpy*/
-
+#include <string>
 /*
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2
@@ -38,7 +38,23 @@ std::vector<uint8_t> string_to_vectorUint8(const std::string &input){
 */
 
 
-/*std::string applyMask(const std::string &in, uint32_t mask){
+
+
+std::string generateTestString(size_t size, size_t offset){ //makes a string of repeating acsii codes 33 through 126 (printable characters). Offset causes the string to start later in the pattern
+	// !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
+	// 33-126
+	std::string output;
+	output.resize(size);
+	for(size_t i =0; i< size; ++i){
+		output[i] = static_cast<char>( ( (i+offset)%94 )+33 );
+	}
+	return output;
+}
+
+
+
+
+std::string applyMask(const std::string &in, uint32_t mask){
 	std::string result;
 	size_t length =in.size();
 	result.resize(length);
@@ -193,30 +209,30 @@ std::string createCloseControlMessage(){
 ByteArray createTestHandshakeHeader(){
 	ByteArray output;
 
-	output.appendNoNull(std::string("GET /socket HTTP/1.1\r\n") );
-	output.appendNoNull(std::string("Host: localhost\r\n") );
-	output.appendNoNull(std::string("Connection: Upgrade\r\n") );
-	output.appendNoNull(std::string("Pragma: no-cache\r\n") );
-	output.appendNoNull(std::string("Cache-Control: no-cache\r\n") );
-	output.appendNoNull(std::string("Upgrade: websocket\r\n") );
-	output.appendNoNull(std::string("Origin: http://localhost:8080\r\n") );
-	output.appendNoNull(std::string("Sec-WebSocket-Version: 13\r\n") );
-	output.appendNoNull(std::string("User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.94 Safari/537.36\r\n") );
-	output.appendNoNull(std::string("Accept-Encoding: gzip, deflate, sdch\r\n") );
-	output.appendNoNull(std::string("Accept-Language: en-US,en;q=0.8\r\n") );
-	output.appendNoNull(std::string("Cookie: GameServer=CJP5G89v2O30Dx-StfclobgZ0AuIH8Nh74SEzHxvBJEZWG6yJ3smhW73TZgDMO0HEy8AvYhKgzxVry5Yby75oT-250dW6PTdm74rhmQyACSwbiAbvp67108QZid7KoPJjf-OuP1cf5Z31_eHimsW8JTIf9KINfG0yy31WuDb21XU-nH9EJcVKhdoXrQB_35DPIRymBxV85cENsxScjjMIBnI60mUR1koC5k_XcwSiTgnoT9ApEPwIX6Z9iw0tV2X7\r\n") );
-	output.appendNoNull(std::string("Sec-WebSocket-Key: +40NMxLMogWjfV/0HyjlxA==\r\n") );
-	output.appendNoNull(std::string("Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits\r\n") );
-	output.appendNoNull(std::string("Sec-WebSocket-Protocol: 05fcc56b7cb916d5e5a82081223b3357\r\n\r\n") );
+	output.appendWithNoSize(std::string("GET /socket HTTP/1.1\r\n") );
+	output.appendWithNoSize(std::string("Host: localhost\r\n") );
+	output.appendWithNoSize(std::string("Connection: keep-alive, Upgrade\r\n") );
+	output.appendWithNoSize(std::string("Pragma: no-cache\r\n") );
+	output.appendWithNoSize(std::string("Cache-Control: no-cache\r\n") );
+	output.appendWithNoSize(std::string("Upgrade: websocket\r\n") );
+	output.appendWithNoSize(std::string("Origin: http://localhost:8080\r\n") );
+	output.appendWithNoSize(std::string("Sec-WebSocket-Version: 13\r\n") );
+	output.appendWithNoSize(std::string("User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.94 Safari/537.36\r\n") );
+	output.appendWithNoSize(std::string("Accept-Encoding: gzip, deflate, sdch\r\n") );
+	output.appendWithNoSize(std::string("Accept-Language: en-US,en;q=0.8\r\n") );
+	output.appendWithNoSize(std::string("Cookie: GameServer=CJP5G89v2O30Dx-StfclobgZ0AuIH8Nh74SEzHxvBJEZWG6yJ3smhW73TZgDMO0HEy8AvYhKgzxVry5Yby75oT-250dW6PTdm74rhmQyACSwbiAbvp67108QZid7KoPJjf-OuP1cf5Z31_eHimsW8JTIf9KINfG0yy31WuDb21XU-nH9EJcVKhdoXrQB_35DPIRymBxV85cENsxScjjMIBnI60mUR1koC5k_XcwSiTgnoT9ApEPwIX6Z9iw0tV2X7\r\n") );
+	output.appendWithNoSize(std::string("Sec-WebSocket-Key: +40NMxLMogWjfV/0HyjlxA==\r\n") );
+	output.appendWithNoSize(std::string("Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits\r\n") );
+	output.appendWithNoSize(std::string("Sec-WebSocket-Protocol: 05fcc56b7cb916d5e5a82081223b3357\r\n\r\n") );
 	return output;
 }
 
-std::vector< ByteArray > createTestHandshakeHeaderVector(){
+/*std::vector< ByteArray > createTestHandshakeHeaderVector(){
 	std::vector< ByteArray > Output;
 
 	Output.push_back( ByteArray(std::string("GET /socket HTTP/1.1")) );
 	Output.push_back( ByteArray(std::string("Host: localhost")) );
-	Output.push_back( ByteArray(std::string("Connection: Upgrade")) );
+	Output.push_back( ByteArray(std::string("Connection: keep-alive, Upgrade")) );
 	Output.push_back( ByteArray(std::string("Pragma: no-cache")) );
 	Output.push_back( ByteArray(std::string("Cache-Control: no-cache")) );
 	Output.push_back( ByteArray(std::string("Upgrade: websocket")) );
@@ -232,5 +248,3 @@ std::vector< ByteArray > createTestHandshakeHeaderVector(){
 
 	return Output;
 }*/
-
-int main(){return 0;}

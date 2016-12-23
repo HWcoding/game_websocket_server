@@ -1,5 +1,5 @@
-/*//#include "tests/server/mock_system_wrapper.h"
-#include "tests/server/mocks_stubs/mock_system_wrapper.h"
+
+#include "tests/test_lib/mocks_stubs/mock_system_wrapper.h"
 
 #include <limits>
 #include <errno.h>
@@ -10,12 +10,6 @@
 #include <sys/socket.h> //for type definitions
 #include <sys/types.h>
 #include <netdb.h>
-
-
-
-
-
-
 
 class MockSocket{
 public:
@@ -218,24 +212,6 @@ void MockSystemState::ClearWriteBuffer(int FD){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MockSystemWrapper::MockSystemWrapper(): nullChar(0), mockAddrinfo(new addrinfo()), mockAddrinfoPointer(NULL), mockSockaddr(new sockaddr_storage()), state(new MockSystemState()) {
 	memset(mockAddrinfo.get(), 0, sizeof(addrinfo));
 	memset(mockSockaddr.get(), 0, sizeof(sockaddr_storage));
@@ -339,41 +315,41 @@ size_t MockSystemWrapper::readFD(int FD, void *buf, size_t count, bool &done) co
 
 void MockSystemWrapper::getNameInfo(const struct sockaddr *sa, unsigned int salen, char *host , unsigned int hostlen,  char *serv, unsigned int servlen, int flags) const{
 	//return getnameinfo(sa, salen, host , hostlen,  serv, servlen, flags);
-	++sa;//to clear unused warning
-	++salen;//to clear unused warning
-	++flags;//to clear unused warning
+	(void)sa;//to clear unused warning
+	(void)salen;//to clear unused warning
+	(void)flags;//to clear unused warning
 	if(host!=NULL && hostlen >0) host[0] = '\0';
 	if(serv!=NULL && servlen >0) serv[0] = '\0';
 }
 
 void MockSystemWrapper::getAddrInfo(const char *node, const char *service, const struct addrinfo *hints, struct addrinfo **res) const{
 	//return getaddrinfo(node, service, hints, res);
-	++node;//to clear unused warning
-	++service;//to clear unused warning
-	++hints;//to clear unused warning
+	(void)node;//to clear unused warning
+	(void)service;//to clear unused warning
+	(void)hints;//to clear unused warning
 
 	memcpy(res, &mockAddrinfoPointer, sizeof(addrinfo*));
 }
 
 void MockSystemWrapper::freeAddrInfo(struct addrinfo *res) const{
 	//freeaddrinfo(res);
-	++res;//to clear unused warning
+	(void)res;//to clear unused warning
 	return;
 }
 
 const char* MockSystemWrapper::gaiStrError(int errcode) const{
 	//return gai_strerror(errcode);
-	++errcode;//to clear unused warning
+	(void)errcode;//to clear unused warning
 	return &nullChar;
 }
 
 int MockSystemWrapper::getSockOpt(int sockfd, int level, int optname, void *optval, unsigned int *optlen) const{
 	//return getsockopt(sockfd, level, optname, optval, optlen);
-	++sockfd;//to clear unused warning
-	++level;//to clear unused warning
-	if(optval != NULL){//to clear unused warning
-		++optname;//to clear unused warning
-	}
+	(void)sockfd;//to clear unused warning
+	(void)level;//to clear unused warning
+	(void)optval;//to clear unused warning
+	(void)optname;//to clear unused warning
+
 	memset(optlen,0, sizeof(int) );
 	return 0;
 
@@ -381,7 +357,7 @@ int MockSystemWrapper::getSockOpt(int sockfd, int level, int optname, void *optv
 
 char* MockSystemWrapper::strError(int errnum) const{
 	//return strerror(errnum);
-	++errnum;//to clear unused warning
+	(void)errnum;//to clear unused warning
 	return const_cast<char*>(&nullChar);
 }
 
@@ -400,18 +376,17 @@ void MockSystemWrapper::bindSocket(int sockfd, const struct sockaddr *addr, unsi
 
 void MockSystemWrapper::listenSocket(int sockfd, int backlog) const{
 	//return listen(sockfd, backlog);
-	++sockfd;//to clear unused warning
-	++backlog;//to clear unused warning
+	(void)sockfd;//to clear unused warning
+	(void)backlog;//to clear unused warning
 }
 
 int MockSystemWrapper::acceptSocket(int sockfd, struct sockaddr *addr, unsigned int *addrlen, bool &done) const{
 	//return accept(sockfd, addr, addrlen);
 	done = false;
-	++sockfd;//to clear unused warning
-	++addr;//to clear unused warning
-	++addrlen;//to clear unused warning
+	(void)sockfd;//to clear unused warning
+	(void)addr;//to clear unused warning
+	(void)addrlen;//to clear unused warning
 	int ret= state->getNewFD();
 	if (ret == -1) done = true;
 	return ret;
-}*/
-int main(){return 0;}
+}

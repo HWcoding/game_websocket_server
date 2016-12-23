@@ -1,5 +1,6 @@
 #ifndef SERVER_SOCKET_WEBSOCKET_WEBSOCKET_MESSAGE_SENDER_H_
 #define SERVER_SOCKET_WEBSOCKET_WEBSOCKET_MESSAGE_SENDER_H_
+//#include "source/server/socket/websocket/websocket_message_sender.h"
 
 #include <unistd.h>
 #include <memory>
@@ -9,7 +10,7 @@
 class SetOfFileDescriptors;
 class SocketMessage;
 class SystemInterface;
-class WriteBuffersInterface;
+class WebsocketWriteBuffers;
 
 class MessageSenderInterface {
 public:
@@ -24,16 +25,17 @@ protected:
 class WebsocketMessageSender : public MessageSenderInterface {
 public:
 	WebsocketMessageSender(SystemInterface *_systemWrap);
+	WebsocketMessageSender(WebsocketWriteBuffers *_writeBuffers );
 	void addMessage(SocketMessage &message);
 	bool writeData(int FD);
 	void closeFDHandler(int FD);
 	WebsocketMessageSender& operator=(const WebsocketMessageSender&)=delete;
 	WebsocketMessageSender(const WebsocketMessageSender&)=delete;
 	~WebsocketMessageSender();
-
-private:
+protected:
+	std::unique_ptr<WebsocketWriteBuffers> writeBuffers;
 	ByteArray createFrameHeader(const ByteArray &in, uint8_t opcode);
-	std::unique_ptr<WriteBuffersInterface> writeBuffers;
+private:
 	size_t MaxWriteBufferSize;
 };
 

@@ -1,33 +1,50 @@
-/*#define TESTING //to activate conditional macros for test logging and access
+#define TEST_FILE_LINK_DEPENDENCIES "source/server/socket/websocket/websocket_write_buffer.cpp, \
+                                     source/data_types/byte_array.cpp, \
+                                     source/server/socket/system_wrapper.cpp"
+
+#include "source/server/socket/websocket/websocket_write_buffer.h"
+#include "tests/test_lib/mocks_stubs/mock_system_wrapper.h"
+#include "tests/test_lib/mocks_stubs/socket_test_helpers.h"
+
 #include "tests/test.h"
-#include "main/includes.h"
-#include <iostream>
-#include <string>
-#include "tests/server/mocks_stubs/mock_system_wrapper.h"
-#include "tests/server/mocks_stubs/socket_test_helpers.h"
-#include "tests/server/websocket_write_buffer_test/websocket_write_buffer_test.h"
-#include "server/socket/set_of_file_descriptors.h"
-#include "server/socket/websocket/websocket_write_buffer.h"
-#include "engine/byte_array.h"
-
-#include <cgreen/cgreen.h>
-using namespace cgreen;
-
-Describe(WriteBufferTest)
-BeforeEach(WriteBufferTest) {}
-AfterEach(WriteBufferTest) {}
-
-namespace WebsocketWriteBuffer_Test{
 
 
-Ensure(WriteBufferTest, addMessage_properly_adds_two_messages) {
+
+class WebsocketWriteBuffersWrap : public WebsocketWriteBuffers
+{
+public:
+	WebsocketWriteBuffersWrap(MockSystemWrapper* sys): WebsocketWriteBuffers(sys){}
+
+	ByteArray getMessageFromBuffer(int i)
+	{
+		return writeBuffer[i].message;
+	}
+
+	void setBufferBegin(int i, size_t value)
+	{
+		writeBuffer[i].begin = value;
+	}
+	size_t getBufferBegin(int i)
+	{
+		return writeBuffer[i].begin;
+	}
+	size_t getBufferCount(int i)
+	{
+		return writeBuffer.count(i);
+	}
+};
+
+
+TEST(WebsocketWriteBufferTest, addMessageProperlyAddsTwoMessages)
+{
 	MockSystemWrapper systemWrap;
 	WebsocketWriteBuffers testBuffer(&systemWrap);
 
 	std::string testString = generateTestString(300);
 	std::string twoStringsAppended = testString;
 	twoStringsAppended.append(testString);
-	ByteArray input(testString);
+	ByteArray input;
+	input.appendWithNoSize(testString);
 
 	testBuffer.addMessage(1, input);
 	testBuffer.addMessage(1, input);
@@ -35,15 +52,21 @@ Ensure(WriteBufferTest, addMessage_properly_adds_two_messages) {
 	testBuffer.writeData(1);
 	std::string result = systemWrap.GetWriteBuffer(1);
 
-	assert_that( result.c_str(), is_equal_to_string( twoStringsAppended.c_str() ) );
+	EXPECT_STREQ(result.c_str(), twoStringsAppended.c_str());
 }
 
-Ensure(WriteBufferTest, addMessage_properly_adds_messages_after_writeData_failed_to_write_whole_buffer) {
+
+
+
+
+TEST(WebsocketWriteBufferTest, addMessageWorksAfterWriteDataFailedToWriteWholeBuffer)
+{
 	MockSystemWrapper systemWrap;
 	WebsocketWriteBuffers testBuffer(&systemWrap);
 	std::string testStringLarge = generateTestString(199000);
 	std::string appendedTestStringValue = testStringLarge.substr(100001);
-	ByteArray input(testStringLarge);
+	ByteArray input;
+	input.appendWithNoSize(testStringLarge);
 
 	//write the first 100001 bytes to buffer then clear it
 	testBuffer.addMessage(1, input);
@@ -54,82 +77,86 @@ Ensure(WriteBufferTest, addMessage_properly_adds_messages_after_writeData_failed
 	systemWrap.SetBytesTillWriteFail(1,-1);// set write to not fail
 
 	//write another message to buffer
-	testBuffer.addMessage(1, ByteArray(std::string("A")) );
+	ByteArray a;
+	a.appendWithNoSize(std::string("A"));
+	testBuffer.addMessage(1, a );
 	appendedTestStringValue.append("A");
 	testBuffer.writeData(1);
 
 	//check buffer to see if the remaining part of the first message is still in buffer
 	std::string result = systemWrap.GetWriteBuffer(1);
-	assert_that( result.c_str(),is_equal_to_string(appendedTestStringValue.c_str()) );
+
+	EXPECT_STREQ(result.c_str(), appendedTestStringValue.c_str());
 }
 
 
-Ensure(WriteBufferTest, WriteData_test) {
+
+TEST(WebsocketWriteBufferTest, MessageSizeTest)
+{
 	MockSystemWrapper systemWrap;
-	WebsocketWriteBuffers testBuffer(&systemWrap);
+	WebsocketWriteBuffersWrap testBuffer(&systemWrap);
+	ByteArray input;
+	input.appendWithNoSize( generateTestString(300) );
+	testBuffer.addMessage(1, input);
+	size_t testSize = testBuffer.messageSize(1);
+
+	EXPECT_EQ( testSize, 300);
+
+	//testBuffer.writeBuffer[1].begin =100;
+	testBuffer.setBufferBegin(1, 100);
+
+
+	testSize = testBuffer.messageSize(1);
+
+	EXPECT_EQ( testSize, 200);
+}
+
+
+
+TEST(WebsocketWriteBufferTest, WriteDataTest)
+{
+	MockSystemWrapper systemWrap;
+	WebsocketWriteBuffersWrap testBuffer(&systemWrap);
 
 	std::string testString = generateTestString(300);
-	ByteArray input(testString);
+	ByteArray input;
+	input.appendWithNoSize(testString);
 
 	testBuffer.addMessage(1, input);
 	testString = testString.substr(5);
-	testBuffer.writeBuffer[1].begin = 5;
+	//testBuffer.writeBuffer[1].begin = 5;
+	testBuffer.setBufferBegin(1, 5);
 
 	testBuffer.writeData(1);
 
 	std::string result = systemWrap.GetWriteBuffer(1);
 
-	assert_that( result.c_str(),is_equal_to_string(testString.c_str()) );
-	assert_that( testBuffer.messageSize(1),is_equal_to(0) );		//Error is buffer was not cleared after writing
-	assert_that( testBuffer.writeBuffer[1].begin,is_equal_to(0) );	//Error is begin was not reset
+	EXPECT_STREQ( result.c_str(), testString.c_str() );
+	EXPECT_EQ( testBuffer.messageSize(1), 0 );		//Error is buffer was not cleared after writing
+	EXPECT_EQ( testBuffer.getBufferBegin(1), 0 );	//Error is begin was not reset
 }
 
 
-Ensure(WriteBufferTest, MessageSize_test) {
+TEST(WebsocketWriteBufferTest, EraseBuffersTest)
+{
 	MockSystemWrapper systemWrap;
-	WebsocketWriteBuffers testBuffer(&systemWrap);
-	ByteArray input( generateTestString(300) );
-	testBuffer.addMessage(1, input);
-	size_t testSize = testBuffer.messageSize(1);
+	WebsocketWriteBuffersWrap testBuffer(&systemWrap);
 
-	assert_that( testSize ,is_equal_to(300) );
-
-	testBuffer.writeBuffer[1].begin =100;
-	testSize = testBuffer.messageSize(1);
-
-	assert_that( testSize ,is_equal_to(200) );
-}
-
-
-Ensure(WriteBufferTest, EraseBuffers_test) {
-	MockSystemWrapper systemWrap;
-	WebsocketWriteBuffers testBuffer(&systemWrap);
-
-	ByteArray input( generateTestString(300) );
+	ByteArray input;
+	input.appendWithNoSize( generateTestString(300) );
 	testBuffer.addMessage(1, input);
 
 	testBuffer.eraseBuffers(1);
 
-	assert_that( testBuffer.writeBuffer.count(1), is_equal_to(0) );
+	//the buffer for FD 1 should be gone
+	EXPECT_EQ( testBuffer.getBufferCount(1), 0);
 }
 
 
-int test(){
-	TestSuite *suite = create_named_test_suite("Websocket Write Buffer");
-	add_test_with_context(suite, WriteBufferTest, addMessage_properly_adds_two_messages);
-	add_test_with_context(suite, WriteBufferTest, addMessage_properly_adds_messages_after_writeData_failed_to_write_whole_buffer);
-	add_test_with_context(suite, WriteBufferTest, WriteData_test);
-	add_test_with_context(suite, WriteBufferTest, MessageSize_test);
-	add_test_with_context(suite, WriteBufferTest, EraseBuffers_test);
-	return run_test_suite(suite, create_text_reporter());
+
+int main(int argc, char *argv[])
+{
+	::testing::InitGoogleTest(&argc, argv);
+	STAY_SILENT_ON_SUCCESS;
+	return RUN_ALL_TESTS();
 }
-
-
-}
-
-
-int main(){
-	return WebsocketWriteBuffer_Test::test();
-}
-*/
-int main(){return 0;}

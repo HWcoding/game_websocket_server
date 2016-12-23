@@ -12,14 +12,20 @@ WebsocketMessageSender::~WebsocketMessageSender(){}
 
 WebsocketMessageSender::WebsocketMessageSender(SystemInterface *_systemWrap) : writeBuffers( new WebsocketWriteBuffers(_systemWrap) ), MaxWriteBufferSize(1999999999){}
 
-void WebsocketMessageSender::addMessage(SocketMessage &message){
+WebsocketMessageSender::WebsocketMessageSender(WebsocketWriteBuffers *_writeBuffers ) :
+                                       writeBuffers( _writeBuffers ), MaxWriteBufferSize(1999999999){}
+
+void WebsocketMessageSender::addMessage(SocketMessage &message)
+{
 	int FD = message.getFD();
-	ByteArray frameHeader = createFrameHeader(message.getMessage(), 2); //2 for binary
-	message.getMessage().insert(message.getMessage().begin(), frameHeader.begin(), frameHeader.end());
-	writeBuffers->addMessage(FD, message.getMessage());
+	ByteArray messageValue = message.getMessage();
+	ByteArray frameHeader = createFrameHeader(messageValue, 2); //2 for binary
+	messageValue.insert(messageValue.begin(), frameHeader.begin(), frameHeader.end());
+	writeBuffers->addMessage(FD, messageValue);
 }
 
-bool WebsocketMessageSender::writeData(int FD){
+bool WebsocketMessageSender::writeData(int FD)
+{
 	size_t writeAmount = writeBuffers->messageSize(FD);
 
 	if(writeAmount>MaxWriteBufferSize){
@@ -28,11 +34,13 @@ bool WebsocketMessageSender::writeData(int FD){
 	return writeBuffers->writeData(FD);
 }
 
-void WebsocketMessageSender::closeFDHandler(int FD){
+void WebsocketMessageSender::closeFDHandler(int FD)
+{
 	writeBuffers->eraseBuffers(FD);
 }
 
-ByteArray WebsocketMessageSender::createFrameHeader(const ByteArray &in, uint8_t opcode){
+ByteArray WebsocketMessageSender::createFrameHeader(const ByteArray &in, uint8_t opcode)
+{
 	size_t size = 2;
 
 	if(in.size()>65535){

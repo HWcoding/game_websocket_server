@@ -125,8 +125,7 @@ void WebsocketReadBuffers::eraseBuffers(int index){
 	fractureBufferType.erase(index); //erase buffer;
 }
 
-WebsocketReadBuffers::WebsocketReadBuffers(SetOfFileDescriptors *FDs, size_t size) : maxMessageSize(size), mut(), messageBuffer(), fractureBuffer(), fractureBufferType(), fileDescriptors(FDs){}
-
+WebsocketReadBuffers::WebsocketReadBuffers(SetOfFileDescriptors *FDs, size_t size) : maxMessageSize(size), mut(), fileDescriptors(FDs), messageBuffer(), fractureBuffer(), fractureBufferType(){}
 WebsocketReadBuffers::~WebsocketReadBuffers(){
 	std::lock_guard<std::mutex> lck(mut); //don't destroy while a thread has a lock
 }

@@ -1,11 +1,11 @@
-/*#ifndef TESTS_SERVER_MOCK_SYSTEM_WRAPPER_H
+#ifndef TESTS_SERVER_MOCK_SYSTEM_WRAPPER_H
 #define TESTS_SERVER_MOCK_SYSTEM_WRAPPER_H
-//#include "tests/server/mock_system_wrapper.h"
+#include "tests/test_lib/mocks_stubs/mock_system_wrapper.h"
 
 #include <memory>
 #include <string>
 #include <sys/types.h>
-#include "server/socket/system_wrapper.h"
+#include "source/server/socket/system_wrapper.h"
 
 class MockSystemState;
 struct addrinfo;
@@ -55,4 +55,4 @@ private:
 	MockSystemWrapper(const MockSystemWrapper&)=delete;
 };
 
-#endif *//* TESTS_SERVER_MOCK_SYSTEM_WRAPPER_H */
+#endif /* TESTS_SERVER_MOCK_SYSTEM_WRAPPER_H */

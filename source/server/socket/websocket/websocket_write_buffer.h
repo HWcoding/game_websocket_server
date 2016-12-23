@@ -1,5 +1,6 @@
 #ifndef SERVER_SOCKET_WEBSOCKET_WEBSOCKET_WRITE_BUFFER_H_
 #define SERVER_SOCKET_WEBSOCKET_WEBSOCKET_WRITE_BUFFER_H_
+//#include "source/server/socket/websocket/websocket_write_buffer.h"
 
 #include <mutex>
 #include <unordered_map>
@@ -22,18 +23,18 @@ class SetOfFileDescriptors;
 
 class WebsocketWriteBuffers : public WriteBuffersInterface{ //holds data shared across threads
 private:
+	SystemInterface *systemWrap;
+	mutable std::mutex mut; // used for multi threaded writing.  A lock needs to be done before accessing the following variables
+
+	WebsocketWriteBuffers& operator=(const WebsocketWriteBuffers&)=delete;
+	WebsocketWriteBuffers(const WebsocketWriteBuffers&)=delete;
+protected:
 	struct pendingMessage{
 		ByteArray message;
 		size_t begin;
 		pendingMessage() : message(), begin(0){}
 	};
-
-	SystemInterface *systemWrap;
-	mutable std::mutex mut; // used for multi threaded writing.  A lock needs to be done before accessing the following variables
 	std::unordered_map<int,pendingMessage> writeBuffer;	//buffer to hold messages waiting to be written to socket
-
-	WebsocketWriteBuffers& operator=(const WebsocketWriteBuffers&)=delete;
-	WebsocketWriteBuffers(const WebsocketWriteBuffers&)=delete;
 public:
 	void addMessage(int index, const ByteArray &in);
 	bool writeData(int index);

@@ -9,8 +9,17 @@
 
 class SetOfFileDescriptors;
 
-class WebsocketReadBuffers{
+class WebsocketReadBuffers
+{
 private:
+	size_t maxMessageSize;
+	std::mutex mut;
+
+	SetOfFileDescriptors *fileDescriptors;
+
+	WebsocketReadBuffers& operator=(const WebsocketReadBuffers&)=delete;
+	WebsocketReadBuffers(const WebsocketReadBuffers&)=delete;
+protected:
 	struct Fracture{
 		std::vector< ByteArray > buffer;
 		size_t totalSize;
@@ -36,17 +45,9 @@ private:
 			expectedSize = -1;
 		}
 	};
-
-	size_t maxMessageSize;
-	std::mutex mut;
 	std::unordered_map<int,PartialMessage> messageBuffer;	//buffer to hold websocket frames that are too short to process
 	std::unordered_map<int,Fracture> fractureBuffer;	//buffer to hold messages split across more than one frame
 	std::unordered_map<int,bool> fractureBufferType;	//true = text  false = binary
-	SetOfFileDescriptors *fileDescriptors;
-
-	WebsocketReadBuffers& operator=(const WebsocketReadBuffers&)=delete;
-	WebsocketReadBuffers(const WebsocketReadBuffers&)=delete;
-
 
 public:
 	void addMessage(int index, ByteArray &in);

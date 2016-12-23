@@ -1,7 +1,7 @@
 #absolute paths are necessary for dependency files to work properly
 #our test executable will have the same name as the cpp file containing the tests
 EXECUTABLE_NAME = $(basename $(notdir $(FILENAME)))
-LIBRARIES = -lpthread -lstdc++ -lm
+LIBRARIES = -lpthread -lstdc++ -lm -lcrypto -lssl -ldl
 
 PROJECT_DIRECTORY = $(abspath ../)/
 

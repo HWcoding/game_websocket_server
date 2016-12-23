@@ -1,21 +1,66 @@
-/*#define TESTING //to activate conditional macros for test logging
+#define TEST_FILE_LINK_DEPENDENCIES "source/server/socket/websocket/websocket_write_buffer.cpp, \
+                                     source/server/socket/websocket/websocket_message_sender.cpp, \
+                                     source/data_types/byte_array.cpp, \
+                                     source/data_types/socket_message.cpp \
+                                     source/server/socket/system_wrapper.cpp"
+
+#include "source/server/socket/websocket/websocket_write_buffer.h"
+#include "source/server/socket/websocket/websocket_message_sender.h"
+#include "tests/test_lib/mocks_stubs/mock_system_wrapper.h"
+#include "tests/test_lib/mocks_stubs/socket_test_helpers.h"
+#include "source/data_types/socket_message.h"
+
 #include "tests/test.h"
-//#include <iostream>
-#include <string>
-#include "main/includes.h"
-#include "server/socket/websocket/websocket_message_sender.h"
-#include "server/socket/socket_message.h"
-#include "server/socket/set_of_file_descriptors.h"
-#include "server/socket/websocket/websocket_message_sender.h"
-#include "engine/byte_array.h"
 
-#include "tests/server/mocks_stubs/mock_system_wrapper.h"
-#include "tests/server/mocks_stubs/socket_test_helpers.h"
-#include "tests/server/websocket_message_sender_test/websocket_message_sender_test.h"
 
-namespace WebsocketMessageSender_Test{
+
+
 
 std::string testCreateFrameHeader(const ByteArray &in, uint8_t opcode);
+
+
+class WebsocketWriteBuffersWrap : public WebsocketWriteBuffers
+{
+public:
+	WebsocketWriteBuffersWrap(MockSystemWrapper* sys): WebsocketWriteBuffers(sys){}
+
+	ByteArray getMessageFromBuffer(int i)
+	{
+		return writeBuffer[i].message;
+	}
+
+	void setBufferBegin(int i, size_t value)
+	{
+		writeBuffer[i].begin = value;
+	}
+	size_t getBufferBegin(int i)
+	{
+		return writeBuffer[i].begin;
+	}
+	size_t getBufferCount(int i)
+	{
+		return writeBuffer.count(i);
+	}
+};
+
+class WebsocketMessageSenderWrap : public WebsocketMessageSender
+{
+public:
+	WebsocketMessageSenderWrap(WebsocketWriteBuffers *_writeBuffers ) : WebsocketMessageSender(_writeBuffers){}
+	WebsocketMessageSenderWrap(SystemInterface *_systemWrap) : WebsocketMessageSender(_systemWrap){}
+
+	ByteArray getMessageFromBuffer(int i)
+	{
+		WebsocketWriteBuffersWrap *wrap = dynamic_cast<WebsocketWriteBuffersWrap*>(writeBuffers.get());
+		return wrap->getMessageFromBuffer(i);
+	}
+	ByteArray createFrameHeader(const ByteArray &in, uint8_t opcode)
+	{
+		return WebsocketMessageSender::createFrameHeader(in, opcode);
+	}
+
+};
+
 
 std::string testCreateFrameHeader(const ByteArray &in, uint8_t opcode){
 	size_t size = 2;
@@ -54,24 +99,39 @@ std::string testCreateFrameHeader(const ByteArray &in, uint8_t opcode){
 	return buffer;
 }
 
-void test_CreateFrameHeader(){
+
+
+
+TEST(WebsocketMessageSenderTest, createFrameHeader)
+{
 	MockSystemWrapper systemWrap;
 	//SetOfFileDescriptors FDs(&systemWrap);
 	//FDs.addFD(1);
-	WebsocketMessageSender sender(&systemWrap);
+	WebsocketMessageSenderWrap sender(&systemWrap);
 
 
 
-	ByteArray testString( generateTestString(125) );
-	ByteArray mediumTestString( generateTestString(65535) );
-	ByteArray largeTestString( generateTestString(65536) );
+	ByteArray testString;
+	testString.appendWithNoSize( generateTestString(125) );
+	ByteArray mediumTestString;
+	mediumTestString.appendWithNoSize( generateTestString(65535) );
+	ByteArray largeTestString;
+	largeTestString.appendWithNoSize( generateTestString(65536) );
 
 
 	std::string testStringResult = sender.createFrameHeader(testString, 2).toString();
 	std::string mediumTestStringResult = sender.createFrameHeader(mediumTestString, 2).toString();
 	std::string largeTestStringResult = sender.createFrameHeader(largeTestString, 2).toString();
 
-	if(testStringResult.compare(testCreateFrameHeader(testString,2)) !=0){
+
+	EXPECT_STREQ( testStringResult.c_str(), testCreateFrameHeader(testString,2).c_str() );
+
+	EXPECT_STREQ( mediumTestStringResult.c_str(), testCreateFrameHeader(mediumTestString,2).c_str() );
+
+	EXPECT_STREQ( largeTestStringResult.c_str(), testCreateFrameHeader(largeTestString,2).c_str() );
+
+
+	/*if(testStringResult.compare(testCreateFrameHeader(testString,2)) !=0){
 		TEST_PRINT(redTestText("small string output is wrong"));
 		throw 1;
 	}
@@ -84,45 +144,49 @@ void test_CreateFrameHeader(){
 	if(largeTestStringResult.compare(testCreateFrameHeader(largeTestString,2)) !=0){
 		TEST_PRINT(redTestText("large string output is wrong"));
 		throw 1;
-	}
+	}*/
 }
-*/
-/*void test_AddMessage(){
+
+
+
+TEST(WebsocketMessageSenderTest, addMessage)
+{
 	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
-	FDs.addFD(1);
-	FDs.setIP(1,std::string("IP") );
-	FDs.setPort(1,std::string("PORT") );
-	FDs.setCSRFkey(1,std::string("KEY") );
-	WebsocketMessageSender sender(&systemWrap, &FDs);
+	WebsocketWriteBuffersWrap * writeBuffer = new WebsocketWriteBuffersWrap(&systemWrap);
+	WebsocketMessageSenderWrap sender(writeBuffer);
 
-	//SocketMessage SocketMessage(int _FD, uint32_t _type, const secString &_IP, const secString &_port, const secString &_CSRFkey, secString &_message);
 	std::string testString("testing");
-	SocketMessage testMessage(1, 1, std::string("IP"), std::string("PORT"), std::string("KEY"), testString);
+	ByteArray IP;
+	IP.appendWithNoSize("IP");
+	ByteArray Port;
+	Port.appendWithNoSize("Port");
+	ByteArray KEY;
+	KEY.appendWithNoSize("KEY");
+	ByteArray mess;
+	mess.appendWithNoSize("testing");
 
-	std::string expectedOutput = sender.createFrameHeader(testMessage.getMessage(), 2);
+	SocketMessage testMessage(1, 1, 0, IP, Port, KEY, mess);
+
+	ByteArray expectedOutput = sender.createFrameHeader(testMessage.getMessage(), 2);
 	expectedOutput.append(testMessage.getMessage());
 
 	sender.addMessage(testMessage);
 
-	if(sender.writeBuffers.writeBuffer[1].message.compare(expectedOutput)!= 0){
+	std::string result = sender.getMessageFromBuffer(1).toString();
+	EXPECT_STREQ( result.c_str(), expectedOutput.toString().c_str() );
+	/*if(sender.writeBuffers.writeBuffer[1].message.compare(expectedOutput)!= 0){
 		TEST_PRINT(redTestText("write buffer does not match input message"));
 		TEST_PRINT(redTestText("Expected:\n"<<expectedOutput<<"\nHas size: "<<expectedOutput.size() ));
 		TEST_PRINT(redTestText("In buffer:\n"<<sender.writeBuffers.writeBuffer[1].message<<"\nHas size: "<<sender.writeBuffers.writeBuffer[1].message.size() ));
 		throw 1;
-	}
-}*/
-/*
-void test(){
-	test_CreateFrameHeader();
-	//test_AddMessage();
-
+	}*/
 }
 
+
+int main(int argc, char *argv[])
+{
+	::testing::InitGoogleTest(&argc, argv);
+	STAY_SILENT_ON_SUCCESS;
+	return RUN_ALL_TESTS();
 }
 
-int main(){
-	WebsocketMessageSender_Test::test();
-	return 0;
-}*/
-int main(){return 0;}
