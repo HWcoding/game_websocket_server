@@ -43,18 +43,20 @@ std::string ByteArray::getNextString() const
 }
 
 
-std::string ByteArray::toString()
+std::string ByteArray::toString() const
 {
 	std::string output;
+	size_t pos = tell();
 	output.resize(std::vector<uint8_t>::size());
 	getBytes(&output[0], std::vector<uint8_t>::size());
+	seek(pos);
 	return output;
 }
 
-void ByteArray::seek(size_t pos)
+void ByteArray::seek(size_t pos) const
 {
 	if( pos < std::vector<uint8_t>::size() ) currentIndex = pos;
 	else {
-		throwInt("ByteArray::seek tried to seek past end of buffer");
+		throwInt("ByteArray::seek tried to seek to: "<<pos<<", which is past end of buffer with size: "<<std::vector<uint8_t>::size());
 	}
 }

@@ -32,10 +32,7 @@ bool SystemWrapper::epollControlAdd(int epoll, int FD, struct epoll_event *event
 }
 
 void SystemWrapper::epollControlDelete(int epoll, int FD, struct epoll_event *event) const{
-	int ret =  epoll_ctl(epoll, EPOLL_CTL_DEL, FD, event);
-	if (ret == -1){
-		throwInt(std::strerror(errno)<<" in epoll_ctl");
-	}
+	epoll_ctl(epoll, EPOLL_CTL_DEL, FD, event);
 }
 
 void SystemWrapper::epollControlMod(int epoll, int FD, struct epoll_event *event) const{
@@ -73,7 +70,7 @@ void SystemWrapper::closeFD(int FD) const{
 	int ret = close(FD);
 	int error = errno;
 	if(ret == -1){
-		LOG_ERROR("SystemWrapper::closeFD"," File descriptor "<<FD<<"failed to close properly. "<< std::strerror(error) );
+		LOG_ERROR(" File descriptor "<<FD<<"failed to close properly. "<< std::strerror(error) );
 	}
 }
 
@@ -166,7 +163,7 @@ int SystemWrapper::acceptSocket(int sockfd, struct sockaddr *addr, unsigned int 
 
 		}
 		else{
-			LOG_ERROR("Error in accept: ", std::strerror(errno));
+			LOG_ERROR( std::strerror(errno));
 		}
 		done = true;
 	}

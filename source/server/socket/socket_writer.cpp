@@ -32,11 +32,11 @@ void SocketWriter::startPoll(){
 		size_t num = systemWrap->epollWait(epollFD, &events[0], MAXEVENTS, 2000);
 		for (size_t i = 0; i < num; ++i){
 			if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP)){// An error occured
-				LOG_ERROR("SocketWriter::startPoll", "epoll error");
+				LOG_ERROR("epoll error");
 				int error = 0;
 				socklen_t errlen = sizeof(error);
 				if (systemWrap->getSockOpt(events[i].data.fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void *>(&error), &errlen) == 0){
-					LOG_ERROR("SocketWriter::startPoll epoll error", "error: "<<systemWrap->strError(error) );
+					LOG_ERROR("error: "<<systemWrap->strError(error) );
 				}
 				closeFD(events[i].data.fd);
 				continue; //go to next FD
@@ -56,18 +56,18 @@ SocketWriter::~SocketWriter(){}
 
 void SocketWriter::setupEpoll(){
 	epollFD = systemWrap->epollCreate(0);
-	LOG_INFO("SocketWriter::setupEpoll", "Writer epollFD is "<<epollFD);
+	LOG_INFO("Writer epollFD is "<<epollFD);
 }
 
 
 void SocketWriter::closeFD(int FD){
 	if(fileDescriptors->removeFD(FD) == -1){
-		LOG_ERROR("SocketWriter::closeFD", "FD "<<FD<<" failed to close correctly");
+		LOG_ERROR("FD "<<FD<<" failed to close correctly");
 	}
 }
 
 void SocketWriter::closeFDHandler(int FD){
-	LOG_INFO("SocketWriter::closeFDHandler", "closed connection on FD "<<FD);
+	LOG_INFO("closed connection on FD "<<FD);
 	try{ fileDescriptors->stopPollingFD(epollFD, FD); }
 	catch(int &ret) {
 		BACKTRACE_PRINT();
@@ -78,7 +78,7 @@ void SocketWriter::closeFDHandler(int FD){
 
 void SocketWriter::newConnectionHandler(int FD){
 	(void) FD; //stops warnings for unused variable when logging is turned off
-	LOG_INFO("SocketWriter::newConnectionHandler", "New connection on FD "<<FD);
+	LOG_INFO("New connection on FD "<<FD);
 	return;
 }
 

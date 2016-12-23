@@ -1,6 +1,6 @@
 #include <string.h>
 #include "source/server/socket/websocket/websocket_handshake.h"
-#include "source/logging/logger.h"
+#include "source/logging/exception_handler.h"
 
 namespace HeaderHelpers {
 	bool isHeaderValid(const ByteArray &vec, const std::string &expectedValue);
@@ -40,6 +40,7 @@ HandshakeHeadersInterface::~HandshakeHeadersInterface(){}
 bool HandshakeHeaders::fillHeaders(const ByteArray &input){
 	std::vector< ByteArray > headers = HeaderHelpers::splitStringIntoLines(input);
 
+
 	for(size_t i =1; i<headers.size(); ++i){ //skip first line
 		if ( HeaderHelpers::isUpgradeHeader(headers[i])) {
 			Upgrade = HeaderHelpers::getUpgradeHeader(headers[i]);
@@ -58,9 +59,9 @@ bool HandshakeHeaders::fillHeaders(const ByteArray &input){
 		}
 
 		else if	( HeaderHelpers::isCookieHeader(headers[i])) {
-			//TODO:
-			Cookie = ByteArray(std::string("Peter") );//HeaderHelpers::getCookieHeader(headers[i]);
+			Cookie = HeaderHelpers::getCookieHeader(headers[i]);
 		}
+		else LOG_INFO("Unused header: "<<headers[i].toString());
 	}
 	filled = checkHeaders();
 	return filled;
@@ -69,29 +70,40 @@ bool HandshakeHeaders::fillHeaders(const ByteArray &input){
 
 bool HandshakeHeaders::checkHeaders() const{
 
-	if(Upgrade.size() == 9){
-		if( ! HeaderHelpers::isHeaderValid(Upgrade, "websocket") ) return false;
+	if(Upgrade.size() >= 9){
+		if( ! HeaderHelpers::isHeaderValid(Upgrade, "websocket") ) {
+			LOG_ERROR("Upgrade header invalid");
+			return false;
+		}
 	}
-	else return false;
+	else {
+		LOG_ERROR("Upgrade.size() < 9");
+		return false;
+	}
 
-	if(Connection.size() == 7){
-		if( ! HeaderHelpers::isHeaderValid(Connection, "Upgrade") ) return false;
+	if(Connection.size() >= 7){
+		if(Connection.toString().find("Upgrade") == std::string::npos) {
+			LOG_ERROR("Connection header invalid |"<<Connection.toString());
+			return false;
+		}
 	}
-	else return false;
+	else {
+		LOG_ERROR("Connection.size() < 7");
+		return false;
+	}
 
 	if(SecWebSocketKey.empty()){
-		writeError("No Sec-WebSocket-Key header");
+		LOG_ERROR("No Sec-WebSocket-Key header");
 		return false;
 	}
 	else if(SecWebSocketProtocol.empty()){
-		writeError("No Sec-WebSocket-Protocol header");
+		LOG_ERROR("No Sec-WebSocket-Protocol header");
 		return false;
 	}
-	//TODO:
-	/*else if(Cookie.empty()){
-		writeError("No cookie header");
+	else if(Cookie.empty()){
+		LOG_ERROR("No cookie header");
 		return false;
-	}*/
+	}
 	return true;
 }
 
@@ -159,7 +171,7 @@ bool isSecWebSocketProtocolHeader(const ByteArray &header) {
 }
 
 bool isCookieHeader(const ByteArray &header) {
-	return isHeaderValid(header, "Cookie: GameServer=");
+	return isHeaderValid(header, "Cookie");
 }
 
 ByteArray getUpgradeHeader(const ByteArray &header) {
@@ -175,6 +187,7 @@ ByteArray getSecWebSocketKeyHeader(const ByteArray &header) {
 }
 
 ByteArray getSecWebSocketProtocolHeader(const ByteArray &header) {
+
 	return getHeader(header, 24);
 }
 
@@ -188,7 +201,7 @@ bool isHeaderValid(const ByteArray &vec, const std::string &expectedValue){
 }
 
 ByteArray getHeader(const ByteArray &header, size_t headerBegin){
-	if(header.size()< headerBegin+1) throw -1;
+	if(header.size()< headerBegin+1) throwInt("header size was less than start index");
 	ByteArray ret;
 	size_t retSize = header.size()- headerBegin;
 	ret.resize(retSize);
@@ -202,6 +215,7 @@ std::vector< ByteArray > splitStringIntoLines(const ByteArray &s) {
 	size_t index =0;
 	while(getNextLine(index, s, item)){
 		elems.push_back(std::move(item));
+
 	}
 	return elems;
 }

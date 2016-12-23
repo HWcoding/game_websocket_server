@@ -22,7 +22,7 @@ StrongWarnings=" -Winvalid-pch -fmax-errors=5 -Wall -Wextra -Wformat=2 -Wformat-
 
 WeakWarnings=" -Wall -Wextra -pedantic -ansi -Weffc++"
 TestWarnings=" -Wall"
-DebugBuild="CFLAGS=-DDEBUG -Og -g3 -fno-omit-frame-pointer -fno-inline"
+DebugBuild="CFLAGS=-DDEBUG -Og -g1 -fno-omit-frame-pointer -fno-inline"
 ReleaseBuild="CFLAGS=-DNDEBUG -Ofast -march=native"
 ProfileBuild="CFLAGS=-DNDEBUG -Ofast -g3 -fno-omit-frame-pointer -march=native"
 TestBuild="CFLAGS=-DDEBUG -DTESTING -Ofast -g3 -fno-omit-frame-pointer -march=native"

@@ -60,7 +60,7 @@ SocketServerConnector::~SocketServerConnector(){
 }
 
 void SocketServerConnector::startPoll(){
-	LOG_INFO("SocketServerConnector::startPoll", "poll started");
+	LOG_INFO("poll started");
 	setupEpoll();
 
 	std::vector<epoll_event> events;
@@ -78,11 +78,11 @@ void SocketServerConnector::startPoll(){
 
 bool SocketServerConnector::handleEpollErrors(epoll_event &event){
 	if ( (event.events & EPOLLERR) || (event.events & EPOLLHUP) ){// An error occured
-		LOG_ERROR("SocketServerConnector::startPoll", "epoll error");
+		LOG_ERROR("epoll error");
 		int error = 0;
 		socklen_t errlen = sizeof(error);
 		if (systemWrap->getSockOpt(event.data.fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void *>(&error), &errlen) == 0){
-			LOG_ERROR("epoll error", "error: "<<systemWrap->strError(error) );
+			LOG_ERROR("error: "<<systemWrap->strError(error) );
 		}
 		closeFD(event.data.fd);
 
@@ -106,7 +106,7 @@ void SocketServerConnector::handleEpollRead(epoll_event &event){
 			try{ readHandshake(event.data.fd); }
 			catch(int &ret) {
 				BACKTRACE_PRINT();
-				LOG_INFO("SocketServerConnector::handleEpollRead(epoll_event &event)", "threw while calling readHandshake("<<event.data.fd<<")");
+				LOG_INFO("threw while calling readHandshake("<<event.data.fd<<")");
 				closeFD(event.data.fd);
 			}
 		}
@@ -118,7 +118,7 @@ void SocketServerConnector::handleEpollWrite(epoll_event &event){
 		try{ sendHandshake(event.data.fd); }
 		catch(int &ret){
 			BACKTRACE_PRINT();
-			LOG_INFO("SocketServerConnector::handleEpollWrite(epoll_event &event)", "threw while calling sendHandshake("<<event.data.fd<<")");
+			LOG_INFO("threw while calling sendHandshake("<<event.data.fd<<")");
 			closeFD(event.data.fd);
 		}
 	}
@@ -167,7 +167,7 @@ int SocketServerConnector::getListeningPort(){
 	createAddressInfoHints(hints);
 
 	getaddrinfoWrap getinfo(systemWrap, std::string(),port, &hints, result);
-	LOG_INFO("SocketServerConnector::createAndBindListeningFD", " Trying to bind to port "<<port);
+	LOG_INFO("Trying to bind to port "<<port);
 
 	bool done = false;
 	while(!done && *running ){//try to connect to port until server shutsdown or we succeed
@@ -178,7 +178,7 @@ int SocketServerConnector::getListeningPort(){
 		throwInt("Could not bind port: "<<port);
 	}
 	else{
-		LOG_INFO("SocketServerConnector::createAndBindListeningFD", "Bound port: "<<port<<" on FD "<<listeningFD);
+		LOG_INFO("Bound port: "<<port<<" on FD "<<listeningFD);
 	}
 	return listeningFD;
 }
@@ -198,7 +198,7 @@ void SocketServerConnector::getPortAndIP(int FD, struct sockaddr &in_addr, unsig
 	memset(&sbuf[0], 0, NI_MAXSERV);
 
 	systemWrap->getNameInfo(&in_addr, in_len, hbuf, sizeof hbuf, sbuf, sizeof sbuf, NI_NUMERICHOST | NI_NUMERICSERV);
-	LOG_INFO("SocketServerConnector::newConnection", "Accepted connection on descriptor " << FD <<" (host="<< hbuf <<", port="<< sbuf <<")" );
+	LOG_INFO("Accepted connection on descriptor " << FD <<" (host="<< hbuf <<", port="<< sbuf <<")" );
 
 	size_t hbufLength = strnlen(hbuf,NI_MAXHOST);
 	size_t sbufLength = strnlen(sbuf,NI_MAXSERV);
@@ -231,7 +231,7 @@ void SocketServerConnector::newConnection(){
 			fileDescriptors->setPort(newConnection, PortBuff);
 		}
 		catch(int &ret) {
-			LOG_INFO("SocketServerConnector::newConnection", "threw while trying to get IP and Port info");
+			LOG_INFO("threw while trying to get IP and Port info");
 			closeFD(newConnection);
 			throw;
 		}
@@ -263,7 +263,7 @@ void SocketServerConnector::waitForHandshake(int FD){
 void SocketServerConnector::closeFD(int FD){
 	Authenticator->closeFD(FD);
 	int ret= fileDescriptors->removeFD(FD);
-	if(ret == -1)LOG_ERROR("SocketServerConnector::closeFD"," File descriptor "<<FD<<"failed to close properly. ");
+	if(ret == -1)LOG_ERROR("File descriptor "<<FD<<"failed to close properly. ");
 }
 
 
@@ -304,14 +304,14 @@ void SocketServerConnector::readHandshake(int FD){
 void SocketServerConnector::handshakeComplete(int FD){
 	fileDescriptors->stopPollingFD(epollFD, FD);
 	fileDescriptors->tellServerAboutNewConnection(FD);
-	LOG_INFO("handshakeComplete", "Handshake Complete");
+	LOG_INFO("Handshake Complete");
 }
 
 
 void SocketServerConnector::processHandshake(ByteArray &in, int FD){
 	Authenticator->processHandshake(in, FD);
 	fileDescriptors->startPollingForWrite(epollFD, FD);//switch from reading to writing
-	LOG_INFO("processHandshake", "Handshake processed");
+	LOG_INFO("Handshake processed");
 }
 
 

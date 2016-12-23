@@ -60,7 +60,7 @@ void debugBackTrace(){
 			debugBacktrace.append("\n");
 		}
 		free(backTraceArray);
-		PRINT_LOG("", "Exception of type "<<exception_name<<" caught. Backtrace: \n"<<debugBacktrace);
+		LOG_ERROR("Exception of type "<<exception_name<<" caught. Backtrace: \n"<<debugBacktrace);
 	}
 }
 

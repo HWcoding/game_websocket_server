@@ -26,7 +26,7 @@ public:
 	/// Sets currentIndex to pos
 	/** It throws an exception if an attempt is made to set it past the end
 	of the buffer. */
-	void seek(size_t pos);
+	void seek(size_t pos) const;
 
 	/// returns currentIndex
 	size_t tell() const;
@@ -98,7 +98,7 @@ public:
 	/// of the buffer.
 	void getBytes(void* bytes, size_t sizeOfBytes) const;
 
-	std::string toString();
+	std::string toString() const;
 private:
 	/// Position in array from which values will be read.
 	mutable size_t currentIndex {0};

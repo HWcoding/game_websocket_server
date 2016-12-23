@@ -23,7 +23,7 @@ Socket::Socket(const ServerConfig &config) : shouldContinueRunning(true),
 									connectorThread() {
 
 	signal(SIGPIPE, SIG_IGN); //ignore sinal when writing to closed sockets to prevent crash on client disconnect
-	LOG_INFO("Socket", "starting Socket");
+	LOG_INFO("starting Socket");
 	shouldContinueRunning = true;
 	readerThread = std::thread(&Socket::startReader, this);
 	writerThread = std::thread(&Socket::startWriter, this);
@@ -39,21 +39,21 @@ Socket::~Socket(){
 	reader->shutdown();
 
 	if(connectorThread.joinable()){
-		LOG_INFO("Socket", "connectorThread Exiting");
+		LOG_INFO("connectorThread Exiting");
 		connectorThread.join();//wait for thread to finish returning
 	}
 
 	if(readerThread.joinable()){
-		LOG_INFO("Socket", "readerThread Exiting");
+		LOG_INFO("readerThread Exiting");
 		readerThread.join();//wait for thread to finish returning
 	}
 
 	if(writerThread.joinable()){
-		LOG_INFO("Socket", "writerThread Exiting");
+		LOG_INFO("writerThread Exiting");
 		writerThread.join();//wait for thread to finish returning
 	}
 
-	LOG_INFO("Socket", "Exited");
+	LOG_INFO("Exited");
 }
 
 
@@ -73,23 +73,23 @@ bool Socket::isRunning() {
 
 
 void Socket::startReader(){ //blocking! should only be called in a new thread
-	LOG_INFO("Socket::startReader","starting");
+	LOG_INFO("starting");
 	try{
 		reader->startPoll(); //loops until *shouldContinueRunning == false or error
 	}
 	catch(std::exception const &e) {
 		BACKTRACE_PRINT();
-		LOG_ERROR("Socket::startReader","exception thrown: " << e.what() );
+		LOG_ERROR("exception thrown: " << e.what() );
 	}
 	catch(int &e) {
 		BACKTRACE_PRINT();
-		LOG_ERROR("Socket::startReader","int exception thrown: " << e);
+		LOG_ERROR("int exception thrown: " << e);
 	}
 	catch(...){
 		BACKTRACE_PRINT();
-		LOG_ERROR("Socket::startReader","unknown exception thrown. Shutting down.");
+		LOG_ERROR("unknown exception thrown. Shutting down.");
 	}
-	LOG_INFO("Socket::startReader","ending");
+	LOG_INFO("ending");
 	shouldContinueRunning = false; //update the status of the server
 	return;
 }
@@ -98,23 +98,23 @@ void Socket::startReader(){ //blocking! should only be called in a new thread
 
 
 void Socket::startWriter(){ //blocking! should only be called in a new thread
-	LOG_INFO("Socket::startWriter","starting");
+	LOG_INFO("starting");
 	try{
 		writer->startPoll(); //loops until *shouldContinueRunning == false
 	}
 	catch(std::exception const &e) {
 		BACKTRACE_PRINT();
-		LOG_ERROR("Socket::startWriter","exception thrown: " << e.what() );
+		LOG_ERROR("exception thrown: " << e.what() );
 	}
 	catch(int &e) {
 		BACKTRACE_PRINT();
-		LOG_ERROR("Socket::startWriter","int exception thrown: " << e);
+		LOG_ERROR("int exception thrown: " << e);
 	}
 	catch(...){
 		BACKTRACE_PRINT();
-		LOG_ERROR("Socket::startWriter","unknown exception thrown. Shutting down.");
+		LOG_ERROR("unknown exception thrown. Shutting down.");
 	}
-	LOG_INFO("Socket::startWriter","ending");
+	LOG_INFO("ending");
 	shouldContinueRunning = false; //update the status of the server
 	return;
 }
@@ -122,23 +122,23 @@ void Socket::startWriter(){ //blocking! should only be called in a new thread
 
 
 void Socket::startConnector(){ //blocking! should only be called in a new thread
-	LOG_INFO("Socket::startConnector","starting");
+	LOG_INFO("starting");
 	try{
 		connector->startPoll(); //loops until *shouldContinueRunning == false
 	}
 	catch(std::exception const &e) {
 		BACKTRACE_PRINT();
-		LOG_ERROR("Socket::startConnector","exception thrown: " << e.what() );
+		LOG_ERROR("exception thrown: " << e.what() );
 	}
 	catch(int &e) {
 		BACKTRACE_PRINT();
-		LOG_ERROR("Socket::startConnector","int exception thrown: " << e);
+		LOG_ERROR("int exception thrown: " << e);
 	}
 	catch(...){
 		BACKTRACE_PRINT();
-		LOG_ERROR("Socket::startConnector","unknown exception thrown. Shutting down.");
+		LOG_ERROR("unknown exception thrown. Shutting down.");
 	}
-	LOG_INFO("Socket::startConnector","ending");
+	LOG_INFO("ending");
 	shouldContinueRunning = false; //update the status of the server
 	return;
 }

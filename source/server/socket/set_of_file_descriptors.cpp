@@ -126,7 +126,7 @@ int SetOfFileDescriptors::removeFD(int FD){
 		ret = -1;
 	}
 	if(callbackThrew) ret = -1;
-	LOG_INFO("SetOfFileDescriptors::removeFD"," removed FD "<<FD);
+	LOG_INFO(" removed FD "<<FD);
 	return ret;
 }
 

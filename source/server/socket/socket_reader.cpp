@@ -60,15 +60,15 @@ void SocketReader::startPoll(){
 				int error = 0;
 				socklen_t errlen = sizeof(error);
 				if (systemWrap->getSockOpt(events[i].data.fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void *>(&error), &errlen) == 0){
-					LOG_ERROR("SocketReader::startPoll", "epoll error on FD "<<events[i].data.fd<<". Error: "<<strerror(error));
+					LOG_ERROR("epoll error on FD "<<events[i].data.fd<<". Error: "<<strerror(error));
 				}
-				else LOG_ERROR("SocketReader::startPoll", "epoll error");
+				else LOG_ERROR("epoll error");
 				closeFD(events[i].data.fd);
 			}
 			else if((events[i].events & EPOLLIN)){	// the socket is ready for reading
 				addToWaitingFDs(events[i].data.fd);
 			}
-			else LOG_ERROR("SocketReader::startPoll", "FD "<<events[i].data.fd<< " was not EPOLLIN "<< events[i].events);
+			else LOG_ERROR("FD "<<events[i].data.fd<< " was not EPOLLIN "<< events[i].events);
 		}
 		readChunk();
 	}
@@ -76,17 +76,17 @@ void SocketReader::startPoll(){
 
 void SocketReader::setupEpoll(){
 	epollFD = systemWrap->epollCreate(0);
-	LOG_INFO("SocketReader::setupEpoll", "Reader epollFD is "<<epollFD);
+	LOG_INFO("Reader epollFD is "<<epollFD);
 }
 
 
 void SocketReader::closeFD(int FD){
 	int ret = fileDescriptors->removeFD(FD);
-	if(ret == -1)LOG_ERROR("SocketReader::closeFD"," File descriptor "<<FD<<"failed to close properly. ");
+	if(ret == -1)LOG_ERROR(" File descriptor "<<FD<<"failed to close properly. ");
 }
 
 void SocketReader::closeFDHandler(int FD){
-	LOG_INFO("SocketReader::closeFDHandler", "closed connection on FD "<<FD);
+	LOG_INFO("closed connection on FD "<<FD);
 	try{ fileDescriptors->stopPollingFD(epollFD, FD); }
 	catch(int &ret) {
 		BACKTRACE_PRINT();
@@ -97,11 +97,11 @@ void SocketReader::closeFDHandler(int FD){
 }
 
 void SocketReader::newConnectionHandler(int FD){
-	LOG_INFO("SocketReader::newConnectionHandler", "New connection on FD "<<FD);
+	LOG_INFO("New connection on FD "<<FD);
 	try{ fileDescriptors->startPollingForRead(epollFD, FD); }
 	catch(int &ret) {
 		BACKTRACE_PRINT();
-		LOG_ERROR("SocketReader::newConnectionHandler(int FD)", "threw while calling fileDescriptors->startPollingForRead("<<epollFD<<", "<<FD<<")");
+		LOG_ERROR("threw while calling fileDescriptors->startPollingForRead("<<epollFD<<", "<<FD<<")");
 		closeFD(FD);
 	}
 }
@@ -117,13 +117,13 @@ void SocketReader::readChunk(){
 		}
 		catch(int &ret){
 			BACKTRACE_PRINT();
-			LOG_ERROR("SocketReader::readChunk()", "threw while calling readChunkFromFD("<<FD<<")");
+			LOG_ERROR("threw while calling readChunkFromFD("<<FD<<")");
 			closeList.push_back(FD); // drop connection on failure
 		}
 		if(waitingFDs.empty()) return;
 	}
 	for(auto FD : closeList){
-		LOG_ERROR("SocketReader::readChunk()", "FD "<<FD<<"added to closeList and closed");
+		LOG_ERROR("FD "<<FD<<"added to closeList and closed");
 		closeFD(FD);
 	}
 	for(auto FD : removeList){ removeFromWaitingFDs(FD); }

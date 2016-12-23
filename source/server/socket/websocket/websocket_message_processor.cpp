@@ -49,10 +49,10 @@ void WebsocketMessageProcessor::processSockMessage (ByteArray &in,  int FD){
 				readerQueue->pushMessage(newMessage);
 			}
 			else if (messageTypes[i] == 8){ //client closed connection (close control opcode)
-				LOG_INFO("WebsocketMessageProcessor::processSockMessage", "Client closed connection on FD " << FD );
+				LOG_INFO("Client closed connection on FD " << FD );
 				fileDescriptors->removeFD(FD); 	//remove player and buffers
 			}
-			else LOG_ERROR("WebsocketMessageProcessor::processSockMessage", "!!!!*****message type was " << messageTypes[i] << " on FD " << FD );
+			else LOG_ERROR("message type was " << messageTypes[i] << " on FD " << FD );
 		}
 	}
 }

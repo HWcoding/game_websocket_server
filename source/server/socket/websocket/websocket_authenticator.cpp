@@ -56,20 +56,15 @@ void WebsocketAuthenticator::processHandshake(const ByteArray &in, int FD)
 	fileDescriptors->setCSRFkey(FD, headers.getSecWebSocketProtocol() );
 	handshakeWriteBuffer[FD] = createHandshake(headers);
 	handshakeReadBuffer.erase(FD);
-
-	if(handshakeWriteBuffer[FD].empty()){ //error creating handshake
-		throwInt("createHandshake failed");
-	}
 }
 
 bool WebsocketAuthenticator::isHandshake(const ByteArray &in) const
 {
 	std::string requestType("GET ");
 	bool ret = memcmp(&in[0], &requestType[0], 4) == 0;
-	//ws://192.168.1.3//socket HTTP/1.1
 	if(!ret){
 	 	std::string temp( reinterpret_cast<const char*>(&in[0]), 4);
-		LOG_ERROR("WebsocketAuthenticator::isHandshake", temp<< " is not == "<< "GET " );
+		LOG_ERROR(temp<< " is not == GET " );
 	}
 	return ret;
 }
@@ -87,11 +82,12 @@ bool WebsocketAuthenticator::isCompleteHandshake(const ByteArray &in) const
 
 HandshakeHeaders WebsocketAuthenticator::getHandshakeHeaders(const ByteArray &in) const
 {
-	HandshakeHeaders empty;
 	HandshakeHeaders headers;
-	if(isHandshakeInvalid(in))return empty;
+	if(isHandshakeInvalid(in))
+		throwInt("Headers not valid");
 	headers.fillHeaders(in);
-	if(headers.areHeadersFilled() == false)return empty;
+	if(headers.areHeadersFilled() == false)
+		throwInt("header read failed");
 	return headers;
 }
 
@@ -141,7 +137,7 @@ uint8_t WebsocketAuthenticator::convertTo64(uint8_t in) const
 	else if(in < 62)  	return static_cast<uint8_t>(in-4);
 	else if(in == 62)	return 43;
 	else if(in == 63)	return 47;
-	LOG_ERROR("WebsocketAuthenticator::convertTo64: ", "input out of range: "<<static_cast<int>(in)<<" should be less than 64" );
+	LOG_ERROR("input out of range: "<<static_cast<int>(in)<<" should be less than 64" );
 	return static_cast<uint8_t>('\\');	//return an invalid base64 char on error
 }
 
@@ -150,7 +146,7 @@ void WebsocketAuthenticator::toBase64(const ByteArray &input, ByteArray &out) co
 {
 	out = ByteArray();
 	if(input.size() != 20) { //the incoming SHA-1 hash should be exactly 20 long.  This simplified function breaks for other lengths
-		LOG_ERROR("WebSocket::toBase64: ", "wrong input length: "<<input.size()<<" should be 20" );
+		LOG_ERROR("wrong input length: "<<input.size()<<" should be 20" );
 		return;
 	}
 	out.resize(28);
