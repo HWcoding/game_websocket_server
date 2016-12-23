@@ -1,122 +1,173 @@
-/*#define TESTING //to activate conditional macros for test logging and access
+#define TEST_FILE_LINK_DEPENDENCIES "source/server/socket/websocket/websocket_handshake.cpp, \
+                                     source/data_types/byte_array.cpp"
+
+#include "source/server/socket/websocket/websocket_handshake.h"
+#include "tests/test_lib/mocks_stubs/socket_test_helpers.h"
+
 #include "tests/test.h"
 
-#include <iostream>
-#include <string>
-#include "server/socket/websocket/websocket_handshake.h"
-#include "engine/byte_array.h"
 
-#include "tests/server/mocks_stubs/mock_system_wrapper.h"
-#include "tests/server/mocks_stubs/socket_test_helpers.h"
-#include "tests/server/websocket_handshake_test/websocket_handshake_test.h"
-#include "main/includes.h"
+class HandshakeHeadersWrap : public HandshakeHeaders
+{
+public:
+	HandshakeHeadersWrap(): HandshakeHeaders() {}
+	HandshakeHeadersWrap(const HandshakeHeaders& h) noexcept : HandshakeHeaders(h){}
+	bool checkHeaders() const
+	{
+		return HandshakeHeaders::checkHeaders();
+	}
+
+	ByteArray & getUpgradeRef()
+	{
+		return Upgrade;
+	}
+	ByteArray & getConnectionRef()
+	{
+		return Connection;
+	}
+	ByteArray & getSecWebSocketKeyRef()
+	{
+		return SecWebSocketKey;
+	}
+	ByteArray & getSecWebSocketProtocolRef()
+	{
+		return SecWebSocketProtocol;
+	}
+	ByteArray & getCookieRef()
+	{
+		return Cookie;
+	}
+	/*ByteArray Upgrade {};
+	ByteArray SecWebSocketKey {};
+	ByteArray SecWebSocketProtocol {};
+	ByteArray Cookie {};*/
+};
 
 
-namespace WebsocketHandshake_Test{
 
 
-void test_FillHeaders(){
+
+TEST(WebsocketHandshakeTest, fillHeaders)
+{
 	ByteArray testInput = createTestHandshakeHeader();
-	HandshakeHeaders testHeader;
+	HandshakeHeadersWrap testHeader;
 	testHeader.fillHeaders(testInput);
 
-	std::string testOutputString = testHeader.Upgrade.toString();
-	if(testOutputString.compare("websocket")!=0){
-		TEST_PRINT(redTestText("Upgrade failed"));
+	std::string testOutputString = testHeader.getUpgrade().toString();
+	EXPECT_STREQ( testOutputString.c_str(), testHeader.getUpgrade().toString().c_str() );
+	/*if(testOutputString.compare("websocket")!=0){
+	//	TEST_PRINT(redTestText("Upgrade failed"));
 		throw 1;
-	}
+	}*/
 
-	testOutputString = testHeader.Connection.toString();
-	if(testOutputString.compare("Upgrade")!=0){
-		TEST_PRINT(redTestText("Connection failed"));
-		throw 1;
-	}
+	testOutputString = testHeader.getConnection().toString();
+	bool doesConnectionContainUpgrade = testHeader.getConnection().toString().find("Upgrade") != std::string::npos;
+	EXPECT_EQ( doesConnectionContainUpgrade, true);
+	//if(testOutputString.compare("Upgrade")!=0){
+	//	TEST_PRINT(redTestText("Connection failed"));
+	//	throw 1;
+	//}
 
-	testOutputString = testHeader.SecWebSocketKey.toString();
-	if(testOutputString.compare("+40NMxLMogWjfV/0HyjlxA==")!=0){
-		TEST_PRINT(redTestText("SecWebSocketKey failed"));
+	testOutputString = testHeader.getSecWebSocketKey().toString();
+	EXPECT_STREQ( testOutputString.c_str(), "+40NMxLMogWjfV/0HyjlxA==" );
+	/*if(testOutputString.compare("+40NMxLMogWjfV/0HyjlxA==")!=0){
+	//	TEST_PRINT(redTestText("SecWebSocketKey failed"));
 		throw 1;
-	}
+	}*/
 
-	testOutputString = testHeader.SecWebSocketProtocol.toString();
-	if(testOutputString.compare("05fcc56b7cb916d5e5a82081223b3357")!=0){
-		TEST_PRINT(redTestText("SecWebSocketProtocol failed"));
+	testOutputString = testHeader.getSecWebSocketProtocol().toString();
+	EXPECT_STREQ( testOutputString.c_str(), "05fcc56b7cb916d5e5a82081223b3357" );
+	/*if(testOutputString.compare("05fcc56b7cb916d5e5a82081223b3357")!=0){
+	//	TEST_PRINT(redTestText("SecWebSocketProtocol failed"));
 		throw 1;
-	}
+	}*/
 
-	testOutputString = testHeader.Cookie.toString();
-	if(testOutputString.compare("CJP5G89v2O30Dx-StfclobgZ0AuIH8Nh74SEzHxvBJEZWG6yJ3smhW73TZgDMO0HEy8AvYhKgzxVry5Yby75oT-250dW6PTdm74rhmQyACSwbiAbvp67108QZid7KoPJjf-OuP1cf5Z31_eHimsW8JTIf9KINfG0yy31WuDb21XU-nH9EJcVKhdoXrQB_35DPIRymBxV85cENsxScjjMIBnI60mUR1koC5k_XcwSiTgnoT9ApEPwIX6Z9iw0tV2X7")!=0){
-		TEST_PRINT(redTestText("Cookie failed"));
+	testOutputString = testHeader.getCookie().toString();
+	EXPECT_STREQ( testOutputString.c_str(), "CJP5G89v2O30Dx-StfclobgZ0AuIH8Nh74SEzHxvBJEZWG6yJ3smhW73TZgDMO0HEy8AvYhKgzxVry5Yby75oT-250dW6PTdm74rhmQyACSwbiAbvp67108QZid7KoPJjf-OuP1cf5Z31_eHimsW8JTIf9KINfG0yy31WuDb21XU-nH9EJcVKhdoXrQB_35DPIRymBxV85cENsxScjjMIBnI60mUR1koC5k_XcwSiTgnoT9ApEPwIX6Z9iw0tV2X7" );
+	/*if(testOutputString.compare("CJP5G89v2O30Dx-StfclobgZ0AuIH8Nh74SEzHxvBJEZWG6yJ3smhW73TZgDMO0HEy8AvYhKgzxVry5Yby75oT-250dW6PTdm74rhmQyACSwbiAbvp67108QZid7KoPJjf-OuP1cf5Z31_eHimsW8JTIf9KINfG0yy31WuDb21XU-nH9EJcVKhdoXrQB_35DPIRymBxV85cENsxScjjMIBnI60mUR1koC5k_XcwSiTgnoT9ApEPwIX6Z9iw0tV2X7")!=0){
+	//	TEST_PRINT(redTestText("Cookie failed"));
 		throw 1;
-	}
+	}*/
 }
 
-void test_CheckHeaders(){
+
+
+
+
+TEST(WebsocketHandshakeTest, checkHeaders){
 	ByteArray testInput = createTestHandshakeHeader();
-	HandshakeHeaders testHeader;
+	HandshakeHeadersWrap testHeader;
 	testHeader.fillHeaders(testInput);
 
-	if(!testHeader.checkHeaders()){
-		TEST_PRINT(redTestText("returned false with good data"));
+	EXPECT_EQ(testHeader.checkHeaders(), true);
+	/*if(!testHeader.checkHeaders()){
+		//TEST_PRINT(redTestText("returned false with good data"));
 		throw 1;
-	}
+	}*/
 
-	ByteArray testTemp = testHeader.Upgrade;
-	testHeader.Upgrade = ByteArray( std::string("testFail") );
-	if(testHeader.checkHeaders()){
-		TEST_PRINT(redTestText("returned true with bad Upgrade header"));
+	ByteArray testTemp = testHeader.getUpgradeRef();
+	testHeader.getUpgradeRef() = ByteArray( std::string("testFail") );
+
+	EXPECT_EQ(testHeader.checkHeaders(), false);
+	/*if(testHeader.checkHeaders()){
+		//TEST_PRINT(redTestText("returned true with bad Upgrade header"));
 		throw 1;
-	}
-	testHeader.Upgrade = testTemp;
+	}*/
+	testHeader.getUpgradeRef() = testTemp;
 
 
-	testTemp = testHeader.Connection;
-	testHeader.Connection = ByteArray( std::string("testFail") );
-	if(testHeader.checkHeaders()){
-		TEST_PRINT(redTestText("returned true with bad Connection header"));
+	testTemp = testHeader.getConnectionRef();
+	testHeader.getConnectionRef() = ByteArray( std::string("testFail") );
+
+	EXPECT_EQ(testHeader.checkHeaders(), false);
+	/*if(testHeader.checkHeaders()){
+		//TEST_PRINT(redTestText("returned true with bad Connection header"));
 		throw 1;
-	}
-	testHeader.Connection = testTemp;
+	}*/
+	testHeader.getConnectionRef() = testTemp;
 
-	testTemp = testHeader.SecWebSocketKey;
-	testHeader.SecWebSocketKey = ByteArray();
-	if(testHeader.checkHeaders()){
-		TEST_PRINT(redTestText("returned true with bad SecWebSocketKey header"));
-		throw 1;
-	}
-	testHeader.SecWebSocketKey = testTemp;
+	testTemp = testHeader.getSecWebSocketKeyRef();
+	testHeader.getSecWebSocketKeyRef() = ByteArray();
 
-	testTemp = testHeader.SecWebSocketProtocol;
-	testHeader.SecWebSocketProtocol = ByteArray();
-	if(testHeader.checkHeaders()){
-		TEST_PRINT(redTestText("returned true with bad SecWebSocketProtocol header"));
+	EXPECT_EQ(testHeader.checkHeaders(), false);
+	/*if(testHeader.checkHeaders()){
+		//TEST_PRINT(redTestText("returned true with bad SecWebSocketKey header"));
 		throw 1;
-	}
-	testHeader.SecWebSocketProtocol = testTemp;
+	}*/
+	testHeader.getSecWebSocketKeyRef() = testTemp;
 
-	testTemp = testHeader.Cookie;
-	testHeader.Cookie = ByteArray();
-	if(testHeader.checkHeaders()){
-		TEST_PRINT(redTestText("returned true with bad Cookie header"));
-		throw 1;
-	}
-	testHeader.Cookie = testTemp;
+	testTemp = testHeader.getSecWebSocketProtocolRef();
+	testHeader.getSecWebSocketProtocolRef() = ByteArray();
 
-	if(!testHeader.checkHeaders()){
-		TEST_PRINT(redTestText("returned false with good data"));
+	EXPECT_EQ(testHeader.checkHeaders(), false);
+	/*if(testHeader.checkHeaders()){
+		//TEST_PRINT(redTestText("returned true with bad SecWebSocketProtocol header"));
 		throw 1;
-	}
+	}*/
+	testHeader.getSecWebSocketProtocolRef() = testTemp;
+
+	testTemp = testHeader.getCookieRef();
+	testHeader.getCookieRef() = ByteArray();
+
+	EXPECT_EQ(testHeader.checkHeaders(), false);
+	/*if(testHeader.checkHeaders()){
+		//TEST_PRINT(redTestText("returned true with bad Cookie header"));
+		throw 1;
+	}*/
+	testHeader.getCookieRef() = testTemp;
+
+	EXPECT_EQ(testHeader.checkHeaders(), true);
+	/*if(!testHeader.checkHeaders()){
+		//TEST_PRINT(redTestText("returned false with good data"));
+		throw 1;
+	}*/
 }
 
-void test(){
-	test_FillHeaders();
-	test_CheckHeaders();
-}
 
-}
 
-int main(){
-	WebsocketHandshake_Test::test();
-	return 0;
-}*/
-int main(){return 0;}
+int main(int argc, char *argv[])
+{
+	::testing::InitGoogleTest(&argc, argv);
+	STAY_SILENT_ON_SUCCESS;
+	return RUN_ALL_TESTS();
+}

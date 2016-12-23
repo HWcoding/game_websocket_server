@@ -36,14 +36,14 @@ public:
 	HandshakeHeaders();
 	HandshakeHeaders(const HandshakeHeaders& h) noexcept;
 	~HandshakeHeaders(){}
-private:
+protected:
 	bool checkHeaders() const;
-
 	ByteArray Connection {};
 	ByteArray Upgrade {};
 	ByteArray SecWebSocketKey {};
 	ByteArray SecWebSocketProtocol {};
 	ByteArray Cookie {};
+private:
 	bool filled{false};
 };
 
