@@ -25,7 +25,7 @@ TestWarnings=" -Wall"
 DebugBuild="CFLAGS=-DDEBUG -Og -g1 -fno-omit-frame-pointer -fno-inline"
 ReleaseBuild="CFLAGS=-DNDEBUG -Ofast -march=native"
 ProfileBuild="CFLAGS=-DNDEBUG -Ofast -g3 -fno-omit-frame-pointer -march=native"
-TestBuild="CFLAGS=-DDEBUG -DTESTING -Ofast -g3 -fno-omit-frame-pointer -march=native"
+TestBuild="CFLAGS=-DNDEBUG -DTESTING -Ofast -g3 -fno-omit-frame-pointer -march=native"
 
 # convert arguments to lower case
 FirstArg=$( echo "${1}" | tr '[:upper:]' '[:lower:]')
@@ -406,9 +406,11 @@ function buildDocs() {
 	else
 
 		#clean docs
-		cd ./docs/html
-		rm -rf ./*
-		cd ../../
+		cd ./docs
+		if [ -d "html" ]; then
+			rm -rf ./html
+		fi
+		cd ../
 	fi
 }
 
@@ -418,7 +420,9 @@ function codeAnalysis() {
 		./external/cppcheck/cppcheck "--quiet" "-I./" "--enable=warning,performance,information" "-j8" "--cppcheck-build-dir=./analysis" "./source"
 	else
 		cd ./analysis
-		rm ./*
+		if [ -f "files.txt" ]; then
+			rm ./*
+		fi
 		cd ../
 	fi
 
@@ -660,7 +664,50 @@ function buildExternals(){
 }
 
 
+function buildDirecrories(){
 
+	if [ ! -d "analysis" ]; then
+		mkdir analysis
+	fi
+
+	if [ ! -d "docs" ]; then
+		mkdir docs
+	fi
+
+	if [ ! -d "objs" ]; then
+		mkdir objs
+	fi
+
+	if [ ! -d "deps" ]; then
+		mkdir deps
+	fi
+	cd ./deps
+
+	if [ ! -d "temp" ]; then
+		mkdir temp
+	fi
+
+	cd ../tests
+
+	if [ ! -d "bin" ]; then
+		mkdir bin
+	fi
+
+	if [ ! -d "objs" ]; then
+		mkdir objs
+	fi
+
+	if [ ! -d "deps" ]; then
+		mkdir deps
+	fi
+	cd ./deps
+
+	if [ ! -d "temp" ]; then
+		mkdir temp
+	fi
+
+	cd ../../
+}
 
 
 function main() {
@@ -673,6 +720,9 @@ function main() {
 	printMinorHeader "Checking Externals"
 	buildExternals
 	printHighlight "Finished"
+
+	#create missing directories
+	buildDirecrories
 
 	makeBuildCompatable
 	# cppcheck
