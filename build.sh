@@ -18,15 +18,16 @@
 StrongWarnings=" -Winvalid-pch -fmax-errors=5 -Wall -Wextra -Wformat=2 -Wformat-signedness\
  -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wcast-qual -Wconversion\
  -Wuseless-cast -Wsign-conversion -Wfloat-conversion -Wlogical-op -Wmissing-declarations -pedantic\
- -ansi -Weffc++ -Werror"
-
-WeakWarnings=" -Wall -Wextra -pedantic -ansi -Weffc++"
+ -ansi -Weffc++ -Wno-odr -Werror"
+WeakWarnings=" -Wall -Wextra -pedantic -ansi -Weffc++ -Wno-odr"
 TestWarnings=" -Wall"
-DebugBuild="CFLAGS=-DDEBUG -Og -g1 -fno-omit-frame-pointer -fno-inline"
-ReleaseBuild="CFLAGS=-DNDEBUG -Ofast -march=native"
-ProfileBuild="CFLAGS=-DNDEBUG -Ofast -g3 -fno-omit-frame-pointer -march=native"
-TestBuild="CFLAGS=-DNDEBUG -DTESTING -Ofast -g3 -fno-omit-frame-pointer -march=native"
 
+ReleaseOptimizations=" -O3 -falign-functions=16 -falign-loops=16 -march=native"
+DebugBuild="CFLAGS=-DDEBUG -Og -g3 -fno-omit-frame-pointer -fno-inline"
+ReleaseBuild="CFLAGS=-DNDEBUG -flto ${ReleaseOptimizations}"
+ProfileBuild="CFLAGS=-DNDEBUG -g3 -fno-omit-frame-pointer -flto ${ReleaseOptimizations}"
+TestBuild="CFLAGS=-DNDEBUG -DTESTING -O0"
+#-flto
 # convert arguments to lower case
 FirstArg=$( echo "${1}" | tr '[:upper:]' '[:lower:]')
 SecondArg=$( echo "${2}" | tr '[:upper:]' '[:lower:]')
@@ -278,7 +279,7 @@ function getTestDependencies() {
 	while read -r line;	do
 		# check to see if the line begins with our macro
 		if [[ "${line}" == "#define TEST_FILE_LINK_DEPENDENCIES"* ]]; then
-        	readingDependency="yes"
+			readingDependency="yes"
 		fi
 		# If variable is yes, append
 		if [[ $readingDependency == "yes" ]]; then
@@ -350,7 +351,11 @@ function compileProductionFiles() {
 		BuildOptions="clean"
 	fi
 	# feed the list to make and build program
-	make -s -j8 "${BuildOptions}" "${FileList}"
+	if [ "$(getBuildType)" != "debug" ]; then
+		make -s -j8 "LINK_TYPE=lto" "${BuildOptions}" "${FileList}"
+	else
+		make -s -j8 "${BuildOptions}" "${FileList}"
+	fi
 	cd ../
 }
 
@@ -445,6 +450,7 @@ function buildPoco() {
 		mkdir poco
 		cd ./poco
 		mkdir lib
+		mkdir lto
 		mkdir include
 		cd ./include
 		mkdir Poco
@@ -459,10 +465,15 @@ function buildPoco() {
 			touch poco_downloaded
 		fi
 
+
+
 		cd ./poco_source
 		echo""
 		printHighlight "Compiling Poco"
-		./configure --everything --static --no-tests --poquito --no-samples --typical --omit=Data/MySQL --cflags="-O3 -march=native" &>build.log
+
+
+		./configure --everything --static --no-tests --poquito --no-samples --typical --omit=Data/MySQL --cflags=" ${ReleaseOptimizations}" &>build.log
+
 		make -j8 -s &>build.log
 
 		POCOLIB_SOURCE="./lib/Linux/x86_64"
@@ -493,6 +504,51 @@ function buildPoco() {
 		done < <(find ./ -type f -name '*.a' -print0)
 
 		cd ../../poco_source
+
+		make distclean &>build.log
+
+		printHighlight "Compiling Poco with link-time optimization"
+
+		#create a configuration file for a link time optimization build
+		cp ./build/config/Linux ./build/config/Linux_gcc_lto
+		sed -i '/LIB     = ${CROSS_COMPILE}ar -cr/c\LIB     = ${CROSS_COMPILE}gcc-ar -cr' "./build/config/Linux_gcc_lto"
+		sed -i '/RANLIB  = ${CROSS_COMPILE}ranlib/c\RANLIB  = ${CROSS_COMPILE}gcc-ranlib' "./build/config/Linux_gcc_lto"
+
+		./configure --config=Linux_gcc_lto --everything --static --no-tests --poquito --no-samples --typical --omit=Data/MySQL --cflags=" -flto ${ReleaseOptimizations}" &>build.log
+
+		make -j8 -s &>build.log
+
+		POCOLIB_SOURCE="./lib/Linux/x86_64"
+		POCOLIB_DEST="../poco/lto/"
+
+		cp ${POCOLIB_SOURCE}/libPocoUtil.a ${POCOLIB_DEST}/libPocoUtil.a
+		cp ${POCOLIB_SOURCE}/libPocoCrypto.a ${POCOLIB_DEST}/libPocoCrypto.a
+		cp ${POCOLIB_SOURCE}/libPocoJSON.a ${POCOLIB_DEST}/libPocoJSON.a
+		cp ${POCOLIB_SOURCE}/libPocoNet.a ${POCOLIB_DEST}/libPocoNet.a
+		cp ${POCOLIB_SOURCE}/libPocoNetSSL.a ${POCOLIB_DEST}/libPocoNetSSL.a
+		cp ${POCOLIB_SOURCE}/libPocoXML.a ${POCOLIB_DEST}/libPocoXML.a
+		cp ${POCOLIB_SOURCE}/libPocoFoundation.a ${POCOLIB_DEST}/libPocoFoundation.a
+		cp ${POCOLIB_SOURCE}/libPocoCppParser.a ${POCOLIB_DEST}/libPocoCppParser.a
+		cp ${POCOLIB_SOURCE}/libPocoData.a ${POCOLIB_DEST}/libPocoData.a
+		cp ${POCOLIB_SOURCE}/libPocoDataODBC.a ${POCOLIB_DEST}/libPocoDataODBC.a
+		cp ${POCOLIB_SOURCE}/libPocoDataPostgreSQL.a ${POCOLIB_DEST}/libPocoDataPostgreSQL.a
+		cp ${POCOLIB_SOURCE}/libPocoDataSQLite.a ${POCOLIB_DEST}/libPocoDataSQLite.a
+		cp ${POCOLIB_SOURCE}/libPocoMongoDB.a ${POCOLIB_DEST}/libPocoMongoDB.a
+		cp ${POCOLIB_SOURCE}/libPocoPDF.a ${POCOLIB_DEST}/libPocoPDF.a
+		cp ${POCOLIB_SOURCE}/libPocoRedis.a ${POCOLIB_DEST}/libPocoRedis.a
+		cp ${POCOLIB_SOURCE}/libPocoZip.a ${POCOLIB_DEST}/libPocoZip.a
+
+		cd ${POCOLIB_DEST}
+
+		# create thin archive for linking
+		while read -d $'\0' file; do
+			gcc-ar -rT poco.a "${file}" &>build.log
+		done < <(find ./ -type f -name '*.a' -print0)
+
+		cd ../../poco_source
+
+		make distclean &>build.log
+
 
 		cp ./CONTRIBUTORS ../poco/CONTRIBUTORS
 		cp ./README ../poco/poco_README
@@ -576,11 +632,11 @@ function buildGoogleTest(){
 		printHighlight "Compiling Google Test"
 		g++ -isystem ${GTEST_DIR}/include -I${GTEST_DIR} \
 			-isystem ${GMOCK_DIR}/include -I${GMOCK_DIR} \
-			-pthread -Ofast -march=native -c ${GTEST_DIR}/src/gtest-all.cc
+			-pthread -Ofast -falign-functions=16 -falign-loops=16 -march=native -c ${GTEST_DIR}/src/gtest-all.cc
 		g++ -isystem ${GTEST_DIR}/include -I${GTEST_DIR} \
 			-isystem ${GMOCK_DIR}/include -I${GMOCK_DIR} \
-			-pthread -Ofast -march=native -c ${GMOCK_DIR}/src/gmock-all.cc
-		ar -rv ../google_test/google_test.a gtest-all.o gmock-all.o
+			-pthread -Ofast -falign-functions=16 -falign-loops=16 -march=native -c ${GMOCK_DIR}/src/gmock-all.cc
+		gcc-ar -rv ../google_test/google_test.a gtest-all.o gmock-all.o
 
 		cd ../
 		GLIB_SOURCE="./google_test_and_mock"
@@ -624,7 +680,7 @@ function buildCppcheck(){
 
 		echo ""
 		printHighlight "Compiling Cppcheck"
-		g++ -Ofast -march=native -DNDEBUG -o cppcheck -std=c++0x \
+		g++ -Ofast -flto -falign-functions=16 -falign-loops=16 -march=native -DNDEBUG -o cppcheck -std=c++0x \
 			-include lib/cxx11emu.h -Iexternals/simplecpp -Iexternals/tinyxml \
 			-Ilib cli/*.cpp lib/*.cpp externals/tinyxml/*.cpp \
 			externals/simplecpp/*.cpp
@@ -715,7 +771,7 @@ function main() {
 	# set the script to stop on error
 	set -e
 	printMajorHeader "Building "${PWD##*/}""
-#	printProjectLineCount
+	printProjectLineCount
 
 	#check for and build missing dependencies
 	printMinorHeader "Checking Externals"

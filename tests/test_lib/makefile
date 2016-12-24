@@ -41,7 +41,7 @@ DEPFILES = $(patsubst %,$(DEP_DIR)%.d,$(basename $(notdir $(OBJECTS))))
 all: $(LIBRARY_NAME)
 
 $(LIBRARY_NAME): $(OBJECTS)
-	ar rcs $@ $^
+	gcc-ar rcs $@ $^
 
 # in order for this rule to work filenames cannot contain the
 # string -!- or any of the special symbols make uses such as @ or $

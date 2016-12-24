@@ -8,6 +8,7 @@ PROJECT_DIRECTORY = $(abspath ../)/
 
 COMP = g++
 CFLAGS = -DDEBUG -Og -g3 -fno-omit-frame-pointer -fno-inline
+LINK_TYPE = lib
 
 EXECUTABLE := $(PROJECT_DIRECTORY)$(EXECUTABLE_NAME)
 OBJ_DIR := $(PROJECT_DIRECTORY)objs/
@@ -15,7 +16,7 @@ DEP_DIR := $(PROJECT_DIRECTORY)deps/
 DEP_TEMP := $(DEP_DIR)temp/
 HEAD_PATH := $(PROJECT_DIRECTORY)
 POCO_HEAD_PATH := $(PROJECT_DIRECTORY)external/poco/include/
-POCO_LIB_PATH := $(PROJECT_DIRECTORY)external/poco/lib/
+POCO_LIB_PATH := $(PROJECT_DIRECTORY)external/poco/$(LINK_TYPE)/
 
 LIBRARIES =  -lpthread -lstdc++ -lm -lcrypto -lssl -ldl
 

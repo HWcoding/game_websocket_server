@@ -25,6 +25,7 @@ int main(int argc, char** argv)
 
 		for(;;) {
 			if(gameSocket.isRunning()){
+				//blocks thread if message queue is empty
 				dispatcher.dispatchMessage( gameSocket.getNextMessage() );
 			}
 		}
