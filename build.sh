@@ -309,7 +309,7 @@ function getTestDependencies() {
 	echo "${Dependencies}"
 }
 
-# takes a test .cpp filename as argument and complies it
+# takes a test .cpp filename as argument and compiles it
 function compileTest() {
 	local ObjectList="OBJECT_LIST=""$(getTestDependencies "${1}")"
 	local FileName="FILENAME=""${1}"
@@ -676,16 +676,16 @@ function main() {
 
 	makeBuildCompatable
 	# cppcheck
-	set +e
+
 	printMinorHeader "Performing Code Analysis"
 	codeAnalysis
 	printHighlight "Finished"
-	set -e
+
 	# build program
 	printMinorHeader "Building Production code"
 	compileProductionFiles
 	printHighlight "Finished"
-	set +e
+
 	# build tests
 	printMinorHeader "Building/Running Tests"
 	compileTestLibs
@@ -698,6 +698,7 @@ function main() {
 	echo ""
 	printHighlight "****Build Complete****"
 	echo ""
+	set +e
 }
 
 main
