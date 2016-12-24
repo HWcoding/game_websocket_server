@@ -725,8 +725,8 @@ function main() {
 	buildDirecrories
 
 	makeBuildCompatable
-	# cppcheck
 
+	# cppcheck
 	printMinorHeader "Performing Code Analysis"
 	codeAnalysis
 	printHighlight "Finished"

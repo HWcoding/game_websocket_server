@@ -1,5 +1,5 @@
-#ifndef SERVER_SOCKET_FILE_DESCRIPTOR_H_
-#define SERVER_SOCKET_FILE_DESCRIPTOR_H_
+#ifndef SOURCE_SERVER_SOCKET_FILE_DESCRIPTOR_H_
+#define SOURCE_SERVER_SOCKET_FILE_DESCRIPTOR_H_
 //#include "source/server/socket/file_descriptor.h"
 
 #include <mutex>
@@ -50,4 +50,4 @@ private:
 	int FD {-1};
 };
 
-#endif /* SERVER_SOCKET_FILE_DESCRIPTOR_H_ */
+#endif /* SOURCE_SERVER_SOCKET_FILE_DESCRIPTOR_H_ */
