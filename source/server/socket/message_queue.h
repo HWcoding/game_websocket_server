@@ -5,12 +5,13 @@
 #include <queue>
 #include <condition_variable>
 #include <mutex>
+#include <atomic>
 
 class SocketMessage;
 
 class MessageQueue{
 public:
-	MessageQueue(bool *run);
+	MessageQueue(std::atomic<bool> *run);
 	~MessageQueue();
 	SocketMessage getNextMessage_Blocking();
 	bool isEmpty();
@@ -24,7 +25,7 @@ private:
 	std::mutex mut;
 	std::queue<SocketMessage> Queue;
 	std::condition_variable bufferReady;
-	bool *running;
+	std::atomic<bool> *running;
 };
 
 #endif /* SERVER_SOCKET_MESSAGE_QUEUE_H_ */

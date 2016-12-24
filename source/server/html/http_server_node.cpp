@@ -3,7 +3,6 @@
 #include "Poco/Net/HTTPServerRequest.h"
 #include "Poco/Net/HTTPServerResponse.h"
 #include "Poco/Net/ServerSocket.h"
-#include "Poco/Util/HelpFormatter.h"
 #include <fstream>
 #include <iostream>
 
@@ -14,10 +13,6 @@ using Poco::Net::HTTPServerRequest;
 using Poco::Net::HTTPServerResponse;
 using Poco::Net::HTTPServerParams;
 using Poco::Util::Application;
-using Poco::Util::Option;
-using Poco::Util::OptionSet;
-using Poco::Util::OptionCallback;
-using Poco::Util::HelpFormatter;
 
 namespace {
 std::string loadFileToString(std::string filename)
@@ -97,32 +92,6 @@ void HTTPGameServer::uninitialize()
 	ServerApplication::uninitialize();
 }
 
-void HTTPGameServer::defineOptions(OptionSet& options)
-{
-	ServerApplication::defineOptions(options);
-
-	options.addOption(
-	Option("help", "h", "display argument help information")
-		.required(false)
-		.repeatable(false)
-		.callback(OptionCallback<HTTPGameServer>(
-			this, &HTTPGameServer::handleHelp)));
-}
-
-void HTTPGameServer::handleHelp(const std::string& name,
-				const std::string& value)
-{
-	(void)name;
-	(void)value;
-	HelpFormatter helpFormatter(options());
-	helpFormatter.setCommand(commandName());
-	helpFormatter.setUsage("OPTIONS");
-	helpFormatter.setHeader(
-		"A websocket game server.");
-	helpFormatter.format(std::cout);
-	stopOptionsProcessing();
-	_helpRequested = true;
-}
 
 int HTTPGameServer::main(const std::vector<std::string>& args)
 {

@@ -5,6 +5,7 @@
 #include <thread>
 #include <string>
 #include <memory>
+#include <atomic>
 
 class SocketMessage;
 class SystemWrapper;
@@ -57,7 +58,7 @@ private:
 	Socket& operator=(const Socket&)=delete;
 	Socket(const Socket&)=delete;
 
-	bool shouldContinueRunning; //flag to tell the thread to end looping and exit //TODO  make sure access to this is atomic
+	std::atomic<bool> shouldContinueRunning; //flag to tell the thread to end looping and exit //TODO  make sure access to this is atomic
 	std::unique_ptr<SystemWrapper> systemWrap;
 	std::unique_ptr<SetOfFileDescriptors> FDs;
 	std::unique_ptr<SocketReader> reader;

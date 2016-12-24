@@ -714,7 +714,7 @@ function main() {
 	# set the script to stop on error
 	set -e
 	printMajorHeader "Building "${PWD##*/}""
-	printProjectLineCount
+#	printProjectLineCount
 
 	#check for and build missing dependencies
 	printMinorHeader "Checking Externals"

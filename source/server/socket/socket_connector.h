@@ -16,7 +16,7 @@ struct epoll_event;
 class SocketServerConnector{
 public:
 	void startPoll();
-	SocketServerConnector(const std::string &_port, SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, bool* run);
+	SocketServerConnector(const std::string &_port, SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, std::atomic<bool>* run);
 	~SocketServerConnector();
 
 private:
@@ -43,7 +43,7 @@ private:
 
 	SystemInterface *systemWrap;
 	std::unique_ptr<WebsocketAuthenticator> Authenticator;
-	bool *running;
+	std::atomic<bool> *running;
 	size_t maxMessageSize;
 	SetOfFileDescriptors *fileDescriptors;
 	std::string port;

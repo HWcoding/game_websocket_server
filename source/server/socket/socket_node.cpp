@@ -12,7 +12,7 @@
 
 SocketInterface::~SocketInterface(){}
 
-Socket::Socket(const ServerConfig &config) : shouldContinueRunning(true),
+Socket::Socket(const ServerConfig &config) : shouldContinueRunning(),
 									systemWrap( new SystemWrapper()),
 									FDs( new SetOfFileDescriptors( systemWrap.get() ) ),
 									reader(  new SocketReader(systemWrap.get(), FDs.get(), &shouldContinueRunning) ),
@@ -24,7 +24,7 @@ Socket::Socket(const ServerConfig &config) : shouldContinueRunning(true),
 
 	signal(SIGPIPE, SIG_IGN); //ignore sinal when writing to closed sockets to prevent crash on client disconnect
 	LOG_INFO("starting Socket");
-	shouldContinueRunning = true;
+	shouldContinueRunning.store(true);
 	readerThread = std::thread(&Socket::startReader, this);
 	writerThread = std::thread(&Socket::startWriter, this);
 	connectorThread = std::thread(&Socket::startConnector, this);
@@ -35,7 +35,7 @@ void Socket::disconnectClient(int FD){
 }
 
 Socket::~Socket(){
-	shouldContinueRunning = false; //tell loop in socket thread to exit and return
+	shouldContinueRunning.store(false); //tell loop in socket thread to exit and return
 	reader->shutdown();
 
 	if(connectorThread.joinable()){
@@ -66,7 +66,7 @@ void Socket::sendMessage(SocketMessage &message){
 }
 
 bool Socket::isRunning() {
-	return shouldContinueRunning;
+	return shouldContinueRunning.load();
 }
 
 

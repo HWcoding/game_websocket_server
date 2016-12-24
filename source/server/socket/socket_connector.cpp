@@ -7,6 +7,7 @@
 #include <netdb.h>
 #include <chrono>
 #include <thread>
+#include <atomic>
 #include <string.h>
 #include "source/server/socket/websocket/websocket_authenticator.h"
 #include "source/data_types/byte_array.h"
@@ -36,7 +37,7 @@ private:
 
 
 
-SocketServerConnector::SocketServerConnector(const std::string &_port, SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, bool* run) :
+SocketServerConnector::SocketServerConnector(const std::string &_port, SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, std::atomic<bool>* run) :
 																														systemWrap(_systemWrap),
 																														Authenticator( new WebsocketAuthenticator( _systemWrap, FDs) ),
 																														running(run),
@@ -66,7 +67,7 @@ void SocketServerConnector::startPoll(){
 	std::vector<epoll_event> events;
 	events.resize( static_cast<size_t>(MAXEVENTS) );
 
-	while(*running){	//The event loop
+	while(running->load()){	//The event loop
 		size_t numberOfEvents = systemWrap->epollWait(epollFD, &events[0], MAXEVENTS, 2000);
 		for (size_t i = 0; i < numberOfEvents; ++i){
 			if(handleEpollErrors(events[i])) continue; //an error occured; move to next event

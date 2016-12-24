@@ -4,6 +4,7 @@
 #include <sys/epoll.h>
 #include <netdb.h>
 #include <signal.h>
+#include <atomic>
 
 #include "source/server/socket/set_of_file_descriptors.h"
 #include "source/data_types/socket_message.h"
@@ -14,7 +15,7 @@
 
 SocketWriterInterface::~SocketWriterInterface(){}
 
-SocketWriter::SocketWriter(SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, bool* run) : 	systemWrap(_systemWrap), sender( new WebsocketMessageSender(_systemWrap) ), writePollingMut(),
+SocketWriter::SocketWriter(SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, std::atomic<bool>* run) : 	systemWrap(_systemWrap), sender( new WebsocketMessageSender(_systemWrap) ), writePollingMut(),
 																					fileDescriptors(FDs), running(run), MAXEVENTS(9999), epollFD(-1) {
 
 	fileDescriptors->addNewConnectionCallback(std::bind(&SocketWriter::newConnectionHandler,this, std::placeholders::_1));
@@ -28,7 +29,7 @@ void SocketWriter::startPoll(){
 	std::vector<epoll_event> events;
 	events.resize( static_cast<size_t>(MAXEVENTS) );
 
-	while(*running){	//The event loop
+	while(running->load()){	//The event loop
 		size_t num = systemWrap->epollWait(epollFD, &events[0], MAXEVENTS, 2000);
 		for (size_t i = 0; i < num; ++i){
 			if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP)){// An error occured

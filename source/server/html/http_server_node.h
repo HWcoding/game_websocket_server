@@ -13,9 +13,6 @@ namespace Poco {
 		class HTTPServerRequest;
 		class HTTPServerResponse;
 	}
-	namespace Util {
-		class OptionSet;
-	}
 } // Poco
 
 
@@ -60,11 +57,6 @@ protected:
 	void initialize(Application& self);
 
 	void uninitialize();
-
-	void defineOptions(Poco::Util::OptionSet& options);
-
-	void handleHelp(const std::string& name,
-					const std::string& value);
 
 	int main(const std::vector<std::string>& args);
 

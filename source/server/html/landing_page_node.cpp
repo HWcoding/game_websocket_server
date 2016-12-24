@@ -22,10 +22,11 @@ void LandingPageNode::serverThread(int argc, char** argv)
 
 		HTTPGameServer app;
 		int ret = app.run(argc, argv);
-		std::cout<<"serverThread returned "<<ret<<std::endl;
+		LOG_INFO("HTTP_ServerThread returned "<<ret);
+		(void)ret; //stops unused warning in release build;
 	}
 	catch (...) {
-		std::cout<<"exception thrown"<<std::endl;
+		LOG_ERROR("exception thrown");
 		BACKTRACE_PRINT();
 	}
 

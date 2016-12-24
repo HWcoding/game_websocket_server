@@ -7,7 +7,6 @@
 
 int main(int argc, char** argv)
 {
-	std::thread HTTP_ServerThread;
 	try{
 		std::cout<<"work in progress"<<std::endl;
 
@@ -26,6 +25,7 @@ int main(int argc, char** argv)
 	}
 	catch(...) {
 		BACKTRACE_PRINT();
+		return 1;
 	}
 
 	return 0;

@@ -1,5 +1,6 @@
 #include "source/server/socket/socket_reader.h"
 #include <signal.h>
+#include <atomic>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include "source/server/socket/set_of_file_descriptors.h"
@@ -11,7 +12,7 @@
 #include "source/logging/exception_handler.h"
 
 
-SocketReader::SocketReader(SystemInterface *_systemWrap, SetOfFileDescriptors *_FDs, bool* run) : systemWrap(_systemWrap),
+SocketReader::SocketReader(SystemInterface *_systemWrap, SetOfFileDescriptors *_FDs, std::atomic<bool>* run) : systemWrap(_systemWrap),
 																										processor( new WebsocketMessageProcessor(_FDs) ),
 																										running(run), fileDescriptors(_FDs), readerQueue(NULL),
 																										waitingFDs(), waitingMut(),
@@ -48,7 +49,7 @@ void SocketReader::startPoll(){
 	std::vector<epoll_event> events;
 	events.resize(static_cast<size_t>(MAXEVENTS) );
 
-	while(*running){ // The event loop
+	while(running->load()){ // The event loop
 		int waitTime = 0;
 		{ // lock
 		std::lock_guard<std::recursive_mutex> lck(waitingMut);

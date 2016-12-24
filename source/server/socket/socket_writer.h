@@ -28,7 +28,7 @@ public:
 	void newConnectionHandler(int FD);
 	void sendMessage(SocketMessage &message);
 
-	SocketWriter(SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, bool* run);
+	SocketWriter(SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, std::atomic<bool>* run);
 	~SocketWriter();
 private:
 	void setupEpoll();
@@ -42,7 +42,7 @@ private:
 	std::unique_ptr<MessageSenderInterface> sender;
 	std::mutex writePollingMut;
 	SetOfFileDescriptors *fileDescriptors;
-	bool *running;
+	std::atomic<bool> *running;
 	int MAXEVENTS;
 	int epollFD;
 };
