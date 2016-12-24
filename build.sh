@@ -587,6 +587,7 @@ function buildGoogleTest(){
 		GLIB_DEST="./google_test"
 
 		cp -r ${GLIB_SOURCE}/googletest/include/* ${GLIB_DEST}/include
+		cp -r ${GLIB_SOURCE}/googlemock/include/* ${GLIB_DEST}/include
 		cp ${GLIB_SOURCE}/README.md ${GLIB_DEST}/googletest_README.md
 		cp ${GLIB_SOURCE}/googletest/LICENSE ${GLIB_DEST}/googletest_LICENSE
 		cp ${GLIB_SOURCE}/googlemock/LICENSE ${GLIB_DEST}/googlemock_LICENSE
