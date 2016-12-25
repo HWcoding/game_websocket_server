@@ -1,5 +1,6 @@
-#ifndef SERVER_SOCKET_WEBSOCKET_WEBSOCKET_MESSAGE_PROCESSOR_H_
-#define SERVER_SOCKET_WEBSOCKET_WEBSOCKET_MESSAGE_PROCESSOR_H_
+#ifndef SOURCE_SERVER_SOCKET_WEBSOCKET_WEBSOCKET_MESSAGE_PROCESSOR_H_
+#define SOURCE_SERVER_SOCKET_WEBSOCKET_WEBSOCKET_MESSAGE_PROCESSOR_H_
+//#include "source/server/socket/websocket/websocket_message_processor.h"
 
 #include <vector>
 #include <memory>
@@ -21,7 +22,7 @@ public:
 
 	void closeFDHandler(int FD);
 
-private:
+protected:
 	size_t 		extractMessage(ByteArray &in, std::vector< ByteArray > &out, std::vector<int> &types, int FD);
 	uint64_t 	getMessageSize(ByteArray &in, uint64_t &messageStart, const uint64_t &start, int FD);
 	void 		completeFracture(ByteArray &out, int &types, size_t position, int FD);
@@ -29,7 +30,7 @@ private:
 	void 		unmask(ByteArray &in, ByteArray &out, uint64_t messageStart, uint64_t length);
 	uint64_t 	getNet64bit(uint8_t *in);
 	uint16_t 	getNet16bit(uint8_t *in);
-
+private:
 	MessageQueue *readerQueue;
 	size_t MaxReadBufferSize;
 	std::unique_ptr<WebsocketReadBuffers> ReadBuffers;
@@ -39,4 +40,4 @@ private:
 	WebsocketMessageProcessor(const WebsocketMessageProcessor&)=delete;
 };
 
-#endif /* SERVER_SOCKET_WEBSOCKET_WEBSOCKET_MESSAGE_PROCESSOR_H_ */
+#endif /* SOURCE_SERVER_SOCKET_WEBSOCKET_WEBSOCKET_MESSAGE_PROCESSOR_H_ */

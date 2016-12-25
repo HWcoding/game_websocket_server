@@ -210,44 +210,6 @@ void WebsocketMessageProcessor::unmask (ByteArray &in, ByteArray &out, uint64_t 
 	mask[2] = in[messageStart-2];
 	mask[3] = in[messageStart-1];
 
-	//fast but non-portable
-/*	typedef long long int v2di __attribute__ ((vector_size (16)));
-	uint64_t i;
-	for (i = 0; i < length && reinterpret_cast<size_t>(&output[i+begin])%16 != 0; ++i){ //unmask output until output[] is 16byte aligned
-		output[i+begin] ^= mask[i % 4];	//unmask data by 'XOR'ing 4byte blocks with the mask one byte at a time
-	}
-
-	if(i < length){ //process the rest 128bits at a time
-		uint64_t endBytes = (length-i) % 64; //run untill there are less than 4 16byte numbers left
-		uint64_t length128 = length-endBytes;
-		length128 /= 16; //convert length64 from number of bytes to number of 128bit ints
-
-		volatile v2di *output128 = reinterpret_cast<volatile v2di*>(&output[i+begin]);
-		uint64_t offset= i;
-
-		v2di mask128 = {0,0};
-		volatile uint8_t *tempMask = reinterpret_cast<volatile uint8_t*>(&mask128);
-		for(int j = 0; j<16; ++j, ++i){
-			tempMask[j] = mask[i % 4]; //build new 128bit mask starting were the previous loop left off (at i)
-		}
-
-		for (i = 0; i < length128; i+=4){//reset i to zero and start unmasking at the output128 pointer
-			output128[i] = __builtin_ia32_pxor128(output128[i], mask128);
-			output128[i+1] = __builtin_ia32_pxor128(output128[i+1], mask128);
-			output128[i+2] = __builtin_ia32_pxor128(output128[i+2], mask128);
-			output128[i+3] = __builtin_ia32_pxor128(output128[i+3], mask128);
-		}
-
-		offset += i*16; //unmask the last remaining bits
-		endBytes += offset;
-		for(i = offset; i<endBytes; i++){
-			output[i+begin] ^= mask[i % 4];
-		}
-	}*/
-
-
-	//slower but portable version
-
 	uint64_t i;
 	for (i = 0; i < length && reinterpret_cast<size_t>(&output[i+begin])%8 != 0; ++i){ //unmask output until output[] is 8byte aligned
 		output[i+begin] ^= mask[i % 4];	//unmask data by 'XOR'ing 4byte blocks with the mask one byte at a time
@@ -267,11 +229,11 @@ void WebsocketMessageProcessor::unmask (ByteArray &in, ByteArray &out, uint64_t 
 			tempMask[j] = mask[i % 4]; //build new 64bit mask starting were the previous loop left off (at i)
 		}
 
-		for (i = 0; i < length64; i+=4){//reset i to zero and start unmasking at the output64 pointer
+		for (i = 0; i < length64; i++){//reset i to zero and start unmasking at the output64 pointer
 			output64[i]   ^= mask64;	//unmask data by 64bit 'XOR'ing
-			output64[i+1] ^= mask64;
-			output64[i+2] ^= mask64;
-			output64[i+3] ^= mask64;
+			output64[++i] ^= mask64;
+			output64[++i] ^= mask64;
+			output64[++i] ^= mask64;
 		}
 
 		offset += i*8; //unmask the last remaining bits

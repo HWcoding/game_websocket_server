@@ -632,10 +632,10 @@ function buildGoogleTest(){
 		printHighlight "Compiling Google Test"
 		g++ -isystem ${GTEST_DIR}/include -I${GTEST_DIR} \
 			-isystem ${GMOCK_DIR}/include -I${GMOCK_DIR} \
-			-pthread -Ofast -falign-functions=16 -falign-loops=16 -march=native -c ${GTEST_DIR}/src/gtest-all.cc
+			-pthread ${ReleaseOptimizations} -c ${GTEST_DIR}/src/gtest-all.cc
 		g++ -isystem ${GTEST_DIR}/include -I${GTEST_DIR} \
 			-isystem ${GMOCK_DIR}/include -I${GMOCK_DIR} \
-			-pthread -Ofast -falign-functions=16 -falign-loops=16 -march=native -c ${GMOCK_DIR}/src/gmock-all.cc
+			-pthread ${ReleaseOptimizations} -c ${GMOCK_DIR}/src/gmock-all.cc
 		gcc-ar -rv ../google_test/google_test.a gtest-all.o gmock-all.o
 
 		cd ../
@@ -680,7 +680,7 @@ function buildCppcheck(){
 
 		echo ""
 		printHighlight "Compiling Cppcheck"
-		g++ -Ofast -flto -falign-functions=16 -falign-loops=16 -march=native -DNDEBUG -o cppcheck -std=c++0x \
+		g++ ${ReleaseOptimizations} -DNDEBUG -o cppcheck -std=c++0x \
 			-include lib/cxx11emu.h -Iexternals/simplecpp -Iexternals/tinyxml \
 			-Ilib cli/*.cpp lib/*.cpp externals/tinyxml/*.cpp \
 			externals/simplecpp/*.cpp

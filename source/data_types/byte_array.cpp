@@ -16,7 +16,7 @@ void ByteArray::getBytes(void* bytes, size_t sizeOfBytes) const
 		currentIndex += sizeOfBytes;
 	}
 	else {
-		throwInt("ByteArray::getBytes tried to read past end of buffer");
+		throwInt("ByteArray::getBytes tried to read past end of buffer of size "<<std::vector<uint8_t>::size()<<" using value of "<<currentIndex+sizeOfBytes);
 	}
 }
 
@@ -47,6 +47,7 @@ std::string ByteArray::toString() const
 {
 	std::string output;
 	size_t pos = tell();
+	seek(0);
 	output.resize(std::vector<uint8_t>::size());
 	getBytes(&output[0], std::vector<uint8_t>::size());
 	seek(pos);

@@ -292,303 +292,69 @@ void test_HandleFragment(){
 	}
 }
 
-void test_GetNet64bit(){
-	//0010 0001 1000 0100 1100 0110 0011 1001 0111 1011 1101 1110 1010 0101 0101 0110
-	//33        132       198       57        123       222       165		86
-	//2415273250371052886
-	uint8_t temp[8];
-	temp[0]= 33; //Network byte order
-	temp[1]= 132; //-124; //
-	temp[2]= 198; //-58; //
-	temp[3]= 57;
-	temp[4]= 123;
-	temp[5]= 222; //-34;//
-	temp[6]= 165; //-91;//
-	temp[7]= 86;
 
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
-	FDs.addFD(1);
-	WebsocketMessageProcessor processor(&FDs);
 
-	uint64_t result =processor.getNet64bit(temp);
-	if(result != 2415273250371052886){
-		TEST_PRINT(redTestText("result is wrong: "<<result<<" Result should be 2415273250371052886"));
-		throw 1;
-	}
-}
 
-void test_GetNet16bit(){
-	//1000 0100 0010 0001
-	//132       33
-	//33825
-	uint8_t temp[2];
-	temp[0]= 132; //Network byte order //-124;//
-	temp[1]= 33;
 
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
-	FDs.addFD(1);
-	WebsocketMessageProcessor processor(&FDs);
 
-	uint16_t result =processor.getNet16bit(temp);
-	if(result != 33825){
-		TEST_PRINT(redTestText("result is wrong: "<<result<<" Result should be 33825"));
-		throw 1;
-	}
-}
 
-void test_CloseFDHandler(){
-	//create processor for testing and set its state
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
 
-	ByteArray IP( std::string("IP") );
-	ByteArray PORT( std::string("PORT") );
-	ByteArray KEY( std::string("KEY") );
 
-	FDs.addFD(1);
-	FDs.setIP(1,IP);
-	FDs.setPort(1,PORT);
-	FDs.setCSRFkey(1,KEY );
 
-	WebsocketMessageProcessor processor(&FDs);
-	bool running = true;
-	std::unique_ptr<MessageQueue> testReaderQueue(new MessageQueue(&running));
-	processor.setReaderQueue(testReaderQueue.get());
 
-	processor.closeFDHandler(1);
 
-	if( testReaderQueue->isEmpty() ){
-		TEST_PRINT(redTestText("Message queue was empty"));
-		throw 1;
-	}
 
-	SocketMessage temp = testReaderQueue->getNextMessage();
 
-	if(temp.getType()!=2){
-		TEST_PRINT(redTestText("Message is wrong type: "<<temp.getType()<<" Type should be 2"));
-		throw 1;
-	}
 
-	std::string testIP = temp.getIP().toString();
-	std::string testPort = temp.getPort().toString();
-	std::string testCSRFkey = temp.getCSRFkey().toString();
 
-	if(testIP.compare(std::string("IP")) != 0){
-		TEST_PRINT(redTestText("Message has wrong IP: \""<<testIP<<"\" IP should be \"IP\""));
-		throw 1;
-	}
 
-	if(testPort.compare(std::string("PORT")) != 0){
-		TEST_PRINT(redTestText("Message has wrong Port: \""<<testPort<<"\" Port should be \"PORT\""));
-		throw 1;
-	}
 
-	if(testCSRFkey.compare(std::string("KEY")) != 0){
-		TEST_PRINT(redTestText("Message has wrong CSRFkey: \""<<testCSRFkey<<"\" CSRFkey should be \"KEY\""));
-		throw 1;
-	}
-}
 
-void test_Unmask(){
-	uint32_t mask = 3893384930;
-	size_t messageSize = 4000;
 
-	//create a number of strings and encode them with a mask the same way a browser would before sending them to this server
-	std::string message;
-	std::string maskedTestString;
 
-	message = generateTestString(messageSize);
-	maskedTestString.append(applyMask(message, mask));
 
-	//unmask simple way to test our masking code
-	std::string simpleUnmask;
-	uint8_t *pMask = reinterpret_cast<uint8_t*>(&mask);
-	char temp;
-	for (uint64_t i = 0; i < maskedTestString.size(); ++i){
-		temp =(char)(((uint8_t)maskedTestString[i])^pMask[i % 4]);	//umask data by 'XOR'ing 4byte blocks with the mask one byte at a time
-		simpleUnmask.append(1,temp);								//add unmasked byte to simpleUnmask
-	}
-	if(simpleUnmask.compare(message)!=0){
-		TEST_PRINT(redTestText("simple logic failed.  applyMask() may be broken"));
-		throw 1;
-	}
 
-	//our test produced proper input data, use it to test unmask
-	std::string fastMaskedTestString;
-	fastMaskedTestString.append(reinterpret_cast<char*>(pMask),4);
-	fastMaskedTestString.append(maskedTestString);
 
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
-	FDs.addFD(1);
-	WebsocketMessageProcessor processor(&FDs);
 
-	ByteArray input(fastMaskedTestString);
-	ByteArray output;
 
-	processor.unmask(input, output, 4, maskedTestString.size());
-	std::string fastUnmask = output.toString();
 
-	if(fastUnmask.compare(message)!=0){
-		TEST_PRINT(redTestText("Unmasked message does not match original message"));
-		throw 1;
-	}
-}
 
-void test_processSockMessage(){
-	uint32_t mask = 3893384930;
-	size_t messageCount = 10;
-	size_t messageSize = 200;
 
-	//create a number of strings and encode them with a mask the same way a browser would before sending them to this server
-	std::vector<std::string> messages;
-	std::string maskedTestString;
-	for(size_t i = 0; i <messageCount; ++i){
-		messages.push_back( generateTestString(messageSize,i) );
-		maskedTestString.append(maskMessageForTesting(messages[i], mask+static_cast<uint32_t>(i), true, 130));
-	}
 
-	ByteArray input(maskedTestString);
 
-	//create processor for testing and set its state
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
 
-	ByteArray IP( std::string("IP") );
-	ByteArray PORT( std::string("PORT") );
-	ByteArray KEY( std::string("KEY") );
 
-	FDs.addFD(1);
-	FDs.setIP(1,IP);
-	FDs.setPort(1,PORT);
-	FDs.setCSRFkey(1,KEY );
 
-	WebsocketMessageProcessor processor(&FDs);
 
-	bool running = true;
-	//MessageQueue * testReaderQueue = new MessageQueue(&running);
-	std::unique_ptr<MessageQueue> testReaderQueue(new MessageQueue(&running));
 
-	processor.setReaderQueue(testReaderQueue.get());
 
-	//process messages.  The function stores the output in a queue (testReaderQueue)
-	processor.processSockMessage(input, 1);
 
-	//move processed messages from queue into vector decoded
-	std::vector< ByteArray > decoded;
-	ByteArray temp = testReaderQueue->getNextMessage().message;
-	while(!temp.empty()){
-		decoded.push_back(temp);
-		temp = testReaderQueue->getNextMessage().message;
-	}
 
-	//test to see if the number of messages output are the same as the number of messages input
-	if(decoded.size() != messageCount){
-		TEST_PRINT(redTestText("The number of processed messages, "<<decoded.size()<<" is not equal to the number of encoded messages, "<<messageCount));
-		throw 1;
-	}
 
-	//test to see if the output messages match the input messages
-	for(size_t i = 0; i< decoded.size(); ++i){
-		if(messages[i].compare( decoded[i].toString() )!=0){
-			TEST_PRINT(redTestText("decoded message "<<i<<" does not match encoded message "<<i));
-			TEST_PRINT(redTestText("decoded message \n"<<messages[i]<<"\nencoded message \n"<<decoded[i].toString() ));
-			throw 1;
-		}
-	}
 
-	//test control message handling
-	if(!FDs.isFDOpen(1)){
-		TEST_PRINT(redTestText("client is disconnected but should not be"));
-		throw 1;
-	}
-	ByteArray closeMessage( createCloseControlMessage() );
-	processor.processSockMessage(closeMessage, 1);
-	if(FDs.isFDOpen(1)){
-		TEST_PRINT(redTestText("Close control message did not disconnect client"));
-		throw 1;
-	}
 
-}
 
-void test_ExtractMessage(){
-	uint32_t mask = 3893384930;
-	size_t messageCount = 10;
-	size_t messageSize = 200;
 
-	std::vector<std::string> messages;
-	std::string maskedTestString;
-	for(size_t i = 0; i <messageCount; ++i){
-		messages.push_back( generateTestString(messageSize,i) );
-		maskedTestString.append(maskMessageForTesting(messages[i], mask+static_cast<uint32_t>(i), true, 130));
-	}
 
-	{
-		MockSystemWrapper systemWrap;
-		SetOfFileDescriptors FDs(&systemWrap);
-		FDs.addFD(1);
-		WebsocketMessageProcessor processor(&FDs);
 
-		std::vector< ByteArray > decoded;
-		std::vector<int> types;
 
-		ByteArray input(maskedTestString);
 
-		size_t decodedCount = processor.extractMessage (input, decoded, types, 1);
 
-		if(decodedCount != messageCount){
-			TEST_PRINT(redTestText("The number of decoded messages, "<<decodedCount<<" is not equal to the number of encoded messages, "<<messageCount));
-			throw 1;
-		}
 
-		for(size_t i = 0; i< decodedCount; ++i){
-			if(messages[i].compare( decoded[i].toString() )!=0){
-				TEST_PRINT(redTestText("decoded message "<<i<<" does not match encoded message "<<i));
-				TEST_PRINT(redTestText("decoded message \n"<<messages[i]<<"\nencoded message \n"<<decoded[i].toString() ));
-				throw 1;
-			}
-		}
-	}
 
-	{
-		MockSystemWrapper systemWrap;
-		SetOfFileDescriptors FDs(&systemWrap);
-		FDs.addFD(1);
-		WebsocketMessageProcessor processor(&FDs);
 
-		std::vector< ByteArray > decoded;
-		std::vector<int> types;
 
-		size_t readSize = messageSize/10;
-		size_t position = 0;
 
-		while( position < maskedTestString.size() ){
-			std::vector< ByteArray > decodedTemp;
-			ByteArray partial( maskedTestString.substr(position, readSize) );
 
-			size_t decodedCount = processor.extractMessage (partial, decodedTemp, types, 1);
-			for(size_t i = 0; i< decodedCount; ++i){
-				decoded.push_back(decodedTemp[i]);
-			}
-			position+=readSize;
-		}
 
-		if(decoded.size() != messageCount){
-			TEST_PRINT(redTestText("The number of decoded messages, "<<decoded.size()<<" is not equal to the number of encoded messages, "<<messageCount));
-			throw 1;
-		}
 
-		for(size_t i = 0; i< decoded.size(); ++i){
-			if(messages[i].compare( decoded[i].toString() )!=0){
-				TEST_PRINT(redTestText("decoded message "<<i<<" does not match encoded message "<<i));
-				TEST_PRINT(redTestText("decoded message \n"<<messages[i]<<"\nencoded message \n"<< decoded[i].toString() ));
-				throw 1;
-			}
-		}
-	}
-}
+
+
+
+
+
+
+
 
 void test_ExtractMessage_performance(){
 	std::vector< ByteArray > splitMessage;
@@ -697,24 +463,467 @@ void test_Unmask_performance(){
 	std::cout<<"unmask processed "<<messageSize/1000000<<"MBs in "<<totalTime<<" milliseconds"<<std::endl;
 }
 
+*/
 
-void test(){
-	test_GetNet16bit();
-	test_GetNet64bit();
-	test_CloseFDHandler();
-	test_GetMessageSize();
-	test_Unmask();
-	test_HandleFragment();
-	test_CompleteFracture();
-	test_ExtractMessage();
-	test_processSockMessage();
-//	test_Unmask_performance();
-//	test_ExtractMessage_performance();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#define TEST_FILE_LINK_DEPENDENCIES "source/server/socket/websocket/websocket_message_processor.cpp, \
+                                     source/data_types/byte_array.cpp, \
+                                     source/server/socket/system_wrapper.cpp, \
+                                     source/server/socket/websocket/websocket_read_buffer.cpp, \
+                                     source/data_types/socket_message.cpp, \
+                                     source/server/socket/set_of_file_descriptors.cpp, \
+                                     source/server/socket/message_queue.cpp, \
+                                     source/server/socket/file_descriptor.cpp, \
+                                     source/logging/exception_handler.cpp"
+
+#include "source/server/socket/websocket/websocket_message_processor.h"
+#include "source/server/socket/set_of_file_descriptors.h"
+#include "source/server/socket/message_queue.h"
+#include "source/data_types/socket_message.h"
+#include "source/data_types/message_type.h"
+#include "tests/test_lib/mocks_stubs/mock_system_wrapper.h"
+#include "tests/test_lib/mocks_stubs/socket_test_helpers.h"
+#include <atomic>
+
+#include "tests/test.h"
+
+
+
+
+class WebsocketMessageProcessorWrap : public WebsocketMessageProcessor
+{
+public:
+	WebsocketMessageProcessorWrap(SetOfFileDescriptors *_FDs) : WebsocketMessageProcessor(_FDs) {}
+	using WebsocketMessageProcessor::extractMessage;
+	using WebsocketMessageProcessor::getMessageSize;
+	using WebsocketMessageProcessor::completeFracture;
+	using WebsocketMessageProcessor::handleFragment;
+	using WebsocketMessageProcessor::unmask;
+	using WebsocketMessageProcessor::getNet64bit;
+	using WebsocketMessageProcessor::getNet16bit;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TEST(WebsocketMessageProcessorTest, test_GetNet64bit)
+{
+	//0010 0001 1000 0100 1100 0110 0011 1001 0111 1011 1101 1110 1010 0101 0101 0110
+	//33        132       198       57        123       222       165		86
+	//2415273250371052886
+	uint8_t temp[8];
+	temp[0]= 33; //Network byte order
+	temp[1]= 132; //-124; //
+	temp[2]= 198; //-58; //
+	temp[3]= 57;
+	temp[4]= 123;
+	temp[5]= 222; //-34;//
+	temp[6]= 165; //-91;//
+	temp[7]= 86;
+
+	MockSystemWrapper systemWrap;
+	SetOfFileDescriptors FDs(&systemWrap);
+	FDs.addFD(1);
+	WebsocketMessageProcessorWrap processor(&FDs);
+
+	uint64_t result =processor.getNet64bit(temp);
+
+	EXPECT_EQ(result, 2415273250371052886);
+	/*if(result != 2415273250371052886){
+		TEST_PRINT(redTestText("result is wrong: "<<result<<" Result should be 2415273250371052886"));
+		throw 1;
+	}*/
 }
-}// namespace WebsocketMessageProcessor_test
 
-int main(){
-	WebsocketMessageProcessor_Test::test();
-	return 0;
-}*/
-int main(){return 0;}
+
+
+TEST(WebsocketMessageProcessorTest, testGetNet16bit)
+{
+	//1000 0100 0010 0001
+	//132       33
+	//33825
+	uint8_t temp[2];
+	temp[0]= 132; //Network byte order //-124;//
+	temp[1]= 33;
+
+	MockSystemWrapper systemWrap;
+	SetOfFileDescriptors FDs(&systemWrap);
+	FDs.addFD(1);
+	WebsocketMessageProcessorWrap processor(&FDs);
+
+	uint16_t result =processor.getNet16bit(temp);
+
+	EXPECT_EQ(result, 33825);
+	/*if(result != 33825){
+		TEST_PRINT(redTestText("result is wrong: "<<result<<" Result should be 33825"));
+		throw 1;
+	}*/
+}
+
+
+
+TEST(WebsocketMessageProcessorTest, testCloseFDHandler)
+{
+	//create processor for testing and set its state
+	MockSystemWrapper systemWrap;
+	SetOfFileDescriptors FDs(&systemWrap);
+
+	ByteArray IP;
+	IP.appendWithNoSize("IP");
+	ByteArray PORT;
+	PORT.appendWithNoSize("PORT");
+	ByteArray KEY;
+	KEY.appendWithNoSize("KEY");
+
+	FDs.addFD(1);
+	FDs.setIP(1,IP);
+	FDs.setPort(1,PORT);
+	FDs.setCSRFkey(1,KEY );
+
+	WebsocketMessageProcessor processor(&FDs);
+	std::atomic<bool> running;
+	running.store(true);
+	std::unique_ptr<MessageQueue> testReaderQueue(new MessageQueue(&running));
+	processor.setReaderQueue(testReaderQueue.get());
+
+	processor.closeFDHandler(1);
+
+	EXPECT_FALSE( testReaderQueue->isEmpty() );
+	/*if( testReaderQueue->isEmpty() ){
+		TEST_PRINT(redTestText("Message queue was empty"));
+		throw 1;
+	}*/
+
+	SocketMessage temp = testReaderQueue->getNextMessage();
+
+	EXPECT_EQ(temp.getType(), MessageType::logout);
+	/*if(temp.getType()!=2){
+		TEST_PRINT(redTestText("Message is wrong type: "<<temp.getType()<<" Type should be 2"));
+		throw 1;
+	}*/
+
+	std::string testIP = temp.getIP().toString();
+	std::string testPort = temp.getPort().toString();
+	std::string testCSRFkey = temp.getCSRFkey().toString();
+
+	EXPECT_STREQ( testIP.c_str(), "IP" );
+	/*if(testIP.compare(std::string("IP")) != 0){
+		TEST_PRINT(redTestText("Message has wrong IP: \""<<testIP<<"\" IP should be \"IP\""));
+		throw 1;
+	}*/
+
+	EXPECT_STREQ( testPort.c_str(), "PORT" );
+	/*if(testPort.compare(std::string("PORT")) != 0){
+		TEST_PRINT(redTestText("Message has wrong Port: \""<<testPort<<"\" Port should be \"PORT\""));
+		throw 1;
+	}*/
+
+	EXPECT_STREQ( testCSRFkey.c_str(), "KEY" );
+	/*if(testCSRFkey.compare(std::string("KEY")) != 0){
+		TEST_PRINT(redTestText("Message has wrong CSRFkey: \""<<testCSRFkey<<"\" CSRFkey should be \"KEY\""));
+		throw 1;
+	}*/
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TEST(WebsocketMessageProcessorTest, testUnmask)
+{
+	uint32_t mask = 3893384930;
+	size_t messageSize = 4000;
+
+	//create a number of strings and encode them with a mask the same way a browser would before sending them to this server
+	std::string message;
+	std::string maskedTestString;
+
+	message = generateTestString(messageSize);
+	maskedTestString.append(applyMask(message, mask));
+
+	//unmask simple way to test our masking test code
+	std::string simpleUnmask;
+	uint8_t *pMask = reinterpret_cast<uint8_t*>(&mask);
+	char temp;
+	for (uint64_t i = 0; i < maskedTestString.size(); ++i){
+		temp =(char)(((uint8_t)maskedTestString[i])^pMask[i % 4]);	//umask data by 'XOR'ing 4byte blocks with the mask one byte at a time
+		simpleUnmask.append(1,temp);								//add unmasked byte to simpleUnmask
+	}
+
+	EXPECT_STREQ( simpleUnmask.c_str(), message.c_str() );
+
+
+	//our test produced proper input data, use it to test unmask
+	std::string fastMaskedTestString;
+	fastMaskedTestString.append(reinterpret_cast<char*>(pMask),4);
+	fastMaskedTestString.append(maskedTestString);
+
+	MockSystemWrapper systemWrap;
+	SetOfFileDescriptors FDs(&systemWrap);
+	FDs.addFD(1);
+	WebsocketMessageProcessorWrap processor(&FDs);
+
+	ByteArray input;
+	input.appendWithNoSize(fastMaskedTestString);
+	ByteArray output;
+
+	processor.unmask(input, output, 4, maskedTestString.size());
+	std::string fastUnmask = output.toString();
+
+	EXPECT_STREQ( fastUnmask.c_str(), message.c_str() );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TEST(WebsocketMessageProcessorTest, testProcessSockMessageWorks)
+{
+	uint32_t mask = 3893384930;
+	uint32_t messageCount = 10;
+	size_t messageSize = 200;
+
+	//create a number of strings and encode them with a mask the same way a browser would before sending them to this server
+	std::vector<std::string> messages;
+	std::string maskedTestString;
+	for(uint32_t i = 0; i <messageCount; ++i){
+		messages.push_back( generateTestString(messageSize,i) );
+		maskedTestString.append(maskMessageForTesting(messages[i], mask+static_cast<uint32_t>(i), true, 130));
+	}
+
+	ByteArray input;
+	input.appendWithNoSize(maskedTestString);
+
+	//create processor for testing and set its state
+	MockSystemWrapper systemWrap;
+	SetOfFileDescriptors FDs(&systemWrap);
+
+	ByteArray IP;
+	IP.appendWithNoSize("IP");
+	ByteArray PORT;
+	PORT.appendWithNoSize("PORT");
+	ByteArray KEY;
+	KEY.appendWithNoSize("KEY");
+
+	FDs.addFD(1);
+	FDs.setIP(1,IP);
+	FDs.setPort(1,PORT);
+	FDs.setCSRFkey(1,KEY );
+
+	WebsocketMessageProcessor processor(&FDs);
+
+	std::atomic<bool> running;
+	running.store(true);
+	//MessageQueue * testReaderQueue = new MessageQueue(&running);
+	std::unique_ptr<MessageQueue> testReaderQueue(new MessageQueue(&running));
+
+	processor.setReaderQueue(testReaderQueue.get());
+
+	//process messages.  The function stores the output in a queue (testReaderQueue)
+	processor.processSockMessage(input, 1);
+
+	//move processed messages from queue into vector decoded
+	std::vector< ByteArray > decoded;
+	ByteArray temp = testReaderQueue->getNextMessage().getMessage();
+	while(!temp.empty()){
+		decoded.push_back(temp);
+		temp = testReaderQueue->getNextMessage().getMessage();
+	}
+
+	//test to see if the number of messages output are the same as the number of messages input
+	EXPECT_EQ( decoded.size(), messageCount );
+	/*if(decoded.size() != messageCount){
+		TEST_PRINT(redTestText("The number of processed messages, "<<decoded.size()<<" is not equal to the number of encoded messages, "<<messageCount));
+		throw 1;
+	}*/
+
+	//test to see if the output messages match the input messages
+	for(size_t i = 0; i< decoded.size(); ++i){
+		EXPECT_STREQ( messages[i].c_str(), decoded[i].toString().c_str() );
+	}
+	/*for(size_t i = 0; i< decoded.size(); ++i){
+		if(messages[i].compare( decoded[i].toString() )!=0){
+			TEST_PRINT(redTestText("decoded message "<<i<<" does not match encoded message "<<i));
+			TEST_PRINT(redTestText("decoded message \n"<<messages[i]<<"\nencoded message \n"<<decoded[i].toString() ));
+			throw 1;
+		}
+	}*/
+
+	//test control message handling
+	EXPECT_TRUE(FDs.isFDOpen(1));
+	/*if(!FDs.isFDOpen(1)){
+		TEST_PRINT(redTestText("client is disconnected but should not be"));
+		throw 1;
+	}*/
+
+
+	ByteArray closeMessage;
+	closeMessage.appendWithNoSize( createCloseControlMessage() );
+	processor.processSockMessage(closeMessage, 1);
+	EXPECT_FALSE(FDs.isFDOpen(1));
+	/*if(FDs.isFDOpen(1)){
+		TEST_PRINT(redTestText("Close control message did not disconnect client"));
+		throw 1;
+	}*/
+}
+
+
+
+
+
+TEST(WebsocketMessageProcessorTest, testExtractMessageWorksWithPartialReads)
+{
+	uint32_t mask = 3893384930;
+	uint32_t messageCount = 10;
+	size_t messageSize = 200;
+
+	std::vector<std::string> messages;
+	std::string maskedTestString;
+	for(uint32_t i = 0; i <messageCount; ++i){
+		messages.push_back( generateTestString(messageSize,i) );
+		maskedTestString.append(maskMessageForTesting(messages[i], mask+i, true, 130));
+	}
+
+	MockSystemWrapper systemWrap;
+	SetOfFileDescriptors FDs(&systemWrap);
+	FDs.addFD(1);
+	WebsocketMessageProcessorWrap processor(&FDs);
+
+	std::vector< ByteArray > decoded;
+	std::vector<int> types;
+
+	size_t readSize = messageSize/10;
+	size_t position = 0;
+
+	while( position < maskedTestString.size() ){
+		std::vector< ByteArray > decodedTemp;
+		ByteArray partial;
+		partial.appendWithNoSize( maskedTestString.substr(position, readSize) );
+
+		size_t decodedCount = processor.extractMessage (partial, decodedTemp, types, 1);
+		for(size_t i = 0; i< decodedCount; ++i){
+			decoded.push_back(decodedTemp[i]);
+		}
+		position+=readSize;
+	}
+
+	EXPECT_EQ( decoded.size(), messageCount );
+
+	for(size_t i = 0; i< decoded.size(); ++i){
+		EXPECT_STREQ( messages[i].c_str(), decoded[i].toString().c_str() );
+	}
+}
+
+TEST(WebsocketMessageProcessorTest, testExtractMessageWorksWithWholeReads)
+{
+	uint32_t mask = 3893384930;
+	uint32_t messageCount = 10;
+	size_t messageSize = 200;
+
+	std::vector<std::string> messages;
+	std::string maskedTestString;
+	for(uint32_t i = 0; i <messageCount; ++i){
+		messages.push_back( generateTestString(messageSize,i) );
+		maskedTestString.append(maskMessageForTesting(messages[i], mask+i, true, 130));
+	}
+
+	MockSystemWrapper systemWrap;
+	SetOfFileDescriptors FDs(&systemWrap);
+	FDs.addFD(1);
+	WebsocketMessageProcessorWrap processor(&FDs);
+
+	std::vector< ByteArray > decoded;
+	std::vector<int> types;
+
+	ByteArray input;
+	input.appendWithNoSize(maskedTestString);
+
+	size_t decodedCount = processor.extractMessage (input, decoded, types, 1);
+
+	EXPECT_EQ( decodedCount, messageCount );
+
+	for(size_t i = 0; i< decodedCount; ++i){
+		EXPECT_STREQ( messages[i].c_str(), decoded[i].toString().c_str() );
+	}
+}
+
+
+
+
+
+
+
+
+int main(int argc, char *argv[])
+{
+	::testing::InitGoogleTest(&argc, argv);
+	STAY_SILENT_ON_SUCCESS;
+	return RUN_ALL_TESTS();
+}
