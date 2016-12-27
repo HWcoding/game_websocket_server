@@ -20,7 +20,7 @@ StrongWarnings=" -Winvalid-pch -fmax-errors=5 -Wall -Wextra -Wformat=2 -Wformat-
  -Wuseless-cast -Wsign-conversion -Wfloat-conversion -Wlogical-op -Wmissing-declarations -pedantic\
  -ansi -Weffc++ -Wno-odr -Werror"
 WeakWarnings=" -Wall -Wextra -pedantic -ansi -Weffc++ -Wno-odr"
-TestWarnings=" -Wall"
+TestWarnings=" -Wall -Wno-odr"
 
 ReleaseOptimizations=" -O3 -falign-functions=16 -falign-loops=16 -march=native"
 DebugBuild="CFLAGS=-DDEBUG -Og -g3 -fno-omit-frame-pointer -fno-inline"

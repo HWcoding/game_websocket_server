@@ -75,6 +75,12 @@ struct Line
 	Point3D b;
 };
 
+struct Ray
+{
+	Point3D origin;
+	Point3D direction;
+};
+
 struct Sphere
 {
 	Point3D center {0.0,0.0,0.0};
@@ -86,10 +92,12 @@ struct Sphere
 
 namespace collision {
 
-bool doSpheresCollide(Sphere &a, Sphere &b);
-bool doesSphereCollideWithPlane(Sphere &s, Plane &p);
+bool doesSphereIntersectSphere(Sphere &a, Sphere &b);
+bool doesSphereIntersectPlane(Sphere &s, Plane &p);
 bool isSphereFullyBehindPlane(Sphere &s, Plane &p);
 bool isPartOfSphereBehindPlane(Sphere &s, Plane &p);
+bool doesLineIntersectPlane(Line &line, Plane &plane, Point3D &pointOfIntersection);
+bool doesRayIntersectShere(const Ray &ray, const Sphere &sphere, Point3D &pointOfIntersection);
 
 }
 

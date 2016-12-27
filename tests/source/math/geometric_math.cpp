@@ -11,12 +11,12 @@
 
 //speed tests
 void builtinInvSqrtProf(){
-	static double output = 1000;
-	output += 1/sqrt(output);
+	volatile double output = 1000;
+	output = 1/sqrt(output);
 }
 void fastInvSqrtProf(){
-	static double output = 1000;
-	output += fastInvSqrt(output);
+	volatile double output = 1000;
+	output = fastInvSqrt(output);
 }
 
 
@@ -163,12 +163,12 @@ TEST(collision, sphere)
 	Sphere a = {Point3D(3.0,2.0,6.0),3.499};
 	Sphere b = {Point3D(0.0,0.0,0.0),3.499};
 
-	EXPECT_FALSE( collision::doSpheresCollide(a,b) );
+	EXPECT_FALSE( collision::doesSphereIntersectSphere(a,b) );
 
 	Sphere c = {Point3D(3.0,2.0,6.0),3.501};
 	Sphere d = {Point3D(0.0,0.0,0.0),3.501};
 
-	EXPECT_TRUE( collision::doSpheresCollide(c,d) );
+	EXPECT_TRUE( collision::doesSphereIntersectSphere(c,d) );
 }
 
 
@@ -177,12 +177,12 @@ TEST(collision, sphereAndPlane)
 	Sphere s1 = {Point3D(0.0,3.5,0.0),3.49};
 	Plane  p1(Point3D(0.0,0.0,0.0),Point3D(0.0,0.0,1.0),Point3D(1.0,0.0,0.0));
 
-	EXPECT_FALSE( collision::doesSphereCollideWithPlane(s1, p1) );
+	EXPECT_FALSE( collision::doesSphereIntersectPlane(s1, p1) );
 
 	Sphere s2 = {Point3D(0.0,3.5,0.0),3.51};
 	Plane  p2(Point3D(0.0,0.0,0.0),Point3D(0.0,0.0,1.0),Point3D(1.0,0.0,0.0));
 
-	EXPECT_TRUE( collision::doesSphereCollideWithPlane(s2, p2) );
+	EXPECT_TRUE( collision::doesSphereIntersectPlane(s2, p2) );
 }
 
 TEST(collision, sphereFullyBehindPlane)
@@ -218,10 +218,88 @@ TEST(collision, partOfSphereBehindPlane)
 
 
 
+TEST(collision, lineIntersectsPlaneWorksWithIntersectingLine)
+{
+	Line line = {
+					{0.0,-0.1,0.0},
+					{0.0,0.1,0.0}
+				};
+
+	Plane  plane(Point3D(0.0,0.0,0.0),Point3D(0.0,0.0,1.0),Point3D(1.0,0.0,0.0));
+
+	Point3D pointOfIntersection;
+	bool doesIntersect = collision::doesLineIntersectPlane(line, plane, pointOfIntersection);
+
+	EXPECT_TRUE( doesIntersect );
+	EXPECT_DOUBLE_EQ(pointOfIntersection.x, 0.0);
+	EXPECT_DOUBLE_EQ(pointOfIntersection.y, 0.0);
+	EXPECT_DOUBLE_EQ(pointOfIntersection.z, 0.0);
+}
+
+TEST(collision, lineIntersectsPlaneWorksWithNonIntersectingLine)
+{
+	Line line = {
+					{0.0,0.0001,0.0},
+					{0.0,0.1,0.0}
+				};
+
+	Plane  plane(Point3D(0.0,0.0,0.0),Point3D(0.0,0.0,1.0),Point3D(1.0,0.0,0.0));
+
+	Point3D pointOfIntersection;
+	bool doesIntersect = collision::doesLineIntersectPlane(line, plane, pointOfIntersection);
+
+	EXPECT_FALSE( doesIntersect );
+}
+
+TEST(collision, lineIntersectsSphereWorksWithIntersectingRay)
+{
+	Ray ray = {
+					{0.0,1.0,0.0},
+					{0.0,-1.0,0.0}
+				};
+
+	Sphere sphere = {
+						{0.0,-1.0,0.0},
+						1.0
+					};
+
+	Point3D pointOfIntersection;
+	bool doesIntersect = collision::doesRayIntersectShere(ray, sphere, pointOfIntersection);
+
+
+	EXPECT_TRUE( doesIntersect );
+	EXPECT_DOUBLE_EQ(pointOfIntersection.x, 0.0);
+	EXPECT_DOUBLE_EQ(pointOfIntersection.y, 0.0);
+	EXPECT_DOUBLE_EQ(pointOfIntersection.z, 0.0);
+}
+
+TEST(collision, lineIntersectsSphereWorksWithNonIntersectingRay)
+{
+	Ray ray = {
+					{0.0,0.0001,0.0},
+					{0.0,-1.0,0.0}
+				};
+
+	Sphere sphere = {
+						{0.0,1.0,0.0},
+						1.0
+					};
+
+	Point3D pointOfIntersection;
+	bool doesIntersect = collision::doesRayIntersectShere(ray, sphere, pointOfIntersection);
+
+
+	EXPECT_FALSE( doesIntersect );
+}
+
+
+
+
+
 int main(int argc, char *argv[])
 {
-	//std::cout<<"builtin cycles taken = "<<profiling::countCpuCycles(builtinInvSqrtProf,100000)<<std::endl;
-	//std::cout<<"fast cycles taken =    "<<profiling::countCpuCycles(fastInvSqrtProf,100000)<<std::endl;
+	//std::cout<<"builtin cycles taken = "<<profiling::countCpuCycles(builtinInvSqrtProf,1000000)<<std::endl;
+	//std::cout<<"fast cycles taken =    "<<profiling::countCpuCycles(fastInvSqrtProf,1000000)<<std::endl;
 
 	::testing::InitGoogleTest(&argc, argv);
 	STAY_SILENT_ON_SUCCESS;

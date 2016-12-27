@@ -1,19 +1,19 @@
 #include "tests/test_lib/clock_cycle_counter.h"
 
-
 namespace {
 	void emptyFunction();
-	int64_t runFunctionTest(void (*func)(void), int64_t iterations);
+	int64_t getFunctionCycleCount(void (*func)(void), int64_t iterations);
 	int64_t getCpuCycles();
 }
 
-namespace profiling{
+namespace profiling {
 
+//calculate the minimum number of cpu cycles required to run func
 int64_t countCpuCycles(void (*func)(void), int64_t iterations)
 {
-	int64_t rdtscpTime = ::runFunctionTest(::emptyFunction,iterations);
-	int64_t cycleCount = ::runFunctionTest(func,iterations);
-	return (cycleCount-rdtscpTime)/iterations;
+	volatile int64_t baseCycleCount = ::getFunctionCycleCount(::emptyFunction,iterations);
+	volatile int64_t cycleCount = ::getFunctionCycleCount(func,iterations);
+	return (cycleCount-baseCycleCount);
 }
 
 } // profiling
@@ -23,17 +23,17 @@ int64_t countCpuCycles(void (*func)(void), int64_t iterations)
 //defined here to prevent inlining above
 namespace {
 
-int64_t runFunctionTest(void (*func)(void), int64_t iterations)
+//runs func through a number of iterations and
+//return the quickest time to complete a single call
+int64_t getFunctionCycleCount(void (*func)(void), int64_t iterations)
 {
-	int count = 100;
-	int64_t cycleCount = INT64_MAX;
+	volatile int64_t cycleCount = INT64_MAX;
 	getCpuCycles();
 	getCpuCycles();
-	while(--count) {
+
+	for(volatile int64_t i = iterations; i!=0; i--) {
 		volatile int64_t beginCycleCount = getCpuCycles();
-		for(int64_t i = iterations; i!=0; i--){
-			func();
-		}
+		func();
 		volatile int64_t endCycleCount = getCpuCycles();
 		endCycleCount = endCycleCount-beginCycleCount;
 		if(endCycleCount < cycleCount) cycleCount = endCycleCount;
@@ -41,11 +41,16 @@ int64_t runFunctionTest(void (*func)(void), int64_t iterations)
 	return cycleCount;
 }
 
-void emptyFunction(){return;}
+void emptyFunction()
+{
+	volatile int i = 0;
+	(void)i;
+	return;
+}
 
 int64_t getCpuCycles()
 {
-	uint64_t rax,rdx,rcx;
+	volatile uint64_t rax,rdx,rcx;
 	__asm__ volatile ( "rdtscp\n" : "=a" (rax), "=d" (rdx), "=c" (rcx) : : );
 	return static_cast<int64_t>( (rdx << 32) | rax );
 }

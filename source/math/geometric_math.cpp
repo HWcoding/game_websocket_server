@@ -19,7 +19,6 @@ double fastInvSqrt(double input)
 
 namespace v_math{
 
-
 Point3D fastNormalize(const Point3D &p)
 {
 	Point3D output(p.x, p.y, p.z);
@@ -103,18 +102,18 @@ double distance(const Point3D &p1, const Point3D &p2)
 
 } // namespace v_math
 
-//#include <iostream>
+
 
 namespace collision {
 
-bool doSpheresCollide(Sphere &a, Sphere &b)
+bool doesSphereIntersectSphere(Sphere &a, Sphere &b)
 {
 	double distanceSQ = v_math::squareDistance(a.center, b.center);
 	double radDist = a.radius+b.radius;
 	return distanceSQ <= radDist*radDist;
 }
 
-bool doesSphereCollideWithPlane(Sphere &s, Plane &p)
+bool doesSphereIntersectPlane(Sphere &s, Plane &p)
 {
 	double distance = v_math::dotProduct(s.center, p.planeNormal)-p.distFromOrigin;
 	return fabs(distance) < s.radius;
@@ -123,22 +122,39 @@ bool doesSphereCollideWithPlane(Sphere &s, Plane &p)
 bool isSphereFullyBehindPlane(Sphere &s, Plane &p)
 {
 	double distance = v_math::dotProduct(s.center, p.planeNormal)-p.distFromOrigin;
-/*	std::cout<<"isSphereFullyBehindPlane"<<std::endl;
-	std::cout<<"distFromOrigin: "<<p.distFromOrigin<<std::endl;
-	std::cout<<"radius: "<<s.radius<<std::endl;
-	std::cout<<"distance: "<< distance<<std::endl;*/
 	return distance < -s.radius;
 }
 
 bool isPartOfSphereBehindPlane(Sphere &s, Plane &p)
 {
 	double distance = v_math::dotProduct(s.center, p.planeNormal)-p.distFromOrigin;
-/*	std::cout<<"isPartOfSphereBehindPlane"<<std::endl;
-	std::cout<<"distFromOrigin: "<<p.distFromOrigin<<std::endl;
-	std::cout<<"radius: "<<s.radius<<std::endl;
-	std::cout<<"distance: "<< distance<<std::endl;*/
 	return distance <= s.radius;
 }
 
-} // namespace collision
+bool doesLineIntersectPlane(Line &line, Plane &plane, Point3D &pointOfIntersection)
+{
+	using namespace v_math;
 
+	Point3D diff = subtract(line.b, line.a);
+	double dotOfPlaneAndA = dotProduct(plane.planeNormal, line.a);
+	double dotOfPlaneAndDiff = dotProduct(plane.planeNormal, diff);
+	double time = (plane.distFromOrigin - dotOfPlaneAndA)/dotOfPlaneAndDiff;
+	if(time >= 0.0 && time <= 1.0f) {
+		Point3D vectorToIntersection = scale(diff, time);
+		pointOfIntersection = add(line.a, vectorToIntersection);
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+bool doesRayIntersectShere(const Ray &ray, const Sphere &sphere, Point3D &pointOfIntersection)
+{
+	(void)sphere;
+	(void)ray;
+	pointOfIntersection = Point3D{1.0,1.0,1.0};
+	return true;
+}
+
+} // namespace collision
