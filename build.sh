@@ -517,7 +517,7 @@ function compilePoco() {
 	make distclean &>>../poco/build.log
 
 
-	cp ./CONTRIBUTORS ../poco/CONTRIBUTORS
+	cp ./CONTRIBUTORS ../poco/poco_CONTRIBUTORS
 	cp ./README ../poco/poco_README
 	cp ./README.md ../poco/poco_README.md
 	cp ./LICENSE ../poco/poco_LICENCE
@@ -627,13 +627,12 @@ function buildGoogleTest(){
 
 		echo ""
 		printHighlight "Compiling Google Test"
-		{ g++ -isystem ${GTEST_DIR}/include -I${GTEST_DIR} \
+		g++ -isystem ${GTEST_DIR}/include -I${GTEST_DIR} \
 			-isystem ${GMOCK_DIR}/include -I${GMOCK_DIR} \
-			-pthread ${ReleaseOptimizations} -c ${GTEST_DIR}/src/gtest-all.cc; } &
-		{ g++ -isystem ${GTEST_DIR}/include -I${GTEST_DIR} \
+			-pthread ${ReleaseOptimizations} -c ${GTEST_DIR}/src/gtest-all.cc
+		g++ -isystem ${GTEST_DIR}/include -I${GTEST_DIR} \
 			-isystem ${GMOCK_DIR}/include -I${GMOCK_DIR} \
-			-pthread ${ReleaseOptimizations} -c ${GMOCK_DIR}/src/gmock-all.cc; } &
-		wait
+			-pthread ${ReleaseOptimizations} -c ${GMOCK_DIR}/src/gmock-all.cc
 		gcc-ar -rv ../google_test/google_test.a gtest-all.o gmock-all.o
 
 		cd ../
