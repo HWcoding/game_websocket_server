@@ -276,7 +276,7 @@ TEST(collision, lineIntersectsSphereWorksWithIntersectingRay)
 TEST(collision, lineIntersectsSphereWorksWithNonIntersectingRay)
 {
 	Ray ray = {
-					{0.0,0.0001,0.0},
+					{0.0,-0.001,0.0},
 					{0.0,-1.0,0.0}
 				};
 
@@ -292,7 +292,39 @@ TEST(collision, lineIntersectsSphereWorksWithNonIntersectingRay)
 	EXPECT_FALSE( doesIntersect );
 }
 
+TEST(collision, fastLineIntersectsSphereWorksWithIntersectingRay)
+{
+	Ray ray = {
+					{0.0,1.0,0.0},
+					{0.0,-1.0,0.0}
+				};
 
+	Sphere sphere = {
+						{0.0,-1.0,0.0},
+						1.0
+					};
+
+	bool doesIntersect = collision::doesRayIntersectShere(ray, sphere);
+
+	EXPECT_TRUE( doesIntersect );
+}
+
+TEST(collision, fastLineIntersectsSphereWorksWithNonIntersectingRay)
+{
+	Ray ray = {
+					{0.0,-0.001,0.0},
+					{0.0,-1.0,0.0}
+				};
+
+	Sphere sphere = {
+						{0.0,1.0,0.0},
+						1.0
+					};
+
+	bool doesIntersect = collision::doesRayIntersectShere(ray, sphere);
+
+	EXPECT_FALSE( doesIntersect );
+}
 
 
 

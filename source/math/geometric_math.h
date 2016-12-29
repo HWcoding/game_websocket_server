@@ -87,6 +87,11 @@ struct Sphere
 	double radius {1.0};
 };
 
+struct Capsule
+{
+
+};
+
 
 
 
@@ -98,6 +103,7 @@ bool isSphereFullyBehindPlane(Sphere &s, Plane &p);
 bool isPartOfSphereBehindPlane(Sphere &s, Plane &p);
 bool doesLineIntersectPlane(Line &line, Plane &plane, Point3D &pointOfIntersection);
 bool doesRayIntersectShere(const Ray &ray, const Sphere &sphere, Point3D &pointOfIntersection);
+bool doesRayIntersectShere(const Ray &ray, const Sphere &sphere);
 
 }
 
