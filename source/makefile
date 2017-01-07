@@ -2,7 +2,6 @@
 EXECUTABLE_NAME = program
 
 
-
 # we need to use absolute path for dependency files to work properly
 PROJECT_DIRECTORY = $(abspath ../)/
 
@@ -15,8 +14,6 @@ OBJ_DIR := $(PROJECT_DIRECTORY)objs/
 DEP_DIR := $(PROJECT_DIRECTORY)deps/
 DEP_TEMP := $(DEP_DIR)temp/
 HEAD_PATH := $(PROJECT_DIRECTORY)
-POCO_HEAD_PATH := $(PROJECT_DIRECTORY)external/poco/include/
-POCO_LIB_PATH := $(PROJECT_DIRECTORY)external/poco/$(LINK_TYPE)/
 
 LIBRARIES =  -lpthread -lstdc++ -lm -lcrypto -lssl -ldl
 
@@ -39,7 +36,7 @@ DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP_TEMP)$*.Td
 # command to move dependencies from the temp folder into the deps folder
 MOV_DEPS = mv -f $(DEP_TEMP)$*.Td $(DEP_DIR)$*.d
 
-CXX = $(COMP) -I $(HEAD_PATH) -isystem $(POCO_HEAD_PATH) $(CFLAGS) $(DEPFLAGS) -std=c++14
+CXX = $(COMP) -I $(HEAD_PATH) $(CFLAGS) $(DEPFLAGS) -std=c++14
 
 DEPFILES = $(patsubst %,$(DEP_DIR)%.d,$(basename $(notdir $(OBJECTS))))
 
