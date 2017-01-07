@@ -4,15 +4,37 @@
 #include <math.h>
 #include <string.h>
 
+
+#include <xmmintrin.h>
 double fastInvSqrt(double input)
 {
-	int64_t bits;
+/*	int64_t bits;
 	memcpy(&bits, &input, sizeof(int64_t));
 	bits= 6910238826744275866LL - (bits>>1);
 	double halfInput = 0.5*input;
 	memcpy(&input, &bits, sizeof(int64_t));
 	input *= 1.5 - halfInput*input*input;
 	return input;
+*/
+	float f = (float)input;
+	float out;
+	_mm_store_ss( &out, _mm_rsqrt_ss( _mm_load_ss( &f ) ) );
+	return (double) out;
+}
+
+
+// extremely fast but very inaccurate. Good for heuristics
+// fastSqrt(100) = 10.25
+double fastSqrt(double f)
+{
+	int64_t i;
+	memcpy(&i , &f, sizeof(uint64_t));
+	i -= 0x3FF0000000000000;
+	i = i>>1;
+	i += 0x3FF0000000000000;
+	double ret;
+	memcpy(&ret, &i, sizeof(uint64_t));
+	return ret;
 }
 
 
@@ -99,38 +121,43 @@ double distance(const Point3D &p1, const Point3D &p2)
 	return sqrt(squareDistance(p1,p2));
 }
 
+double estimatedDistance(const Point3D &a, const Point3D &b)
+{
+	return fastSqrt(squareDistance(a, b));
+}
+
 
 } // namespace v_math
 
 
 namespace collision {
 
-bool doesSphereIntersectSphere(Sphere &a, Sphere &b)
+bool doesSphereIntersectSphere(const Sphere &a, const Sphere &b)
 {
 	double distanceSQ = v_math::squareDistance(a.center, b.center);
 	double radDist = a.radius+b.radius;
 	return distanceSQ <= radDist*radDist;
 }
 
-bool doesSphereIntersectPlane(Sphere &s, Plane &p)
+bool doesSphereIntersectPlane(const Sphere &s, const Plane &p)
 {
 	double distance = v_math::dotProduct(s.center, p.planeNormal)-p.distFromOrigin;
 	return fabs(distance) < s.radius;
 }
 
-bool isSphereFullyBehindPlane(Sphere &s, Plane &p)
+bool isSphereFullyBehindPlane(const Sphere &s, const Plane &p)
 {
 	double distance = v_math::dotProduct(s.center, p.planeNormal)-p.distFromOrigin;
 	return distance < -s.radius;
 }
 
-bool isPartOfSphereBehindPlane(Sphere &s, Plane &p)
+bool isPartOfSphereBehindPlane(const Sphere &s, const Plane &p)
 {
 	double distance = v_math::dotProduct(s.center, p.planeNormal)-p.distFromOrigin;
 	return distance <= s.radius;
 }
 
-bool doesLineIntersectPlane(Line &line, Plane &plane, Point3D &pointOfIntersection)
+bool doesLineIntersectPlane(const Line &line, const Plane &plane, Point3D &pointOfIntersection)
 {
 	using namespace v_math;
 
@@ -148,23 +175,24 @@ bool doesLineIntersectPlane(Line &line, Plane &plane, Point3D &pointOfIntersecti
 	}
 }
 
-bool doesRayIntersectShere(const Ray &ray, const Sphere &sphere, Point3D &pointOfIntersection)
+bool doesRayIntersectSphere(const Ray &ray, const Sphere &sphere, Point3D &pointOfIntersection)
 {
 	using namespace v_math;
 	Point3D vectorToCenter = subtract(ray.origin, sphere.center);
 
-	double dotBetweenRayAndCenter = dotProduct(vectorToCenter, ray.direction);
-	double distanceToEdgeOfSphere = dotProduct(vectorToCenter,vectorToCenter) - sphere.radius * sphere.radius;
+	double dotOfRayAndCenter = dotProduct(vectorToCenter, ray.direction);
+	double distanceToEdgeOfSphere = dotProduct(vectorToCenter,vectorToCenter) -
+	                                                 sphere.radius * sphere.radius;
 
 	// if starting poit is outside sphere and points away from sphere, we miss
-	if(distanceToEdgeOfSphere > 0.0 && dotBetweenRayAndCenter > 0.0) return false;
+	if(distanceToEdgeOfSphere > 0.0 && dotOfRayAndCenter > 0.0) return false;
 
-	double discriminant = dotBetweenRayAndCenter * dotBetweenRayAndCenter - distanceToEdgeOfSphere;
+	double discriminant = dotOfRayAndCenter * dotOfRayAndCenter - distanceToEdgeOfSphere;
 
 	// no real roots so ray is not inline with sphere and misses
 	if(discriminant < 0.0) return false;
 
-	double time = -dotBetweenRayAndCenter - sqrt(discriminant);
+	double time = -dotOfRayAndCenter - sqrt(discriminant);
 	if(time < 0.0) time = 0.0;
 	Point3D vectorToIntersection = scale(ray.direction, time);
 	pointOfIntersection = add(ray.origin, vectorToIntersection);
@@ -172,22 +200,23 @@ bool doesRayIntersectShere(const Ray &ray, const Sphere &sphere, Point3D &pointO
 }
 
 // faster version that does not find intersection point
-bool doesRayIntersectShere(const Ray &ray, const Sphere &sphere)
+bool doesRayIntersectSphere(const Ray &ray, const Sphere &sphere)
 {
 	using namespace v_math;
 	Point3D vectorToCenter = subtract(ray.origin, sphere.center);
 
-	double distanceToEdgeOfSphere = dotProduct(vectorToCenter,vectorToCenter) - sphere.radius * sphere.radius;
+	double distanceToEdgeOfSphere = dotProduct(vectorToCenter,vectorToCenter) -
+	                                                  sphere.radius * sphere.radius;
 
 	// if at least one real root we hit
 	if(distanceToEdgeOfSphere <= 0.0) return true;
 
-	double dotBetweenRayAndCenter = dotProduct(vectorToCenter, ray.direction);
+	double dotOfRayAndCenter = dotProduct(vectorToCenter, ray.direction);
 
 	// if starting poit is outside sphere and points away from sphere, we miss
-	if(dotBetweenRayAndCenter > 0.0) return false;
+	if(dotOfRayAndCenter > 0.0) return false;
 
-	double discriminant = dotBetweenRayAndCenter * dotBetweenRayAndCenter - distanceToEdgeOfSphere;
+	double discriminant = dotOfRayAndCenter * dotOfRayAndCenter - distanceToEdgeOfSphere;
 
 	// no real roots so ray is not inline with sphere and misses
 	if(discriminant < 0.0) return false;
@@ -198,3 +227,17 @@ bool doesRayIntersectShere(const Ray &ray, const Sphere &sphere)
 
 
 } // namespace collision
+
+
+
+
+
+
+
+
+
+
+
+
+
+

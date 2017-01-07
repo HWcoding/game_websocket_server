@@ -32,6 +32,21 @@ private:
 };
 
 
+class ThreeJSPageRequestHandler:
+public Poco::Net::HTTPRequestHandler
+{
+public:
+	ThreeJSPageRequestHandler(const std::string& format);
+
+	void handleRequest(Poco::Net::HTTPServerRequest& request,
+					   Poco::Net::HTTPServerResponse& response);
+
+private:
+	std::string responseString {};
+	std::string _format;
+};
+
+
 
 class IndexPageRequestHandlerFactory:
 public Poco::Net::HTTPRequestHandlerFactory

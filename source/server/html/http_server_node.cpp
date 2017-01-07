@@ -53,15 +53,42 @@ void IndexPageRequestHandler::handleRequest(HTTPServerRequest& request,
 	cookie.setMaxAge(3600); // 1 hour
 	response.addCookie(cookie);
 
+
+
+	responseString = loadFileToString("./client/Testindex.html");
+
 	std::ostream& ostr = response.send();
 	ostr << responseString;
 }
 
 
+ThreeJSPageRequestHandler::ThreeJSPageRequestHandler(const std::string& format):
+		responseString(loadFileToString("./client/three.min.js")),
+		_format(format)
+	{}
 
+void ThreeJSPageRequestHandler::handleRequest(HTTPServerRequest& request,
+                              HTTPServerResponse& response)
+{
+	Application& app = Application::instance();
+	app.logger().information("Request from "
+	    + request.clientAddress().toString());
 
+	response.setChunkedTransferEncoding(true);
+	response.setContentType("text/html");
+	response.setKeepAlive(true);
 
+	// set cookie in response
+//	Poco::Net::HTTPCookie cookie("name", "TEST_COOKIE");
+//	cookie.setPath("/");
+//	cookie.setMaxAge(3600); // 1 hour
+//	response.addCookie(cookie);
 
+	responseString = loadFileToString("./client/three.min.js");
+
+	std::ostream& ostr = response.send();
+	ostr << responseString;
+}
 
 
 
@@ -71,7 +98,10 @@ HTTPRequestHandler* IndexPageRequestHandlerFactory::createRequestHandler(
 {
 	if (request.getURI() == "/")
 		return new IndexPageRequestHandler(_format);
+	else if (request.getURI() == "/three.js")
+		return new ThreeJSPageRequestHandler(_format);
 	else
+		std::cout<<"requested URI is "<<request.getURI()<<std::endl;
 		return 0;
 }
 

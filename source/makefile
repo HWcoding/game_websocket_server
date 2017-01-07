@@ -47,7 +47,8 @@ DEPFILES = $(patsubst %,$(DEP_DIR)%.d,$(basename $(notdir $(OBJECTS))))
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJECTS) $(POCO_LIBS)
+$(EXECUTABLE): $(OBJECTS)
+#$(POCO_LIBS)
 	$(CXX) -o $@ $^ $(LIBRARIES)
 
 # in order for this rule to work filenames cannot contain the

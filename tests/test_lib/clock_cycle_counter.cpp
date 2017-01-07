@@ -31,7 +31,7 @@ int64_t getFunctionCycleCount(void (*func)(void), int64_t iterations)
 	getCpuCycles();
 	getCpuCycles();
 
-	for(volatile int64_t i = iterations; i!=0; i--) {
+	for(volatile int64_t i = iterations; i!=0; --i) {
 		volatile int64_t beginCycleCount = getCpuCycles();
 		func();
 		volatile int64_t endCycleCount = getCpuCycles();

@@ -22,10 +22,6 @@ namespace HeaderHelpers {
 }// HeaderHelpers namespace
 
 
-
-
-
-
 HandshakeHeaders::HandshakeHeaders() : Connection(), Upgrade(), SecWebSocketKey(), SecWebSocketProtocol(), Cookie(){}
 
 HandshakeHeaders::HandshakeHeaders(const HandshakeHeaders& h) noexcept : Connection(h.Connection),
@@ -39,7 +35,6 @@ HandshakeHeadersInterface::~HandshakeHeadersInterface(){}
 
 bool HandshakeHeaders::fillHeaders(const ByteArray &input){
 	std::vector< ByteArray > headers = HeaderHelpers::splitStringIntoLines(input);
-
 
 	for(size_t i =1; i<headers.size(); ++i){ //skip first line
 		if ( HeaderHelpers::isUpgradeHeader(headers[i])) {
@@ -101,8 +96,8 @@ bool HandshakeHeaders::checkHeaders() const{
 		return false;
 	}
 	else if(Cookie.empty()){
-		LOG_ERROR("No cookie header");
-		return false;
+		//LOG_ERROR("No cookie header"); //TODO
+		return true;//false;
 	}
 	return true;
 }

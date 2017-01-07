@@ -49,6 +49,8 @@ public:
 	double   getNextDouble() const;
 	bool     getNextBool()   const;
 	std::string getNextString() const;
+	template<class T>
+	T getNext() const;
 	///@}
 	/// @name Constructors
 	///@{
@@ -108,7 +110,13 @@ private:
 
 
 
-
+template<class T>
+inline T ByteArray::getNext() const
+{
+	T output;
+	getBytes(&output, sizeof (T));
+	return output;
+}
 
 
 inline void ByteArray::append(const ByteArray &arr)
@@ -126,7 +134,6 @@ inline void ByteArray::append(const bool &num)
 template<class T>
 inline void ByteArray::append(const T &num)
 {
-	static_assert(std::is_arithmetic<T>::value, "attempted to store incompatable type");
 	appendBytes(&num, sizeof (T));
 }
 

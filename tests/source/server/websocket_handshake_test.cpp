@@ -144,19 +144,19 @@ TEST(WebsocketHandshakeTest, checkHeaders){
 		//TEST_PRINT(redTestText("returned true with bad SecWebSocketProtocol header"));
 		throw 1;
 	}*/
-	testHeader.getSecWebSocketProtocolRef() = testTemp;
+//	testHeader.getSecWebSocketProtocolRef() = testTemp;
 
-	testTemp = testHeader.getCookieRef();
-	testHeader.getCookieRef() = ByteArray();
+//	testTemp = testHeader.getCookieRef();
+//	testHeader.getCookieRef() = ByteArray();
 
-	EXPECT_EQ(testHeader.checkHeaders(), false);
+//	EXPECT_EQ(testHeader.checkHeaders(), false);
 	/*if(testHeader.checkHeaders()){
 		//TEST_PRINT(redTestText("returned true with bad Cookie header"));
 		throw 1;
 	}*/
-	testHeader.getCookieRef() = testTemp;
+//	testHeader.getCookieRef() = testTemp;
 
-	EXPECT_EQ(testHeader.checkHeaders(), true);
+//	EXPECT_EQ(testHeader.checkHeaders(), true);
 	/*if(!testHeader.checkHeaders()){
 		//TEST_PRINT(redTestText("returned false with good data"));
 		throw 1;

@@ -23,7 +23,7 @@ TestWarnings=" -Wall -Wno-odr"
 ReleaseOptimizations=" -O3 -falign-functions=16 -falign-loops=16 -march=native"
 DebugBuild="CFLAGS=-DDEBUG -Og -g3 -fno-omit-frame-pointer -fno-inline"
 ReleaseBuild="CFLAGS=-DNDEBUG -flto ${ReleaseOptimizations}"
-TestBuild="CFLAGS=-DNDEBUG -DTESTING -O0"
+TestBuild="CFLAGS=-DDEBUG -DTESTING -O0"
 #-flto
 # convert arguments to lower case
 FirstArg=$( echo "${1}" | tr '[:upper:]' '[:lower:]')
@@ -708,47 +708,71 @@ function buildCppcheck() {
 
 
 
-
 function installPackages() {
-	printHighlight "This will install openssl, libssl-dev, libpq-dev, unixodbc-dev, and doxygen"
-	if [ $(isNotInstalled openssl) == "true" ]; then
-		printHighlight "Installing openssl"
-		sudo apt-get install openssl
-	else
-		printHighlight "openssl already installed"
-	fi
+	#sudo apt-get install lighttpd
+	#sudo service lighttpd start
+#	printHighlight "This will install openssl, wget, libssl-dev, libpq-dev, unixodbc-dev, graphviz, and doxygen"
+	printHighlight "This will install graphviz and doxygen"
+#	if [ $(isNotInstalled openssl) == "true" ]; then
+#		printHighlight "Installing openssl"
+#		sudo apt-get install openssl
+#	else
+#		printHighlight "openssl already installed"
+#	fi
 
-	if [ $(isNotInstalled libssl-dev) == "true" ]; then
-		printHighlight "Installing libssl-dev"
-		sudo apt-get install libssl-dev
-	else
-		printHighlight "libssl-dev already installed"
-	fi
+#	if [ $(isNotInstalled wget) == "true" ]; then
+#		printHighlight "Installing wget"
+#		sudo apt-get install wget
+#	else
+#		printHighlight "wget already installed"
+#	fi
 
-	if [ $(isNotInstalled libpq-dev) == "true" ]; then
-		printHighlight "Installing libpq-dev"
-		sudo apt-get install libpq-dev
-	else
-		printHighlight "libpq-dev already installed"
-	fi
+#	if [ $(isNotInstalled libssl-dev) == "true" ]; then
+#		printHighlight "Installing libssl-dev"
+#		sudo apt-get install libssl-dev
+#	else
+#		printHighlight "libssl-dev already installed"
+#	fi
 
-	if [ $(isNotInstalled unixodbc-dev) == "true" ]; then
-		printHighlight "Installing unixodbc-dev"
-		sudo apt-get install unixodbc-dev
+#	if [ $(isNotInstalled libpq-dev) == "true" ]; then
+#		printHighlight "Installing libpq-dev"
+#		sudo apt-get install libpq-dev
+#	else
+#		printHighlight "libpq-dev already installed"
+#	fi
+
+#	if [ $(isNotInstalled unixodbc-dev) == "true" ]; then
+#		printHighlight "Installing unixodbc-dev"
+#		sudo apt-get install unixodbc-dev
+#	else
+#		printHighlight "unixodbc-dev already installed"
+#	fi
+
+	if [ $(isNotInstalled graphviz) == "true" ]; then
+		printHighlight "Installing graphviz"
+		sudo apt-get install graphviz
 	else
-		printHighlight "unixodbc-dev already installed"
+		printHighlight "graphviz is already installed"
 	fi
 
 	if [ $(isNotInstalled doxygen) == "true" ]; then
 		printHighlight "Installing doxygen"
 		sudo apt-get install doxygen
 	else
-		printHighlight "Doxygen is already installed"
+		printHighlight "doxygen is already installed"
 	fi
 }
 
-
-
+function installThreeJS() {
+	cd ../client
+	if [  ! -f "./three.min.js" ]; then
+		printHighlight "Downloading three.min.js from github"
+		wget "https://github.com/mrdoob/three.js/raw/dev/build/three.min.js"
+	else
+		printHighlight "three.js already downloaded"
+	fi
+	cd ../external
+}
 
 
 
@@ -759,10 +783,13 @@ function buildExternals() {
 	fi
 	cd ./external
 	installPackages
-	buildPoco
+	installThreeJS
+#	buildPoco
 	buildCppcheck
 	buildGoogleTest
 	printHighlight "Waiting for packages to finish compiling"
+
+
 	wait # for all packages to compile
 	cd ../
 }
@@ -827,6 +854,11 @@ function main() {
 
 	#create missing directories
 	buildDirecrories
+
+	sudo cp "/home/pc001/Projects/server/client/Testindex.html" "/var/www/html/index.html"
+
+	sudo cp "/home/pc001/Projects/server/client/three.min.js" "/var/www/html/three.js"
+
 
 	makeBuildCompatable
 

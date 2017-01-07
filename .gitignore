@@ -1,5 +1,6 @@
 analysis/*.txt
 analysis/*.a1
+client/three.min.js
 deps/*d
 deps/lastBuildType.txt
 docs/html

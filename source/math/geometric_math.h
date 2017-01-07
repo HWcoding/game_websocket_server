@@ -26,6 +26,7 @@ double dotProduct(const Point3D &p1, const Point3D &p2);
 Point3D crossProduct(const Point3D &p1, const Point3D &p2);
 double squareDistance(const Point3D &p1, const Point3D &p2);
 double distance(const Point3D &p1, const Point3D &p2);
+double estimatedDistance(const Point3D &a, const Point3D &b);
 
 } // namespace vector_math
 
@@ -93,18 +94,21 @@ struct Capsule
 };
 
 
+double fastSqrt(double f);
+
 
 
 namespace collision {
 
-bool doesSphereIntersectSphere(Sphere &a, Sphere &b);
-bool doesSphereIntersectPlane(Sphere &s, Plane &p);
-bool isSphereFullyBehindPlane(Sphere &s, Plane &p);
-bool isPartOfSphereBehindPlane(Sphere &s, Plane &p);
-bool doesLineIntersectPlane(Line &line, Plane &plane, Point3D &pointOfIntersection);
-bool doesRayIntersectShere(const Ray &ray, const Sphere &sphere, Point3D &pointOfIntersection);
-bool doesRayIntersectShere(const Ray &ray, const Sphere &sphere);
+bool doesSphereIntersectSphere(const Sphere &a, const Sphere &b);
+bool doesSphereIntersectPlane(const Sphere &s, const Plane &p);
+bool isSphereFullyBehindPlane(const Sphere &s, const Plane &p);
+bool isPartOfSphereBehindPlane(const Sphere &s, const Plane &p);
+bool doesLineIntersectPlane(const Line &line, const Plane &plane, Point3D &pointOfIntersection);
+bool doesRayIntersectSphere(const Ray &ray, const Sphere &sphere, Point3D &pointOfIntersection);
+bool doesRayIntersectSphere(const Ray &ray, const Sphere &sphere);
 
 }
+
 
 #endif /* SOURCE_MATH_GEOMETRIC_MATH_H */

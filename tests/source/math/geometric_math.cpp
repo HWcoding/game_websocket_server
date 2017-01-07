@@ -11,15 +11,35 @@
 
 //speed tests
 void builtinInvSqrtProf(){
-	volatile double output = 1000;
-	output = 1/sqrt(output);
+	volatile double output = 1001;
+	output = 1.0/sqrt(output);
 }
 void fastInvSqrtProf(){
-	volatile double output = 1000;
+	volatile double output = 1001;
 	output = fastInvSqrt(output);
 }
 
 
+void builtinSqrtProf(){
+	volatile double output = 1001;
+	output = sqrt(output);
+}
+void fastSqrtProf(){
+	volatile double output = 1001;
+	output = fastSqrt(output);
+}
+
+TEST(math, fastInvSqrt)
+{
+	EXPECT_NEAR(fastInvSqrt(100), 0.1, 0.00001);
+}
+
+
+TEST(math, fastSqrt)
+{
+	//very inaccurate
+	EXPECT_NEAR(fastSqrt(100), 10, 0.3);
+}
 
 
 TEST(vector_math, scale)
@@ -46,7 +66,7 @@ TEST(vector_math, fastNormalize)
 
 	double length = sqrt(r.x*r.x+r.y*r.y+r.z*r.z);
 
-	// normalize uses approximate inverse square
+	// fastNormalize uses approximate inverse square
 	// which is inaccurate
 	EXPECT_NEAR(length, 1.0, 0.001);
 
@@ -221,7 +241,7 @@ TEST(collision, partOfSphereBehindPlane)
 TEST(collision, lineIntersectsPlaneWorksWithIntersectingLine)
 {
 	Line line = {
-					{0.0,-0.1,0.0},
+					{0.0,-0.000001,0.0},
 					{0.0,0.1,0.0}
 				};
 
@@ -231,15 +251,15 @@ TEST(collision, lineIntersectsPlaneWorksWithIntersectingLine)
 	bool doesIntersect = collision::doesLineIntersectPlane(line, plane, pointOfIntersection);
 
 	EXPECT_TRUE( doesIntersect );
-	EXPECT_DOUBLE_EQ(pointOfIntersection.x, 0.0);
-	EXPECT_DOUBLE_EQ(pointOfIntersection.y, 0.0);
-	EXPECT_DOUBLE_EQ(pointOfIntersection.z, 0.0);
+	EXPECT_NEAR(pointOfIntersection.x, 0.0, 0.000001);
+	EXPECT_NEAR(pointOfIntersection.y, 0.0, 0.000001);
+	EXPECT_NEAR(pointOfIntersection.z, 0.0, 0.000001);
 }
 
 TEST(collision, lineIntersectsPlaneWorksWithNonIntersectingLine)
 {
 	Line line = {
-					{0.0,0.0001,0.0},
+					{0.0,0.000001,0.0},
 					{0.0,0.1,0.0}
 				};
 
@@ -254,7 +274,7 @@ TEST(collision, lineIntersectsPlaneWorksWithNonIntersectingLine)
 TEST(collision, lineIntersectsSphereWorksWithIntersectingRay)
 {
 	Ray ray = {
-					{0.0,1.0,0.0},
+					{0.0,0.000001,0.0},
 					{0.0,-1.0,0.0}
 				};
 
@@ -264,19 +284,19 @@ TEST(collision, lineIntersectsSphereWorksWithIntersectingRay)
 					};
 
 	Point3D pointOfIntersection;
-	bool doesIntersect = collision::doesRayIntersectShere(ray, sphere, pointOfIntersection);
+	bool doesIntersect = collision::doesRayIntersectSphere(ray, sphere, pointOfIntersection);
 
 
 	EXPECT_TRUE( doesIntersect );
-	EXPECT_DOUBLE_EQ(pointOfIntersection.x, 0.0);
-	EXPECT_DOUBLE_EQ(pointOfIntersection.y, 0.0);
-	EXPECT_DOUBLE_EQ(pointOfIntersection.z, 0.0);
+	EXPECT_NEAR(pointOfIntersection.x, 0.0, 0.000001);
+	EXPECT_NEAR(pointOfIntersection.y, 0.0, 0.000001);
+	EXPECT_NEAR(pointOfIntersection.z, 0.0, 0.000001);
 }
 
 TEST(collision, lineIntersectsSphereWorksWithNonIntersectingRay)
 {
 	Ray ray = {
-					{0.0,-0.001,0.0},
+					{0.0,-0.000001,0.0},
 					{0.0,-1.0,0.0}
 				};
 
@@ -286,7 +306,7 @@ TEST(collision, lineIntersectsSphereWorksWithNonIntersectingRay)
 					};
 
 	Point3D pointOfIntersection;
-	bool doesIntersect = collision::doesRayIntersectShere(ray, sphere, pointOfIntersection);
+	bool doesIntersect = collision::doesRayIntersectSphere(ray, sphere, pointOfIntersection);
 
 
 	EXPECT_FALSE( doesIntersect );
@@ -295,7 +315,7 @@ TEST(collision, lineIntersectsSphereWorksWithNonIntersectingRay)
 TEST(collision, fastLineIntersectsSphereWorksWithIntersectingRay)
 {
 	Ray ray = {
-					{0.0,1.0,0.0},
+					{0.0,0.000001,0.0},
 					{0.0,-1.0,0.0}
 				};
 
@@ -304,7 +324,7 @@ TEST(collision, fastLineIntersectsSphereWorksWithIntersectingRay)
 						1.0
 					};
 
-	bool doesIntersect = collision::doesRayIntersectShere(ray, sphere);
+	bool doesIntersect = collision::doesRayIntersectSphere(ray, sphere);
 
 	EXPECT_TRUE( doesIntersect );
 }
@@ -312,26 +332,31 @@ TEST(collision, fastLineIntersectsSphereWorksWithIntersectingRay)
 TEST(collision, fastLineIntersectsSphereWorksWithNonIntersectingRay)
 {
 	Ray ray = {
-					{0.0,-0.001,0.0},
-					{0.0,-1.0,0.0}
-				};
+				{0.0,-0.000001,0.0},
+				{0.0,-1.0,0.0}
+			};
 
 	Sphere sphere = {
 						{0.0,1.0,0.0},
 						1.0
 					};
 
-	bool doesIntersect = collision::doesRayIntersectShere(ray, sphere);
+	bool doesIntersect = collision::doesRayIntersectSphere(ray, sphere);
 
 	EXPECT_FALSE( doesIntersect );
 }
 
 
 
+
+
 int main(int argc, char *argv[])
 {
-	//std::cout<<"builtin cycles taken = "<<profiling::countCpuCycles(builtinInvSqrtProf,1000000)<<std::endl;
-	//std::cout<<"fast cycles taken =    "<<profiling::countCpuCycles(fastInvSqrtProf,1000000)<<std::endl;
+	//std::cout<<"builtinInvSqrtProf cycles taken = "<<profiling::countCpuCycles(builtinInvSqrtProf,1000000)<<std::endl;
+	//std::cout<<"fastInvSqrtProf cycles taken =    "<<profiling::countCpuCycles(fastInvSqrtProf,1000000)<<std::endl;
+
+	//std::cout<<"builtinSqrtProf cycles taken = "<<profiling::countCpuCycles(builtinSqrtProf,1000000)<<std::endl;
+	//std::cout<<"fastSqrtProf cycles taken =    "<<profiling::countCpuCycles(fastSqrtProf,1000000)<<std::endl;
 
 	::testing::InitGoogleTest(&argc, argv);
 	STAY_SILENT_ON_SUCCESS;
