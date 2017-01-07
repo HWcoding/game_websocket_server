@@ -433,173 +433,6 @@ function isNotInstalled() {
 }
 
 
-function compilePoco() {
-	cd ./poco_source
-	echo""
-	printHighlight "Compiling Poco"
-
-
-	./configure --everything --static --no-tests --poquito --no-samples --typical --omit=Data/MySQL --cflags=" ${ReleaseOptimizations}" &>>../poco/build.log
-
-	make -j8 -s &>>../poco/build.log
-
-	POCOLIB_SOURCE="./lib/Linux/x86_64"
-	POCOLIB_DEST="../poco/lib/"
-
-	cp ${POCOLIB_SOURCE}/libPocoUtil.a ${POCOLIB_DEST}/libPocoUtil.a
-	cp ${POCOLIB_SOURCE}/libPocoCrypto.a ${POCOLIB_DEST}/libPocoCrypto.a
-	cp ${POCOLIB_SOURCE}/libPocoJSON.a ${POCOLIB_DEST}/libPocoJSON.a
-	cp ${POCOLIB_SOURCE}/libPocoNet.a ${POCOLIB_DEST}/libPocoNet.a
-	cp ${POCOLIB_SOURCE}/libPocoNetSSL.a ${POCOLIB_DEST}/libPocoNetSSL.a
-	cp ${POCOLIB_SOURCE}/libPocoXML.a ${POCOLIB_DEST}/libPocoXML.a
-	cp ${POCOLIB_SOURCE}/libPocoFoundation.a ${POCOLIB_DEST}/libPocoFoundation.a
-	cp ${POCOLIB_SOURCE}/libPocoCppParser.a ${POCOLIB_DEST}/libPocoCppParser.a
-	cp ${POCOLIB_SOURCE}/libPocoData.a ${POCOLIB_DEST}/libPocoData.a
-	cp ${POCOLIB_SOURCE}/libPocoDataODBC.a ${POCOLIB_DEST}/libPocoDataODBC.a
-	cp ${POCOLIB_SOURCE}/libPocoDataPostgreSQL.a ${POCOLIB_DEST}/libPocoDataPostgreSQL.a
-	cp ${POCOLIB_SOURCE}/libPocoDataSQLite.a ${POCOLIB_DEST}/libPocoDataSQLite.a
-	cp ${POCOLIB_SOURCE}/libPocoMongoDB.a ${POCOLIB_DEST}/libPocoMongoDB.a
-	cp ${POCOLIB_SOURCE}/libPocoPDF.a ${POCOLIB_DEST}/libPocoPDF.a
-	cp ${POCOLIB_SOURCE}/libPocoRedis.a ${POCOLIB_DEST}/libPocoRedis.a
-	cp ${POCOLIB_SOURCE}/libPocoZip.a ${POCOLIB_DEST}/libPocoZip.a
-
-	cd ${POCOLIB_DEST}
-
-	# create thin archive for linking
-	while read -d $'\0' file; do
-		ar -rT poco.a "${file}" &>>build.log
-	done < <(find ./ -type f -name '*.a' -print0)
-
-	cd ../../poco_source
-
-	make distclean &>>../poco/build.log
-
-	printHighlight "Compiling Poco with link-time optimization"
-
-	#create a configuration file for a link time optimization build
-	cp ./build/config/Linux ./build/config/Linux_gcc_lto
-	sed -i '/LIB     = ${CROSS_COMPILE}ar -cr/c\LIB     = ${CROSS_COMPILE}gcc-ar -cr' "./build/config/Linux_gcc_lto"
-	sed -i '/RANLIB  = ${CROSS_COMPILE}ranlib/c\RANLIB  = ${CROSS_COMPILE}gcc-ranlib' "./build/config/Linux_gcc_lto"
-
-	./configure --config=Linux_gcc_lto --everything --static --no-tests --poquito --no-samples --typical --omit=Data/MySQL --cflags=" -flto ${ReleaseOptimizations}" &>>../poco/build.log
-
-	make -j8 -s &>>../poco/build.log
-
-	POCOLIB_SOURCE="./lib/Linux/x86_64"
-	POCOLIB_DEST="../poco/lto/"
-
-	cp ${POCOLIB_SOURCE}/libPocoUtil.a ${POCOLIB_DEST}/libPocoUtil.a
-	cp ${POCOLIB_SOURCE}/libPocoCrypto.a ${POCOLIB_DEST}/libPocoCrypto.a
-	cp ${POCOLIB_SOURCE}/libPocoJSON.a ${POCOLIB_DEST}/libPocoJSON.a
-	cp ${POCOLIB_SOURCE}/libPocoNet.a ${POCOLIB_DEST}/libPocoNet.a
-	cp ${POCOLIB_SOURCE}/libPocoNetSSL.a ${POCOLIB_DEST}/libPocoNetSSL.a
-	cp ${POCOLIB_SOURCE}/libPocoXML.a ${POCOLIB_DEST}/libPocoXML.a
-	cp ${POCOLIB_SOURCE}/libPocoFoundation.a ${POCOLIB_DEST}/libPocoFoundation.a
-	cp ${POCOLIB_SOURCE}/libPocoCppParser.a ${POCOLIB_DEST}/libPocoCppParser.a
-	cp ${POCOLIB_SOURCE}/libPocoData.a ${POCOLIB_DEST}/libPocoData.a
-	cp ${POCOLIB_SOURCE}/libPocoDataODBC.a ${POCOLIB_DEST}/libPocoDataODBC.a
-	cp ${POCOLIB_SOURCE}/libPocoDataPostgreSQL.a ${POCOLIB_DEST}/libPocoDataPostgreSQL.a
-	cp ${POCOLIB_SOURCE}/libPocoDataSQLite.a ${POCOLIB_DEST}/libPocoDataSQLite.a
-	cp ${POCOLIB_SOURCE}/libPocoMongoDB.a ${POCOLIB_DEST}/libPocoMongoDB.a
-	cp ${POCOLIB_SOURCE}/libPocoPDF.a ${POCOLIB_DEST}/libPocoPDF.a
-	cp ${POCOLIB_SOURCE}/libPocoRedis.a ${POCOLIB_DEST}/libPocoRedis.a
-	cp ${POCOLIB_SOURCE}/libPocoZip.a ${POCOLIB_DEST}/libPocoZip.a
-
-	cd ${POCOLIB_DEST}
-
-	# create thin archive for linking
-	while read -d $'\0' file; do
-		gcc-ar -rT poco.a "${file}" &>>build.log
-	done < <(find ./ -type f -name '*.a' -print0)
-
-	cd ../../poco_source
-
-	make distclean &>>../poco/build.log
-
-
-	cp ./CONTRIBUTORS ../poco/poco_CONTRIBUTORS
-	cp ./README ../poco/poco_README
-	cp ./README.md ../poco/poco_README.md
-	cp ./LICENSE ../poco/poco_LICENCE
-
-	cd ../
-
-	POCOHEAD_SOURCE="./poco_source"
-	POCOHEAD_DEST="./poco/include"
-
-	cd ./poco/include
-	mkdir openssl
-	cd ./Poco
-	mkdir CppParser
-	mkdir Crypto
-	mkdir Data
-	mkdir JSON
-	mkdir MongoDB
-	mkdir Net
-	mkdir PDF
-	mkdir Redis
-	mkdir SevenZip
-	mkdir Util
-	mkdir XML
-	mkdir Zip
-	cd ../../../
-
-	cp -r ${POCOHEAD_SOURCE}/Foundation/include/Poco/* ${POCOHEAD_DEST}/Poco
-	cp -r ${POCOHEAD_SOURCE}/CppParser/include/Poco/CppParser/* ${POCOHEAD_DEST}/Poco/CppParser
-	cp -r ${POCOHEAD_SOURCE}/Crypto/include/Poco/Crypto/* ${POCOHEAD_DEST}/Poco/Crypto
-	cp -r ${POCOHEAD_SOURCE}/Data/include/Poco/Data/* ${POCOHEAD_DEST}/Poco/Data
-	cp -r ${POCOHEAD_SOURCE}/JSON/include/Poco/JSON/* ${POCOHEAD_DEST}/Poco/JSON
-	cp -r ${POCOHEAD_SOURCE}/MongoDB/include/Poco/MongoDB/* ${POCOHEAD_DEST}/Poco/MongoDB
-	cp -r ${POCOHEAD_SOURCE}/Net/include/Poco/Net/* ${POCOHEAD_DEST}/Poco/Net
-	cp -r ${POCOHEAD_SOURCE}/NetSSL_OpenSSL/include/Poco/Net/* ${POCOHEAD_DEST}/Poco/Net
-	cp -r ${POCOHEAD_SOURCE}/openssl/include/openssl/* ${POCOHEAD_DEST}/openssl
-	cp -r ${POCOHEAD_SOURCE}/PDF/include/Poco/PDF/* ${POCOHEAD_DEST}/Poco/PDF
-	cp -r ${POCOHEAD_SOURCE}/Redis/include/Poco/Redis/* ${POCOHEAD_DEST}/Poco/Redis
-	cp -r ${POCOHEAD_SOURCE}/SevenZip/include/Poco/SevenZip/* ${POCOHEAD_DEST}/Poco/SevenZip
-	cp -r ${POCOHEAD_SOURCE}/Util/include/Poco/Util/* ${POCOHEAD_DEST}/Poco/Util
-	cp -r ${POCOHEAD_SOURCE}/XML/include/Poco/XML/* ${POCOHEAD_DEST}/Poco/XML
-	cp -r ${POCOHEAD_SOURCE}/Zip/include/Poco/Zip/* ${POCOHEAD_DEST}/Poco/Zip
-
-	rm poco_downloaded
-	rm -rf ./poco_source
-	touch poco_built
-}
-
-#fetch and build POCO network library
-function buildPoco() {
-	if [ ! -f "poco_built" ]; then
-		printMinorHeader "Building portable components (Poco) network library"
-
-
-		if [ -d "poco" ]; then
-			rm -rf ./poco
-		fi
-		mkdir poco
-		cd ./poco
-		mkdir lib
-		mkdir lto
-		mkdir include
-		cd ./include
-		mkdir Poco
-		cd ../../
-		if [ ! -f "poco_downloaded" ]; then
-			if [ -d "poco_source" ]; then
-				rm -rf ./poco_source
-			fi
-			echo ""
-			printHighlight "Cloning Poco c++ network library from github at:\nhttps://github.com/pocoproject/poco.git"
-				git clone https://github.com/pocoproject/poco.git poco_source
-			touch poco_downloaded
-		fi
-
-		{ compilePoco; } & #compile in separate process to allow next package to download while compiling
-
-		printHighlight "Finished"
-	fi
-}
-
-
-
 #fetch and build google test framework
 function buildGoogleTest(){
 	if [ ! -f "google_test_built" ]; then
@@ -711,42 +544,7 @@ function buildCppcheck() {
 function installPackages() {
 	#sudo apt-get install lighttpd
 	#sudo service lighttpd start
-#	printHighlight "This will install openssl, wget, libssl-dev, libpq-dev, unixodbc-dev, graphviz, and doxygen"
 	printHighlight "This will install graphviz and doxygen"
-#	if [ $(isNotInstalled openssl) == "true" ]; then
-#		printHighlight "Installing openssl"
-#		sudo apt-get install openssl
-#	else
-#		printHighlight "openssl already installed"
-#	fi
-
-#	if [ $(isNotInstalled wget) == "true" ]; then
-#		printHighlight "Installing wget"
-#		sudo apt-get install wget
-#	else
-#		printHighlight "wget already installed"
-#	fi
-
-#	if [ $(isNotInstalled libssl-dev) == "true" ]; then
-#		printHighlight "Installing libssl-dev"
-#		sudo apt-get install libssl-dev
-#	else
-#		printHighlight "libssl-dev already installed"
-#	fi
-
-#	if [ $(isNotInstalled libpq-dev) == "true" ]; then
-#		printHighlight "Installing libpq-dev"
-#		sudo apt-get install libpq-dev
-#	else
-#		printHighlight "libpq-dev already installed"
-#	fi
-
-#	if [ $(isNotInstalled unixodbc-dev) == "true" ]; then
-#		printHighlight "Installing unixodbc-dev"
-#		sudo apt-get install unixodbc-dev
-#	else
-#		printHighlight "unixodbc-dev already installed"
-#	fi
 
 	if [ $(isNotInstalled graphviz) == "true" ]; then
 		printHighlight "Installing graphviz"
@@ -784,7 +582,6 @@ function buildExternals() {
 	cd ./external
 	installPackages
 	installThreeJS
-#	buildPoco
 	buildCppcheck
 	buildGoogleTest
 	printHighlight "Waiting for packages to finish compiling"
@@ -840,6 +637,11 @@ function buildDirecrories(){
 	cd ../../
 }
 
+function copyClientToTestServer(){
+	sudo cp "./client/Testindex.html" "/var/www/html/index.html"
+	sudo cp "./client/three.min.js" "/var/www/html/three.js"
+}
+
 
 function main() {
 	# set the script to stop on error
@@ -855,10 +657,7 @@ function main() {
 	#create missing directories
 	buildDirecrories
 
-	sudo cp "/home/pc001/Projects/server/client/Testindex.html" "/var/www/html/index.html"
-
-	sudo cp "/home/pc001/Projects/server/client/three.min.js" "/var/www/html/three.js"
-
+	copyClientToTestServer
 
 	makeBuildCompatable
 

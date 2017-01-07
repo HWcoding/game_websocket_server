@@ -20,8 +20,6 @@ POCO_LIB_PATH := $(PROJECT_DIRECTORY)external/poco/$(LINK_TYPE)/
 
 LIBRARIES =  -lpthread -lstdc++ -lm -lcrypto -lssl -ldl
 
-POCO_LIBS = $(POCO_LIB_PATH)poco.a
-
 # use the full path of the cpp file in object file names to
 # prevent multiple files with the same name in different
 # folders from overwriting each other in the /objs folder
@@ -48,7 +46,6 @@ DEPFILES = $(patsubst %,$(DEP_DIR)%.d,$(basename $(notdir $(OBJECTS))))
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-#$(POCO_LIBS)
 	$(CXX) -o $@ $^ $(LIBRARIES)
 
 # in order for this rule to work filenames cannot contain the
