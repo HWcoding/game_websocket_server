@@ -7,651 +7,199 @@
 
 
 	<body style="margin: 0px; overflow: hidden">
-	<script src="three.js"></script>
-	<script type="text/javascript">
+		<script src="three.js"></script>
+		<script type="text/javascript">
 
-	screenWidth = window.innerWidth || document.documentElement.clientWidth || document.getElementsByTagName('body')[0].clientWidth;
-	screenHeight = window.innerHeight || document.documentElement.clientHeight || document.getElementsByTagName('body')[0].clientHeight;
+		screenWidth = window.innerWidth || document.documentElement.clientWidth || document.getElementsByTagName('body')[0].clientWidth;
+		screenHeight = window.innerHeight || document.documentElement.clientHeight || document.getElementsByTagName('body')[0].clientHeight;
 
-	var scene = new THREE.Scene();
-	var camera = new THREE.PerspectiveCamera(45, screenWidth / screenHeight, 0.1, 1000);
-	camera.position.z = 5;
-	camera.position.y = 15;
-	camera.lookAt(new THREE.Vector3(0, 0, 0));
+		var scene = new THREE.Scene();
+		var camera = new THREE.PerspectiveCamera(45, screenWidth / screenHeight, 0.1, 1000);
+		camera.position.z = 5;
+		camera.position.y = 15;
+		camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-	var renderer = new THREE.WebGLRenderer();
-	renderer.setSize( screenWidth, screenHeight );
-	renderer.shadowMapEnabled = true;
-	renderer.shadowMapSoft = true;
-	renderer.shadowMapWidth = 1024;
-	renderer.shadowMapHeight = 1024;
-	renderer.shadowMapType = THREE.PCFSoftShadowMap;
-	document.body.appendChild( renderer.domElement );
+		var renderer = new THREE.WebGLRenderer();
+		renderer.setSize( screenWidth, screenHeight );
+		renderer.shadowMapEnabled = true;
+		renderer.shadowMapSoft = true;
+		renderer.shadowMapWidth = 1024;
+		renderer.shadowMapHeight = 1024;
+		renderer.shadowMapType = THREE.PCFSoftShadowMap;
+		document.body.appendChild( renderer.domElement );
 
-	var light = new THREE.AmbientLight(0x202020); // soft white light
-	scene.add(light);
+		var light = new THREE.AmbientLight(0x202020); // soft white light
+		scene.add(light);
 
-	var directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-	directionalLight.castShadow = true;
-	directionalLight.shadow.camera.right    =  20;
-	directionalLight.shadow.camera.left     = -20;
-	directionalLight.shadow.camera.top      =  15;
-	directionalLight.shadow.camera.bottom   = -15;
-	directionalLight.position.set(0, 20, 0);
-	scene.add(directionalLight);
+		var directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+		directionalLight.castShadow = true;
+		directionalLight.shadow.camera.right    =  20;
+		directionalLight.shadow.camera.left     = -20;
+		directionalLight.shadow.camera.top      =  15;
+		directionalLight.shadow.camera.bottom   = -15;
+		directionalLight.position.set(0, 20, 0);
+		scene.add(directionalLight);
 
-	var geometry = new THREE.SphereGeometry(1, 32, 32);
-	var material = new THREE.MeshLambertMaterial({ color: 0x00ff00 });
-	var sphere = new THREE.Mesh(geometry, material);
-	sphere.castShadow = true;
-	sphere.receiveShadow = true;
-	scene.add(sphere);
-
-
-	var floorGeometry = new THREE.BoxGeometry(100, 1,100);
-	var floorMaterial = new THREE.MeshLambertMaterial({ color: 0x222222 });
-	var floor = new THREE.Mesh(floorGeometry, floorMaterial);
-	floor.receiveShadow = true;
-	floor.position.y = -1.5;
-	scene.add(floor);
+		var geometry = new THREE.SphereGeometry(1, 32, 32);
+		var material = new THREE.MeshLambertMaterial({ color: 0x00ff00 });
+		var sphere = new THREE.Mesh(geometry, material);
+		sphere.castShadow = true;
+		sphere.receiveShadow = true;
+		scene.add(sphere);
 
 
-
-	function getChar(event) {
-		if (event.which == null) {
-			return String.fromCharCode(event.keyCode); // IE
-		}
-		else if (event.which != 0 ) {//}&& event.charCode != 0) {
-			return String.fromCharCode(event.which); // the rest
-		}
-		else {
-			return null; // special key
-		}
-	}
-
-	var wkey = false;
-	var skey = false;
-	var akey = false;
-	var dkey = false;
-	var moved = false;
-
-	var keydownCallback = function(event) {
-		var char = getChar(event);
-		if (char === 'W') wkey = true;
-		else if (char === 'S') skey = true;
-		else if (char === 'A') akey = true;
-		else if (char === 'D') dkey = true;
-	}
-
-	var keyupCallback = function (event) {
-		var char = getChar(event);
-		if (char === 'W') wkey = false;
-		else if (char === 'S') skey = false;
-		else if (char === 'A') akey = false;
-		else if (char === 'D') dkey = false;
-		else {
-			console.log(char);
-		}
-	}
-
-	document.addEventListener("keydown", keydownCallback);
-	document.addEventListener("keyup", keyupCallback);
+		var floorGeometry = new THREE.BoxGeometry(100, 1,100);
+		var floorMaterial = new THREE.MeshLambertMaterial({ color: 0x222222 });
+		var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+		floor.receiveShadow = true;
+		floor.position.y = -1.5;
+		scene.add(floor);
 
 
-	var render = function () {
-		requestAnimationFrame(render);
 
-		if (dkey) {
-			sphere.position.x += .1;
-			moved = true;
-		}
-
-		if (akey) {
-			sphere.position.x -= .1;
-			moved = true;
-		}
-
-		if (skey) {
-			sphere.position.z += .1;
-			moved = true;
-		}
-
-		if (wkey) {
-			sphere.position.z -= .1;
-			moved = true;
-		}
-
-		if(moved) {
-			sendMove(sphere.position.x, sphere.position.z);
-			moved = false;
-		}
-
-		renderer.render(scene, camera);
-	};
-
-	render();
-
-//var render = true;
-var exampleSocket;
-
-var sendMessage = function(message){
-	if(exampleSocket.readyState == 1){
-		exampleSocket.send(message);
-	}
-}
-
-function connectToSocket(key){
-	var webSocketHostname = window.location.hostname;
-	var webSocketPort = ":5600"; //for testting
-	var webSocketURL = "ws://"+webSocketHostname+webSocketPort;
-
-	exampleSocket = new WebSocket(webSocketURL, key);
-	exampleSocket.binaryType =  "arraybuffer";
-
-	var readystatecheck = function(){
-		if(exampleSocket.readyState == 1) {
-			exampleSocket.onmessage = function (event) {
-			//	processMessage(event.data);
+		function getChar(event) {
+			if (event.which == null) {
+				return String.fromCharCode(event.keyCode);
 			}
-			exampleSocket.onclose = function (event){
-				open = false;
+			else if (event.which != 0 ) {
+				return String.fromCharCode(event.which);
 			}
-			enterGame();
+			else {
+				return null;
+			}
 		}
-		else if(exampleSocket.readyState <2)setTimeout(readystatecheck,1);
-	}
-	setTimeout(readystatecheck,1);
-}
 
-StartSocketHandshake();
+		var wkey = false;
+		var skey = false;
+		var akey = false;
+		var dkey = false;
+		var moved = false;
 
-
-function StartSocketHandshake(){ //inform server we wish to login then get Cookie and CSRF token from server
-	connectToSocket("DkslIDLrksl29005");
-/*	var	xmlhttp=new XMLHttpRequest();
-
-	xmlhttp.onreadystatechange=function() {
-		if (xmlhttp.readyState==4 && xmlhttp.status==200) {
-			var data = JSON.parse(xmlhttp.responseText);
-			connectToSocket(data.key); //start handshake
+		var keydownCallback = function(event) {
+			var char = getChar(event);
+			if (char === 'W') wkey = true;
+			else if (char === 'S') skey = true;
+			else if (char === 'A') akey = true;
+			else if (char === 'D') dkey = true;
 		}
-	}
-	xmlhttp.open("POST","/server",true);
-	xmlhttp.setRequestHeader("Content-type","application/x-www-form-urlencoded, charset=UTF-8");
-	xmlhttp.send();*/
-}
 
-
-//corresponds with enum MessageType in message_type.h
-var GMessageType = {
-	MOVE:		1,
-	ABILITY:	2,
-	LOGIN:		3,
-	LOGOUT: 	4
-}
-
-
-
-function sendMove(x, y){
-	var buffer	= new ArrayBuffer(28);
-	var view	= new DataView(buffer);
-	view.setUint32(0,GMessageType.MOVE,true);
-	view.setFloat64(4,x,true);
-	view.setFloat64(12,y,true);
-	view.setFloat64(20,0,true);
-	sendMessage(buffer);
-}
-
-function enterGame(){
-	var buffer	= new ArrayBuffer(28);
-	var view	= new DataView(buffer);
-	view.setUint32(0,GMessageType.LOGIN,true);
-	view.setFloat64(4,0,true);
-	view.setFloat64(12,0,true);
-	view.setFloat64(20,0,true);
-	sendMessage(buffer);
-}
-
-/*
-var screenWidth =0;
-var screenHeight =0;
-
-
-var gameObject = function(){
-	var x = 8.0;
-	var y = 8.0;
-}
-
-function setupCharacter(playerID){
-	var characterBlock = document.createElement('div');
-	characterBlock.id = 'player';
-	characterBlock.className = 'character';
-	characterBlock.setAttribute("style","background-color:#55FF88");
-	characterBlock.style.display = "block";
-	document.getElementsByTagName('body')[0].appendChild(characterBlock);
-}
-
-*/
-/*
-var moveAmount = 0.3;
-function moveLeft(){
-	movePlayer('player',moveAmount, 0);
-}
-
-function moveRight(){
-	movePlayer('player',0-moveAmount, 0);
-}
-
-function moveUp(){
-	movePlayer('player',0, 0-moveAmount);
-}
-
-function moveDown(){
-	movePlayer('player',0, moveAmount);
-}
-
-*/
-
-
-/*
-function movePlayer(playerID, x, y){
-	//var player = document.getElementById('player');
-	//player.style.left = (player.offsetLeft + x) + "px";
-	//player.style.top = (player.offsetTop + y) + "px";
-	//sendMove(player.offsetLeft, player.offsetTop);
-	sphere.position.x += x;
-	sphere.position.z += y;
-	sendMove(sphere.position.x, sphere.position.z);
-
-
-}*/
-/*
-function moveTo(ID, x, y){
-	ID.style.left = x + "px";
-	ID.style.top = y + "px";
-}
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-function sendMove(x, y){
-	var buffer	= new ArrayBuffer(12);
-	var view	= new DataView(buffer);
-	view.setUint32(0,GMessageType.MOVE,true);
-	view.setFloat32(4,x,true);
-	view.setFloat32(8,y,true);
-	sendMessage(buffer);
-	//sendMessage("move "+x+" "+y);
-}
-
-*/
-/*function handleMove(message){
-	var IDnum = message.getNextUint64();
-	var ID = IDnum.toString();
-
-	var x = message.getNextFloat64();
-	var y = message.getNextFloat64();
-	var z = message.getNextFloat64();
-
-	//console.log("player "+ID+" moved to x="+x+" y="+y);
-	moveCharacter(ID, x, y);
-}
-
-
-function handleLogin(message){
-	var IDnum = message.getNextUint32();
-	var ID = IDnum.toString();
-
-	var x = message.getNextFloat64();
-	var y = message.getNextFloat64();
-	var z = message.getNextFloat64();
-
-	//console.log("player "+ID+" logged in.");
-	addCharacter(ID, x, y);
-}
-
-
-function handleLogout(message){
-	var IDnum = message.getNextUint32();
-	var ID = IDnum.toString();
-
-	//console.log("player "+ID+" logged out.");
-	removeCharacter(ID);
-}
-
-
-
-
-function PlayerMessage(s){
-	this.offset = 0;
-	this.view = new DataView(s);
-	return this;
-}
-PlayerMessage.prototype.getNextUint32 = function(){
-	var ret = this.view.getUint32(this.offset,true);
-	this.offset +=4;
-	return ret;
-}
-PlayerMessage.prototype.getNextUint16 = function(){
-	var ret = this.view.getUint16(this.offset,true);
-	this.offset +=2;
-	return ret;
-}
-PlayerMessage.prototype.getNextUint8 = function(){
-	var ret = this.view.getUint8(this.offset);
-	this.offset +=1;
-	return ret;
-}
-PlayerMessage.prototype.getNextInt32 = function(){
-	var ret = this.view.getInt32(this.offset,true);
-	this.offset +=4;
-	return ret;
-}
-PlayerMessage.prototype.getNextInt16 = function(){
-	var ret = this.view.getInt16(this.offset,true);
-	this.offset +=2;
-	return ret;
-}
-PlayerMessage.prototype.getNextInt8 = function(){
-	var ret = this.view.getInt8(this.offset);
-	this.offset +=1;
-	return ret;
-}
-PlayerMessage.prototype.getNextFloat32 = function(){
-	var ret = this.view.getFloat32(this.offset,true)
-	this.offset +=4;
-	return ret;
-}
-PlayerMessage.prototype.getNextFloat64 = function(){
-	var ret = this.view.getFloat64(this.offset,true)
-	this.offset +=8;
-	return ret;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function processMessage(s){
-	if (s.byteLength == 0) return;
-	var message = new PlayerMessage(s);
-
-	while(message.offset < s.byteLength){
-		var messType = message.getNextUint32();
-		console.log(messType+" testing");
-		if		(messType == GMessageType.LOGIN)	{ handleLogin	(message); }
-		else if	(messType == GMessageType.LOGOUT)	{ handleLogout	(message); }
-		else if	(messType == GMessageType.MOVE)		{ handleMove	(message); }
-	}
-}*/
-/*
-
-function removeCharacter(ID){
-	var characterBlock = document.getElementById(ID);
-
-	if(characterBlock === null){
-		console.log("removeCharacter characterBlock is null");
-		return;
-	}
-
-	characterBlock.remove();
-}
-
-
-function addCharacter(ID, x, y){
-	//console.log("addCharacter adding character "+ID);
-	var characterBlock = document.createElement('div');
-	characterBlock.id = ID;
-	characterBlock.className = 'character';
-	characterBlock.setAttribute("style","background-color:#55FF88");
-	characterBlock.style.display = "block";
-	document.getElementsByTagName('body')[0].appendChild(characterBlock);
-	moveTo(characterBlock, x, y);
-}
-
-
-function moveCharacter(ID, x, y){
-	var characterBlock = document.getElementById(ID);
-
-	if(characterBlock === null){
-		console.log("moveCharacter characterBlock is null");
-		return;
-	}
-	moveTo(characterBlock, x, y);
-}*/
-/*
-
-function renderWorld(){
-	//renderSpinnerTimer();
-	if(render){
-	//	var chatbox = document.getElementById('Server');
-	//	var lim = (chatbox.scrollHeight - chatbox.scrollTop) - chatbox.clientHeight
-	//	var bottom = (lim<10 && lim>-10);
-	//	chatbox.innerHTML = Chat.render();
-	//	if(bottom)chatbox.scrollTop = chatbox.scrollHeight;
-	}
-	//render = false;
-	requestAnimationFrame(renderWorld);
-}
-*/
-
-/*window.onload = function(e){
-//	screenWidth = window.innerWidth || document.documentElement.clientWidth || document.getElementsByTagName('body')[0].clientWidth;
-//	screenHeight = window.innerHeight || document.documentElement.clientHeight || document.getElementsByTagName('body')[0].clientHeight;
-    //setUpUI();
-    setupCharacter();
- //   initInput();
- //   requestAnimationFrame(renderWorld);
-}*/
-
-
-//var movementX =0;
-//var movementY =0;
-/*
-function initInput() {
-	document.addEventListener('keydown', function(event) {
-		if(event.keyCode == 87) {//w
-		   // forwardMove =true;
-			moveUp();
+		var keyupCallback = function (event) {
+			var char = getChar(event);
+			if (char === 'W') wkey = false;
+			else if (char === 'S') skey = false;
+			else if (char === 'A') akey = false;
+			else if (char === 'D') dkey = false;
+			else {
+				console.log(char);
+			}
 		}
-		else if(event.keyCode == 83) {//s
-		    //backwardMove =true;
-		    moveDown();
+
+		document.addEventListener("keydown", keydownCallback);
+		document.addEventListener("keyup", keyupCallback);
+
+
+		var render = function () {
+			requestAnimationFrame(render);
+
+			if (dkey) {
+				sphere.position.x += .1;
+				moved = true;
+			}
+
+			if (akey) {
+				sphere.position.x -= .1;
+				moved = true;
+			}
+
+			if (skey) {
+				sphere.position.z += .1;
+				moved = true;
+			}
+
+			if (wkey) {
+				sphere.position.z -= .1;
+				moved = true;
+			}
+
+			if(moved) {
+				sendMove(sphere.position.x, sphere.position.z);
+				moved = false;
+			}
+
+			renderer.render(scene, camera);
+		};
+
+		render();
+
+		//var render = true;
+		var exampleSocket;
+
+		var sendMessage = function(message){
+			if(exampleSocket.readyState == 1){
+				exampleSocket.send(message);
+			}
 		}
-		else if(event.keyCode == 65) {//a
-		    //rightMove =true;
-		    moveRight();
+
+		function connectToSocket(key){
+			var webSocketHostname = window.location.hostname;
+			var webSocketPort = ":5600"; //for testting
+			var webSocketURL = "ws://"+webSocketHostname+webSocketPort;
+
+			exampleSocket = new WebSocket(webSocketURL, key);
+			exampleSocket.binaryType =  "arraybuffer";
+
+			var readystatecheck = function(){
+				if(exampleSocket.readyState == 1) {
+					exampleSocket.onmessage = function (event) {
+					//	processMessage(event.data);
+					}
+					exampleSocket.onclose = function (event){
+						open = false;
+					}
+					enterGame();
+				}
+				else if(exampleSocket.readyState <2)setTimeout(readystatecheck,1);
+			}
+			setTimeout(readystatecheck,1);
 		}
-		else if(event.keyCode == 68) {//d
-		    //leftMove =true;
-		    moveLeft();
+
+		StartSocketHandshake();
+
+
+		function StartSocketHandshake(){ //inform server we wish to login then get Cookie and CSRF token from server
+			connectToSocket("DkslIDLrksl29005");
 		}
-		//else if(event.keyCode >= 49 && event.keyCode <= 54) {// keys 1 through 6
-		//    var button =document.getElementById('actionButton'+(event.keyCode-48));
-		//	if(button.className == "actionOverlay"){
-			//	button.className +=" active";
-			//	button.click();
-		//	}
-		//}
-		//else if(event.keyCode == 9) {//tab
-		 //   if(document.exitPointerLock !== undefined){
-		//		document.exitPointerLock();			//unlock the mouse pointer
-		//	}
-		//	event.preventDefault();
-		//}
-	});
-	document.addEventListener('keyup', function(event) {
-		if(event.keyCode == 87) {//w
-		    forwardMove =false;
+
+
+		//corresponds with enum MessageType in message_type.h
+		var GMessageType = {
+			MOVE:		1,
+			ABILITY:	2,
+			LOGIN:		3,
+			LOGOUT: 	4
 		}
-		else if(event.keyCode == 83) {//s
-		    backwardMove =false;
+
+
+
+		function sendMove(x, y){
+			var buffer	= new ArrayBuffer(28);
+			var view	= new DataView(buffer);
+			view.setUint32(0,GMessageType.MOVE,true);
+			view.setFloat64(4,x,true);
+			view.setFloat64(12,y,true);
+			view.setFloat64(20,0,true);
+			sendMessage(buffer);
 		}
-		else if(event.keyCode == 65) {//a
-		    rightMove =false;
+
+		function enterGame(){
+			var buffer	= new ArrayBuffer(28);
+			var view	= new DataView(buffer);
+			view.setUint32(0,GMessageType.LOGIN,true);
+			view.setFloat64(4,0,true);
+			view.setFloat64(12,0,true);
+			view.setFloat64(20,0,true);
+			sendMessage(buffer);
 		}
-		else if(event.keyCode == 68) {//d
-		    leftMove =false;
-		}
-		else if(event.keyCode >= 49 && event.keyCode <= 54) {
-		    var button =document.getElementById('actionButton'+(event.keyCode-48));
-			button.className ="actionOverlay";
-		}
-	});*/
-
-	//var fullscreen = document.getElementById("fullscreen");
-	//var fullscreen = document.body;
-	//var fullscreen = document;
-
-	//fullscreen.oncontextmenu = function (event) {
-    //	event.preventDefault();
-	//	return false;
-	//};
-
-	//document.body.addEventListener('mousedown', function (event){
-	/*document.addEventListener('mousedown', function (event){
-		if(event.button === 0){//left mouse
-
-		}
-		else if(event.button === 2){// right mouse
-
-		}
-		else if(event.button === 1){// middle mouse
-
-		}
-	}, false);*/
-
-	//document.body.addEventListener('mouseup', function (event){
-	/*document.addEventListener('mouseup', function (event){
-		if(event.button === 0){//left mouse
-			//console.log("left");
-		}
-		else if(event.button === 2){// right mouse
-			//console.log("right");
-		}
-		else if(event.button === 1){// middle mouse
-			//console.log("middle");
-		}
-	}, false);*/
-
-	/*try{
-		document.addEventListener("mousemove",
-		function(event) {
-*//*			if(pointerLocked){
-				movementX +=event.movementX       ||
-							event.mozMovementX    ||
-							event.webkitMovementX ||
-							0;
-				movementY +=event.movementY       ||
-							event.mozMovementY    ||
-							event.webkitMovementY ||
-							0;
-			}*//*
-			//	console.log(movementX);
-			//for (var prop in event) {
-			//  console.log(prop + ' = ' + event[prop]);
-			// }
-			//console.log('\n');
-		}, false);
-	}
-	catch(e){
-		return true;
-	}*/
-
-
-	// do nothing in the event handler except canceling the event
-	/*fullscreen.ondragstart = function(event) {
-		if (event && event.preventDefault) { event.preventDefault(); }
-		if (event && event.stopPropagation) { event.stopPropagation(); }
-		return false;
-	}
-	// do nothing in the event handler except canceling the event
-	fullscreen.onselectstart = function(event) {
-		if (event && event.preventDefault) { event.preventDefault(); }
-		if (event && event.stopPropagation) { event.stopPropagation(); }
-		return false;
-	}
-
-	return false;
-}
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 		</script>
