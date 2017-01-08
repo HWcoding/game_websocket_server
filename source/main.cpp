@@ -1,10 +1,8 @@
-
 #include "source/server/socket/socket_node.h"
 #include "source/message_handlers/message_dispatcher.h"
 #include "source/data_types/socket_message.h"
 #include "source/logging/exception_handler.h"
 #include "source/server/socket/websocket/websocket_authenticator.h"
-
 
 
 class MyClientValidator : public ClientValidatorInterface
@@ -33,7 +31,6 @@ public:
 	}
 	~MyClientValidator(){};
 };
-
 
 
 int main()
