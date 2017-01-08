@@ -7,17 +7,32 @@
 #include <string.h>
 #include "source/logging/exception_handler.h"
 
-WebsocketMessageProcessor::WebsocketMessageProcessor(SetOfFileDescriptors *_FDs) : readerQueue(NULL), MaxReadBufferSize(999999999), ReadBuffers( new WebsocketReadBuffers(_FDs, MaxReadBufferSize) ), fileDescriptors(_FDs){}
+
+WebsocketMessageProcessor::WebsocketMessageProcessor(SetOfFileDescriptors *_FDs) :
+	readerQueue(NULL),
+	MaxReadBufferSize(999999999),
+	ReadBuffers( new WebsocketReadBuffers(_FDs, MaxReadBufferSize) ),
+	fileDescriptors(_FDs)
+{}
+
+
 WebsocketMessageProcessor::~WebsocketMessageProcessor(){}
 
-MessageQueue * WebsocketMessageProcessor::getQueue(){
+
+MessageQueue * WebsocketMessageProcessor::getQueue()
+{
 	return readerQueue;
 }
-void WebsocketMessageProcessor::setReaderQueue(MessageQueue *_readerQueue){
+
+
+void WebsocketMessageProcessor::setReaderQueue(MessageQueue *_readerQueue)
+{
 	readerQueue = _readerQueue;
 }
 
-void WebsocketMessageProcessor::closeFDHandler(int FD){
+
+void WebsocketMessageProcessor::closeFDHandler(int FD)
+{
 	//add message to queue to indicate client has disconnected
 	SocketMessage newMessage;
 	ByteArray key = fileDescriptors->getCSRFkey(FD);
@@ -32,7 +47,9 @@ void WebsocketMessageProcessor::closeFDHandler(int FD){
 	ReadBuffers->eraseBuffers(FD);
 }
 
-void WebsocketMessageProcessor::processSockMessage (ByteArray &in,  int FD){
+
+void WebsocketMessageProcessor::processSockMessage (ByteArray &in,  int FD)
+{
 	std::vector< ByteArray > messages;
 	std::vector<int> messageTypes;
 	size_t r = extractMessage(in, messages, messageTypes, FD);
@@ -57,7 +74,9 @@ void WebsocketMessageProcessor::processSockMessage (ByteArray &in,  int FD){
 	}
 }
 
-size_t WebsocketMessageProcessor::extractMessage (ByteArray &in, std::vector< ByteArray > &out, std::vector<int> &types, int FD){
+
+size_t WebsocketMessageProcessor::extractMessage (ByteArray &in, std::vector< ByteArray > &out, std::vector<int> &types, int FD)
+{
 	types.reserve(10);
 	types.push_back(-1);
 	out.reserve(10);			//we could calculate how many messages are in 'in' here and reserve the correct number but it would be slow. 10 should cover most cases.
@@ -129,7 +148,9 @@ size_t WebsocketMessageProcessor::extractMessage (ByteArray &in, std::vector< By
 	return currentM;
 }
 
-uint64_t WebsocketMessageProcessor::getMessageSize (ByteArray &in, uint64_t &messageStart, const uint64_t &start, int FD){
+
+uint64_t WebsocketMessageProcessor::getMessageSize (ByteArray &in, uint64_t &messageStart, const uint64_t &start, int FD)
+{
 	uint64_t size = in[start+1]^128;
 	if(size >= 128){
 		throwInt("maskbit was not set on descriptor "<<FD<<" start: "<<start<<" in.size(): "<<in.size()<<". First bit "<<  static_cast<unsigned int>( in[start] ) ); //maskbit was not set
@@ -165,13 +186,17 @@ uint64_t WebsocketMessageProcessor::getMessageSize (ByteArray &in, uint64_t &mes
 	return size;
 }
 
-void WebsocketMessageProcessor::completeFracture (ByteArray &out, int &types, size_t position, int FD){
+
+void WebsocketMessageProcessor::completeFracture (ByteArray &out, int &types, size_t position, int FD)
+{
 	ReadBuffers->extractFracture(out, position, FD); //if we aready have part of the message in buffer, prepend it to end
 	types = ReadBuffers->getFractureType(FD);
 	ReadBuffers->eraseFractureType(FD);
 }
 
-void WebsocketMessageProcessor::handleFragment (ByteArray &in, uint8_t opcode, int FD){
+
+void WebsocketMessageProcessor::handleFragment (ByteArray &in, uint8_t opcode, int FD)
+{
 	if(opcode <= 2){
 		if(opcode != 0){ 		//first fragment of message
 			if(opcode == 1){	//text
@@ -189,10 +214,12 @@ void WebsocketMessageProcessor::handleFragment (ByteArray &in, uint8_t opcode, i
 	}
 }
 
-void WebsocketMessageProcessor::unmask (ByteArray &in, ByteArray &out, uint64_t messageStart, uint64_t length){
+
+void WebsocketMessageProcessor::unmask (ByteArray &in, ByteArray &out, uint64_t messageStart, uint64_t length)
+{
 	//this function is nasty because it represented 97% of execution time. Its now optimised, and ugly, and illegal (strict-aliasing rules are broken)
-	if(messageStart < 4) throw -1; //throwInt("Message start position too low to allow for mask");
-	if(in.size() < messageStart+length) throw -1; //throwInt("Message size is smaller than reported length");
+	if(messageStart < 4) throwInt("Message start position too low to allow for mask");
+	if(in.size() < messageStart+length) throwInt("Message size is smaller than reported length");
 
 	uint64_t begin  = out.size(); //save end position of string to begin writing to
 	size_t capacity = begin+length; //new size needed to hold the concatenated strings
@@ -211,11 +238,13 @@ void WebsocketMessageProcessor::unmask (ByteArray &in, ByteArray &out, uint64_t 
 	mask[3] = in[messageStart-1];
 
 	uint64_t i;
-	for (i = 0; i < length && reinterpret_cast<size_t>(&output[i+begin])%8 != 0; ++i){ //unmask output until output[] is 8byte aligned
+	//unmask output until output[] is 8byte aligned
+	for (i = 0; i < length && reinterpret_cast<size_t>(&output[i+begin])%8 != 0; ++i) {
 		output[i+begin] ^= mask[i % 4];	//unmask data by 'XOR'ing 4byte blocks with the mask one byte at a time
 	}
 
-	if(i < length){ //process the rest 64bits at a time
+	//process the rest 64bits at a time
+	if(i < length) {
 		uint64_t endBytes = (length-i) % 32; //run untill there are less than 4 8byte numbers left
 		uint64_t length64 = length-endBytes;
 		length64 /= 8; //convert length64 from number of bytes to number of 64bit ints
@@ -225,11 +254,11 @@ void WebsocketMessageProcessor::unmask (ByteArray &in, ByteArray &out, uint64_t 
 
 		uint64_t mask64 = 0;
 		volatile uint8_t *tempMask = reinterpret_cast<volatile uint8_t*>(&mask64);
-		for(int j = 0; j<8; ++j, ++i){
+		for(int j = 0; j<8; ++j, ++i) {
 			tempMask[j] = mask[i % 4]; //build new 64bit mask starting were the previous loop left off (at i)
 		}
 
-		for (i = 0; i < length64; i++){//reset i to zero and start unmasking at the output64 pointer
+		for (i = 0; i < length64; i++) {//reset i to zero and start unmasking at the output64 pointer
 			output64[i]   ^= mask64;	//unmask data by 64bit 'XOR'ing
 			output64[++i] ^= mask64;
 			output64[++i] ^= mask64;
@@ -238,13 +267,16 @@ void WebsocketMessageProcessor::unmask (ByteArray &in, ByteArray &out, uint64_t 
 
 		offset += i*8; //unmask the last remaining bits
 		endBytes += offset;
-		for(i = offset; i<endBytes; i++){
+		for(i = offset; i<endBytes; i++) {
 			output[i+begin] ^= mask[i % 4];
 		}
 	}
 }
 
-uint64_t WebsocketMessageProcessor::getNet64bit (uint8_t *in){ //converts a 64bit array in network byte order into a little endian unsigned 64bit int
+
+//converts a 64bit array in network byte order into a little endian unsigned 64bit int
+uint64_t WebsocketMessageProcessor::getNet64bit (uint8_t *in)
+{
 	uint8_t out[8];
 	uint64_t rval;
 
@@ -262,7 +294,10 @@ uint64_t WebsocketMessageProcessor::getNet64bit (uint8_t *in){ //converts a 64bi
 	return rval;
 }
 
-uint16_t WebsocketMessageProcessor::getNet16bit (uint8_t *in){ //converts a 16bit array in network byte order into a little endian unsigned 16bit int
+
+//converts a 16bit array in network byte order into a little endian unsigned 16bit int
+uint16_t WebsocketMessageProcessor::getNet16bit (uint8_t *in)
+{
 	uint8_t out[2];
 	uint16_t rval;
 

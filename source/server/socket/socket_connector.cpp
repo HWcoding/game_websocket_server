@@ -77,6 +77,11 @@ void SocketServerConnector::startPoll(){
 	}
 }
 
+void SocketServerConnector::setClientValidator(ClientValidatorInterface * validator)
+{
+	Authenticator->setClientValidator(validator);
+}
+
 bool SocketServerConnector::handleEpollErrors(epoll_event &event){
 	if ( (event.events & EPOLLERR) || (event.events & EPOLLHUP) ){// An error occured
 		LOG_ERROR("epoll error");
@@ -225,7 +230,7 @@ void SocketServerConnector::newConnection(){
 
 		try{
 			getPortAndIP(newConnection, in_addr, in_len, PortBuff, IPBuff);
-			if(Authenticator->isNotValidConnection(newConnection, IPBuff,PortBuff)){
+			if(Authenticator->isNotValidConnection(IPBuff,PortBuff)){
 				throwInt(" descriptor " << newConnection <<" (IP="<< std::string(reinterpret_cast<char *>(&IPBuff[0]),IPBuff.size() ) <<", port="<< std::string(reinterpret_cast<char *>(&PortBuff[0]),PortBuff.size() ) <<")"<< " failed validation");
 			}
 			fileDescriptors->setIP(newConnection, IPBuff);

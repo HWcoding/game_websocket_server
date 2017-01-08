@@ -44,7 +44,7 @@ protected:
 	ByteArray SecWebSocketProtocol {};
 	ByteArray Cookie {};
 private:
-	bool filled{false};
+	bool filled {false};
 };
 
 

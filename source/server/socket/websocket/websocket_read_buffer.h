@@ -46,6 +46,7 @@ protected:
 			expectedSize = -1;
 		}
 	};
+
 	std::unordered_map<int,PartialMessage> messageBuffer;	//buffer to hold websocket frames that are too short to process
 	std::unordered_map<int,Fracture> fractureBuffer;	//buffer to hold messages split across more than one frame
 	std::unordered_map<int,bool> fractureBufferType;	//true = text  false = binary

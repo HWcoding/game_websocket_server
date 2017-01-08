@@ -10,7 +10,11 @@
 
 
 
+
+
 AuthenticatorInterface::~AuthenticatorInterface(){}
+
+ClientValidatorInterface::~ClientValidatorInterface(){}
 
 
 WebsocketAuthenticator::WebsocketAuthenticator(SystemInterface *_systemWrap, SetOfFileDescriptors*FDs) :
@@ -18,19 +22,20 @@ WebsocketAuthenticator::WebsocketAuthenticator(SystemInterface *_systemWrap, Set
                                                   handshakeWriteBuffer(), maxHandshakeSize(2048),
                                                   fileDescriptors(FDs){}
 
-bool WebsocketAuthenticator::isNotValidConnection(int newConnection, const ByteArray &hbuf, const ByteArray &sbuf) const
-{
 
+bool WebsocketAuthenticator::isNotValidConnection(const ByteArray &IP, const ByteArray &port) const
+{
 	//place holder to silence unused warnings //TODO: check IP and port info
-	newConnection ++;
-	ByteArray h = hbuf;
-	h.push_back(0);
-	h[0]++;
-	ByteArray s = sbuf;
-	s.push_back(0);
-	s[0]++;
+	//(void)newConnection;
+	//(void)hbuf;
+	//(void)sbuf;
 	/////////////////////////////////////
-	return false;
+
+	std::string address = IP.toString();
+	std::string portNum = port.toString();
+	return ! ClientValidator->isClientIPValid(address, portNum);
+	//ClientValidator->isValidClientHeaders(ConnectionHeaders &headers);
+	//return true;
 }
 
 
@@ -38,6 +43,20 @@ void WebsocketAuthenticator::closeFD(int FD)
 {
 	if(handshakeReadBuffer.count(FD) != 0)handshakeReadBuffer.erase(FD);
 	if(handshakeWriteBuffer.count(FD) != 0)handshakeWriteBuffer.erase(FD);
+}
+
+void WebsocketAuthenticator::checkForValidHeaders(int FD, HandshakeHeaders &headers) const
+{
+	ConnectionHeaders connectionHeaders;
+
+	connectionHeaders.IP = fileDescriptors->getIP(FD).toString();
+	connectionHeaders.port = fileDescriptors->getPort(FD).toString();
+	connectionHeaders.SecWebSocketProtocol = headers.getSecWebSocketProtocol().toString();
+	connectionHeaders.Cookie = headers.getCookie().toString();
+
+	if( ! ClientValidator->areClientHeadersValid(connectionHeaders) ) {
+		throwInt("Client headers were not valid");
+	}
 }
 
 void WebsocketAuthenticator::processHandshake(const ByteArray &in, int FD)
@@ -53,7 +72,10 @@ void WebsocketAuthenticator::processHandshake(const ByteArray &in, int FD)
 	}
 	if(!isCompleteHandshake(handshakeReadBuffer[FD])) return;
 	HandshakeHeaders headers = getHandshakeHeaders(handshakeReadBuffer[FD]);
-	fileDescriptors->setCSRFkey(FD, headers.getSecWebSocketProtocol() );
+
+	checkForValidHeaders(FD, headers);
+
+	fileDescriptors->setCSRFkey(FD, headers.getSecWebSocketProtocol() );//move this outside this class
 	handshakeWriteBuffer[FD] = createHandshake(headers);
 	handshakeReadBuffer.erase(FD);
 }
@@ -124,9 +146,9 @@ bool WebsocketAuthenticator::isHandshakeInvalid(const ByteArray &handShake) cons
 		writeError("handshake header too large");
 		return true;
 	}
-	else if(isHandshake(handShake))return false;
-	else if (!isCompleteHandshake(handShake)) return true;
-	else return true;
+	else if( ! isHandshake(handShake))return true;
+	else if ( ! isCompleteHandshake(handShake)) return true;
+	else return false;
 }
 
 //converts an 8bit int less than 64 into a base64 char
@@ -138,6 +160,8 @@ uint8_t WebsocketAuthenticator::convertTo64(uint8_t in) const
 	else if(in == 62)	return 43;
 	else if(in == 63)	return 47;
 	LOG_ERROR("input out of range: "<<static_cast<int>(in)<<" should be less than 64" );
+	throw -1;
+	//will not reach here but there is a compiler error without next line
 	return static_cast<uint8_t>('\\');	//return an invalid base64 char on error
 }
 

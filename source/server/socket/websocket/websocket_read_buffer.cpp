@@ -4,47 +4,56 @@
 #include "source/logging/exception_handler.h"
 
 
-void WebsocketReadBuffers::addMessage(int index, ByteArray &in){
+void WebsocketReadBuffers::addMessage(int index, ByteArray &in)
+{
 	std::lock_guard<std::mutex> lck(mut);
-	if(fileDescriptors->isFDOpen(index)){
+	if(fileDescriptors->isFDOpen(index)) {
 		PartialMessage& tempBuff = messageBuffer[index];
-		if(in.size()+tempBuff.size() <= maxMessageSize){
+		if(in.size()+tempBuff.size() <= maxMessageSize) {
 			tempBuff.increaseSize(in.size());
 			tempBuff.buffer.push_back(std::move(in));
 		}
-		else{
+		else {
 			throwInt("Message expected size too large. Expectedsize: "<<tempBuff.expectedSize);
 		}
 	}
 }
 
-bool WebsocketReadBuffers::messageIsEmpty(int index){
+
+bool WebsocketReadBuffers::messageIsEmpty(int index)
+{
 	std::lock_guard<std::mutex> lck(mut);
 	return (messageBuffer.count(index) == 0);
 }
 
 
-void WebsocketReadBuffers::setMessageSize(int index, size_t _size){
+void WebsocketReadBuffers::setMessageSize(int index, size_t _size)
+{
 	if(messageBuffer.count(index) != 0) {
 		messageBuffer[index].expectedSize = static_cast<int64_t>(_size);
 	}
 }
 
-bool WebsocketReadBuffers::extractMessage(ByteArray &out, size_t position, int index){
+
+bool WebsocketReadBuffers::extractMessage(ByteArray &out, size_t position, int index)
+{
 	std::lock_guard<std::mutex> lck(mut);
-	if(messageBuffer.count(index) != 0){
+	if(messageBuffer.count(index) != 0) {
 		PartialMessage& tempBuff = messageBuffer[index];
-		if(!tempBuff.buffer.empty()){
-			if(out.size()+tempBuff.size() <= maxMessageSize){
-				if( tempBuff.expectedSize > static_cast<int64_t>(maxMessageSize) ) throwInt("Message expected size too large. Expectedsize: "<<tempBuff.expectedSize);
-				if( static_cast<int64_t>( out.size()+tempBuff.size() ) >= tempBuff.expectedSize ){
+		if(!tempBuff.buffer.empty()) {
+			if(out.size()+tempBuff.size() <= maxMessageSize) {
+				if( tempBuff.expectedSize > static_cast<int64_t>(maxMessageSize) ) {
+					throwInt("Message expected size too large. Expectedsize: "<<tempBuff.expectedSize);
+				}
+				if( static_cast<int64_t>( out.size()+tempBuff.size() ) >= tempBuff.expectedSize ) {
 					ByteArray message;
-					if(tempBuff.expectedSize > 0)message.reserve( static_cast<size_t>(tempBuff.expectedSize) );
-					for(auto element : tempBuff.buffer){
+					if(tempBuff.expectedSize > 0) {
+						message.reserve( static_cast<size_t>(tempBuff.expectedSize) );
+					}
+					for(auto element : tempBuff.buffer) {
 						size_t messageSize = message.size();
 						message.resize(messageSize + element.size());
 						memcpy( &message[messageSize], &element[0], element.size() );
-						element = ByteArray(); //save memory
 					}
 					messageBuffer.erase(index);
 					out.insert( out.begin()+static_cast<int64_t>(position), message.begin(), message.end() ); //add message buffer to out;
@@ -60,8 +69,8 @@ bool WebsocketReadBuffers::extractMessage(ByteArray &out, size_t position, int i
 }
 
 
-
-void WebsocketReadBuffers::addFracture(int index, ByteArray &in){
+void WebsocketReadBuffers::addFracture(int index, ByteArray &in)
+{
 	std::lock_guard<std::mutex> lck(mut);
 	if(fileDescriptors->isFDOpen(index)){
 		Fracture& tempBuff = fractureBuffer[index];
@@ -71,15 +80,17 @@ void WebsocketReadBuffers::addFracture(int index, ByteArray &in){
 	}
 }
 
-void WebsocketReadBuffers::extractFracture( ByteArray &out, size_t position, int index){
+
+void WebsocketReadBuffers::extractFracture( ByteArray &out, size_t position, int index)
+{
 	std::lock_guard<std::mutex> lck(mut);
-	if(fractureBuffer.count(index) != 0){
+	if(fractureBuffer.count(index) != 0) {
 		Fracture& tempBuff = fractureBuffer[index];
-		if(tempBuff.size() != 0){
-			if(out.size()+tempBuff.size() <= maxMessageSize){
+		if(tempBuff.size() != 0) {
+			if(out.size()+tempBuff.size() <= maxMessageSize) {
 				ByteArray fractureContents;
 				fractureContents.reserve(tempBuff.size());
-				for(auto element : tempBuff.buffer){
+				for(auto element : tempBuff.buffer) {
 					size_t messageSize = fractureContents.size();
 					fractureContents.resize(messageSize + element.size());
 					memcpy( &fractureContents[messageSize], &element[0], element.size() );
@@ -93,39 +104,65 @@ void WebsocketReadBuffers::extractFracture( ByteArray &out, size_t position, int
 }
 
 
-void WebsocketReadBuffers::clearFracture(int index){
+void WebsocketReadBuffers::clearFracture(int index)
+{
 	std::lock_guard<std::mutex> lck(mut);
-	if(fractureBuffer.count(index) != 0){
-		for(auto element : fractureBuffer[index].buffer){
+	if(fractureBuffer.count(index) != 0) {
+		for(auto element : fractureBuffer[index].buffer) {
 			element.clear();
 		}
 	}
 }
 
-void WebsocketReadBuffers::fractureTypeSet(int index, bool flag){
+
+void WebsocketReadBuffers::fractureTypeSet(int index, bool flag)
+{
 	std::lock_guard<std::mutex> lck(mut);
-	if(fileDescriptors->isFDOpen(index)) fractureBufferType[index] = flag;
+	if(fileDescriptors->isFDOpen(index)) {
+		fractureBufferType[index] = flag;
+	}
 }
 
-bool WebsocketReadBuffers::getFractureType(int index){
+
+bool WebsocketReadBuffers::getFractureType(int index)
+{
 	std::lock_guard<std::mutex> lck(mut);
-	if(fractureBufferType.count(index) != 0) return fractureBufferType[index];
+	if(fractureBufferType.count(index) != 0) {
+		return fractureBufferType[index];
+	}
 	else return false;
 }
 
-void WebsocketReadBuffers::eraseFractureType(int index){
+
+void WebsocketReadBuffers::eraseFractureType(int index)
+{
 	std::lock_guard<std::mutex> lck(mut);
-	if(fractureBufferType.count(index) != 0)fractureBufferType.erase(index); //erase buffer;
+	if(fractureBufferType.count(index) != 0) {
+		fractureBufferType.erase(index); //erase buffer;
+	}
 }
 
-void WebsocketReadBuffers::eraseBuffers(int index){
+
+void WebsocketReadBuffers::eraseBuffers(int index)
+{
 	std::lock_guard<std::mutex> lck(mut);
 	messageBuffer.erase(index); //erase buffer;
 	fractureBuffer.erase(index); //erase buffer;
 	fractureBufferType.erase(index); //erase buffer;
 }
 
-WebsocketReadBuffers::WebsocketReadBuffers(SetOfFileDescriptors *FDs, size_t size) : maxMessageSize(size), mut(), fileDescriptors(FDs), messageBuffer(), fractureBuffer(), fractureBufferType(){}
-WebsocketReadBuffers::~WebsocketReadBuffers(){
+
+WebsocketReadBuffers::WebsocketReadBuffers(SetOfFileDescriptors *FDs, size_t size) :
+	maxMessageSize(size),
+	mut(),
+	fileDescriptors(FDs),
+	messageBuffer(),
+	fractureBuffer(),
+	fractureBufferType()
+{}
+
+
+WebsocketReadBuffers::~WebsocketReadBuffers()
+{
 	std::lock_guard<std::mutex> lck(mut); //don't destroy while a thread has a lock
 }

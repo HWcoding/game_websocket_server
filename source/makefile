@@ -7,7 +7,6 @@ PROJECT_DIRECTORY = $(abspath ../)/
 
 COMP = g++
 CFLAGS = -DDEBUG -Og -g3 -fno-omit-frame-pointer -fno-inline
-LINK_TYPE = lib
 
 EXECUTABLE := $(PROJECT_DIRECTORY)$(EXECUTABLE_NAME)
 OBJ_DIR := $(PROJECT_DIRECTORY)objs/
@@ -15,7 +14,13 @@ DEP_DIR := $(PROJECT_DIRECTORY)deps/
 DEP_TEMP := $(DEP_DIR)temp/
 HEAD_PATH := $(PROJECT_DIRECTORY)
 
-LIBRARIES =  -lpthread -lstdc++ -lm -lcrypto -lssl -ldl
+
+# only include -rdynamic if we are doing a debug build
+ifneq (,$(findstring -DDEBUG,$(CFLAGS)))
+	LIBRARIES =  -rdynamic -lpthread -lstdc++ -lcrypto -ldl
+else
+	LIBRARIES =  -lpthread -lstdc++ -lcrypto
+endif
 
 # use the full path of the cpp file in object file names to
 # prevent multiple files with the same name in different

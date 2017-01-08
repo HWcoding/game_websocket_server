@@ -31,13 +31,16 @@ SocketReader::~SocketReader(){
 	readerQueue = NULL;
 }
 
+
 SocketMessage SocketReader::getNextMessage(){  // blocks thread while queue is empty
 	return readerQueue->getNextMessage_Blocking();//getNextMessage();
 }
 
+
 void SocketReader::shutdown(){
 	readerQueue->shutdown(); // unblocks getNextMessage() if it's blocking and sets running to false--ending the event loop.
 }
+
 
 void SocketReader::processSockMessage(ByteArray &in,  int FD){
 	processor->processSockMessage(in, FD);

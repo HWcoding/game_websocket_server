@@ -10,6 +10,7 @@ class SystemInterface;
 class SetOfFileDescriptors;
 class WebsocketAuthenticator;
 class ByteArray;
+class ClientValidatorInterface;
 struct epoll_event;
 
 
@@ -17,6 +18,7 @@ class SocketServerConnector{
 public:
 	void startPoll();
 	SocketServerConnector(const std::string &_port, SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, std::atomic<bool>* run);
+	void setClientValidator(ClientValidatorInterface * validator);
 	~SocketServerConnector();
 
 private:

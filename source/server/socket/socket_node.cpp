@@ -61,6 +61,10 @@ SocketMessage Socket::getNextMessage(){
 	return reader->getNextMessage();
 }
 
+void Socket::setClientValidator(ClientValidatorInterface * validator){
+	connector->setClientValidator(validator);
+}
+
 void Socket::sendMessage(SocketMessage &message){
 	writer->sendMessage(message);
 }

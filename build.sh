@@ -20,7 +20,8 @@ StrongWarnings=" -Winvalid-pch -fmax-errors=5 -Wall -Wextra -Wformat=2 -Wformat-
 WeakWarnings=" -Wall -Wextra -pedantic -ansi -Weffc++ -Wno-odr"
 TestWarnings=" -Wall -Wno-odr"
 
-ReleaseOptimizations=" -O3 -falign-functions=16 -falign-loops=16 -march=native"
+
+ReleaseOptimizations=" -Ofast -falign-functions=16 -falign-loops=16 -march=native"
 DebugBuild="CFLAGS=-DDEBUG -Og -g3 -fno-omit-frame-pointer -fno-inline"
 ReleaseBuild="CFLAGS=-DNDEBUG -flto ${ReleaseOptimizations}"
 TestBuild="CFLAGS=-DDEBUG -DTESTING -O0"
@@ -49,6 +50,7 @@ function checkColorSupport() {
 	echo "${ColorSupported}"
 }
 
+
 # echos input inside a blue gradiant bar
 function printMajorHeaderColor() {
 	echo -en "\033[48;5;17m "
@@ -64,6 +66,7 @@ function printMajorHeaderColor() {
 	echo -en "\033[48;5;17m "
 	echo -e "\033[0m"
 }
+
 
 # echos input between 2 rows of asterisks
 function printMajorHeaderText() {
@@ -92,6 +95,7 @@ function printMajorHeaderText() {
 	echo "${borderString}"
 }
 
+
 # echos a large header containing the input
 function printMajorHeader() {
 	local supported="$(checkColorSupport)"
@@ -110,6 +114,7 @@ function printMinorHeaderColor() {
 	echo -en "   "
 	echo -e "\033[0m"
 }
+
 
 # echos input in a row of asterisks
 function printMinorHeaderText() {
@@ -130,6 +135,7 @@ function printMinorHeaderText() {
 	echo "${centerString}"
 }
 
+
 # echos a small header containing the input
 function printMinorHeader() {
 	local supported="$(checkColorSupport)"
@@ -148,6 +154,7 @@ function printHighlightColor() {
 	echo -en  "${1}"
 	echo -e "\033[0m"
 }
+
 
 # echos a highlighted version of input
 function printHighlight() {
@@ -175,6 +182,7 @@ function getIsArgument() {
 	fi
 }
 
+
 # returns true if temparary files should be deleted. Set by passing clean as a command argument
 CleanFlag=""
 function getCleanFlag() {
@@ -188,6 +196,7 @@ function getCleanFlag() {
 	echo "${CleanFlag}"
 }
 
+
 # returns a string containing the build flags to use with makefile
 BuildFlag=""
 function getBuildFlag() {
@@ -200,6 +209,7 @@ function getBuildFlag() {
 	fi
 	echo "${BuildFlag}"
 }
+
 
 # returns a string containing the build flags to use with the production makefile including warnings
 ProductionBuildFlag=""
@@ -215,6 +225,7 @@ function getProductionBuildFlag() {
 	echo "${ProductionBuildFlag}"
 }
 
+
 # returns a string containing the build flags to use with the test makefile including warnings
 TestBuildFlag=""
 function getTestBuildFlag() {
@@ -224,6 +235,7 @@ function getTestBuildFlag() {
 	fi
 	echo "${TestBuildFlag}"
 }
+
 
 # returns a string describing the build type.
 BuildType=""
@@ -237,6 +249,7 @@ function getBuildType() {
 	fi
 	echo "${BuildType}"
 }
+
 
 # checks to see if previous build used the same build flags
 CompatableBuild=""
@@ -257,10 +270,12 @@ function checkBuildCompatabilty() {
 	echo "${CompatableBuild}"
 }
 
+
 # writes the current build type to file.
 function writeBuildType() {
 	echo "$(getBuildType)" > "./deps/lastBuildType.txt"
 }
+
 
 # takes a test .cpp filename as an argument and returns dependencies listed in it
 function getTestDependencies() {
@@ -301,6 +316,7 @@ function getTestDependencies() {
 	echo "${Dependencies}"
 }
 
+
 # takes a test .cpp filename as argument and compiles it
 function compileTest() {
 	local ObjectList="OBJECT_LIST=""$(getTestDependencies "${1}")"
@@ -313,6 +329,7 @@ function compileTest() {
 	make -s -j2 "${BuildOptions}" "${ObjectList}" "${FileName}"
 }
 
+
 #compiles all the .cpp files in the ./tests directory
 function compileTestFiles() {
 	# move into the test directory
@@ -324,6 +341,7 @@ function compileTestFiles() {
 	wait
 	cd ../
 }
+
 
 # compiles all the .cpp files in the ./source directory
 function compileProductionFiles() {
@@ -348,6 +366,7 @@ function compileProductionFiles() {
 	cd ../
 }
 
+
 function compileTestLibs() {
 	# move to source directory
 	cd ./tests/test_lib
@@ -366,6 +385,7 @@ function compileTestLibs() {
 	cd ../../
 }
 
+
 # checks to see if this build uses the same build type as the last
 # if not, it cleans the temp files and starts the build from scratch
 function makeBuildCompatable() {
@@ -380,6 +400,7 @@ function makeBuildCompatable() {
 	fi
 }
 
+
 function printProjectLineCount() {
 	# get line count
 	cd ./source
@@ -391,6 +412,7 @@ function printProjectLineCount() {
 	echo -e "$(printHighlight "Project contains:") ${TestLines} lines of test code"
 	echo -e "$(printHighlight "Total is:")         $((TestLines + ProductionLines)) lines of code"
 }
+
 
 function buildDocs() {
 	if [ "$(getCleanFlag)" == "false" ]; then
@@ -488,6 +510,7 @@ function buildGoogleTest(){
 	fi
 }
 
+
 function compileCppcheck() {
 	cd ./cppcheck_source
 
@@ -509,6 +532,7 @@ function compileCppcheck() {
 	rm -rf ./cppcheck_source
 	touch cppcheck_built
 }
+
 
 #fetch and build Cppcheck code analysis tool
 function buildCppcheck() {
@@ -536,14 +560,9 @@ function buildCppcheck() {
 }
 
 
-
-
-
-
-
 function installPackages() {
-	#sudo apt-get install lighttpd
-	#sudo service lighttpd start
+	#apt-get install lighttpd
+	#service lighttpd start
 	printHighlight "This will install graphviz and doxygen"
 
 	if [ $(isNotInstalled graphviz) == "true" ]; then
@@ -561,6 +580,7 @@ function installPackages() {
 	fi
 }
 
+
 function installThreeJS() {
 	cd ../client
 	if [  ! -f "./three.min.js" ]; then
@@ -571,7 +591,6 @@ function installThreeJS() {
 	fi
 	cd ../external
 }
-
 
 
 # build external dependencies
@@ -637,9 +656,12 @@ function buildDirecrories(){
 	cd ../../
 }
 
+
 function copyClientToTestServer(){
-	sudo cp "./client/Testindex.html" "/var/www/html/index.html"
-	sudo cp "./client/three.min.js" "/var/www/html/three.js"
+	set +e
+	cp "./client/Testindex.html" "/var/www/html/index.html"
+	cp "./client/three.min.js" "/var/www/html/three.js"
+	set -e
 }
 
 
@@ -657,7 +679,7 @@ function main() {
 	#create missing directories
 	buildDirecrories
 
-	copyClientToTestServer
+#	copyClientToTestServer
 
 	makeBuildCompatable
 

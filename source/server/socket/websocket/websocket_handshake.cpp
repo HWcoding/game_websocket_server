@@ -58,6 +58,11 @@ bool HandshakeHeaders::fillHeaders(const ByteArray &input){
 		}
 		else LOG_INFO("Unused header: "<<headers[i].toString());
 	}
+
+	/*if(Cookie.size() == 0) {
+		Cookie.appendWithNoSize("no cookie");
+	}*/
+
 	filled = checkHeaders();
 	return filled;
 }
@@ -95,10 +100,10 @@ bool HandshakeHeaders::checkHeaders() const{
 		LOG_ERROR("No Sec-WebSocket-Protocol header");
 		return false;
 	}
-	else if(Cookie.empty()){
-		//LOG_ERROR("No cookie header"); //TODO
-		return true;//false;
-	}
+	/*else if(Cookie.empty()){
+		LOG_ERROR("No cookie header");
+		return false;
+	}*/
 	return true;
 }
 

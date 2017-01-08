@@ -3,6 +3,38 @@
 #include "source/message_handlers/message_dispatcher.h"
 #include "source/data_types/socket_message.h"
 #include "source/logging/exception_handler.h"
+#include "source/server/socket/websocket/websocket_authenticator.h"
+
+
+
+class MyClientValidator : public ClientValidatorInterface
+{
+public:
+	bool areClientHeadersValid(ConnectionHeaders &headers)
+	{
+		/*struct ConnectionHeaders
+		{
+			std::string IP {};
+			std::string port {};
+			std::string SecWebSocketProtocol {};
+			std::string Cookie {};
+		};*/
+
+		(void)headers;
+		//accept all connections
+		return true;
+	}
+	bool isClientIPValid(std::string &IP, std::string &port)
+	{
+		(void)IP;
+		(void)port;
+		//accept all connections
+		return true;
+	}
+	~MyClientValidator(){};
+};
+
+
 
 int main()
 {
@@ -15,8 +47,9 @@ int main()
 
 		ServerConfig config;
 		config.port = std::string("5600");
-
+		MyClientValidator validator;
 		Socket gameSocket(config);
+		gameSocket.setClientValidator(&validator);
 
 		MessageDispatcher dispatcher;
 

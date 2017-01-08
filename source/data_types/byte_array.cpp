@@ -46,11 +46,13 @@ std::string ByteArray::getNextString() const
 std::string ByteArray::toString() const
 {
 	std::string output;
-	size_t pos = tell();
-	seek(0);
-	output.resize(std::vector<uint8_t>::size());
-	getBytes(&output[0], std::vector<uint8_t>::size());
-	seek(pos);
+	if(std::vector<uint8_t>::size() > 0) {
+		size_t pos = tell();
+		seek(0);
+		output.resize(std::vector<uint8_t>::size());
+		getBytes(&output[0], std::vector<uint8_t>::size());
+		seek(pos);
+	}
 	return output;
 }
 

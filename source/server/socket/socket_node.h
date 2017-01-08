@@ -13,10 +13,12 @@ class SetOfFileDescriptors;
 class SocketReader;
 class SocketWriter;
 class SocketServerConnector;
+class ClientValidatorInterface;
 
 class SocketInterface{
 public:
 	virtual SocketMessage getNextMessage() =0;
+	virtual void setClientValidator(ClientValidatorInterface * validator) =0;
 	virtual void sendMessage(SocketMessage &message) =0;
 	virtual void disconnectClient(int FD) =0;
 	virtual bool isRunning() =0;
@@ -43,6 +45,7 @@ class Socket : public SocketInterface{ ///class starts new threads to handle soc
 public:
 	Socket(const ServerConfig &config);
 	SocketMessage getNextMessage();
+	void setClientValidator(ClientValidatorInterface * validator);
 
 	void sendMessage(SocketMessage &message);
 	void disconnectClient(int FD);
