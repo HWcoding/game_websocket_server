@@ -34,7 +34,8 @@ void Socket::disconnectClient(int FD){
 	FDs->removeFD(FD);
 }
 
-Socket::~Socket(){
+void Socket::shutdown()
+{
 	shouldContinueRunning.store(false); //tell loop in socket thread to exit and return
 	reader->shutdown();
 
@@ -54,6 +55,11 @@ Socket::~Socket(){
 	}
 
 	LOG_INFO("Exited");
+}
+
+Socket::~Socket()
+{
+	shutdown();
 }
 
 

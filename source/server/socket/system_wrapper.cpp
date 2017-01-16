@@ -70,7 +70,7 @@ void SystemWrapper::closeFD(int FD) const{
 	int ret = close(FD);
 	int error = errno;
 	if(ret == -1){
-		LOG_ERROR(" File descriptor "<<FD<<"failed to close properly. "<< std::strerror(error) );
+		LOG_ERROR(" File descriptor "<<FD<<" failed to close properly. "<< std::strerror(error) );
 	}
 }
 

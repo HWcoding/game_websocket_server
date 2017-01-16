@@ -32,35 +32,85 @@ public:
 	~MyClientValidator(){};
 };
 
+#include <thread>
+#include <atomic>
+class ThreadWrapper
+{
+public:
+	template< class Function, class... Args >
+	explicit ThreadWrapper( Function&& f, Args&&... args )
+	{
+		Thread = std::thread(f, args...);
+	}
 
-int main()
+	~ThreadWrapper()
+	{
+		if(Thread.joinable()) {
+			Thread.join(); //wait for thread to finish returning
+		}
+	}
+private:
+	std::thread Thread {};
+
+};
+
+
+
+namespace {
+void messageLoop(Socket *gameSocket, std::atomic<bool> *run)
 {
 	try {
-		std::cout<<"Work in progress"<<std::endl;
-		std::cout<<"Navigate a browser to localhost to test"<<std::endl;
-		std::cout<<"You can move the green circle using w, a, s, and d"<<std::endl;
-		std::cout<<"The circle's position will be printed in this console"<<std::endl;
-		std::cout<<"\033[31mExit using ctl-c\033[0m"<<std::endl;
-
-		ServerConfig config;
-		config.port = std::string("5600");
-		MyClientValidator validator;
-		Socket gameSocket(config);
-		gameSocket.setClientValidator(&validator);
 
 		MessageDispatcher dispatcher;
 
-		for(;;) {
-			if(gameSocket.isRunning()){
+		while(run->load()) {
+			if(gameSocket->isRunning()){
 				//blocks thread if message queue is empty
-				dispatcher.dispatchMessage( gameSocket.getNextMessage() );
+				dispatcher.dispatchMessage( gameSocket->getNextMessage() );
 			}
 		}
 	}
 	catch(...) {
 		BACKTRACE_PRINT();
-		return 1;
 	}
+}
+} //namespace
+
+
+
+#include "source/signal_handler.h"
+int main()
+{
+	std::atomic<bool> run(true);
+	SignalHandler *sigHandler = SignalHandler::getSignalHandler(&run);
+	if(sigHandler == nullptr) throwInt("sigHandler is null");
+
+	std::cout<<"Work in progress"<<std::endl;
+	std::cout<<"Navigate a browser to localhost to test"<<std::endl;
+	std::cout<<"You can move the green circle using w, a, s, and d"<<std::endl;
+	std::cout<<"The circle's position will be printed in this console"<<std::endl;
+	std::cout<<"\033[31mQuit by entering \"q\"\033[0m"<<std::endl;
+
+	ServerConfig config;
+	config.port = std::string("5590");
+	Socket gameSocket(config);
+
+	MyClientValidator validator;
+	gameSocket.setClientValidator(&validator);
+
+	ThreadWrapper loop(&::messageLoop, &gameSocket, &run);
+
+//	int result = daemon(1, 1);
+	while(run.load()) {
+		std::string input;
+		getline(std::cin, input);
+		if(input.compare("q") == 0){
+			break;
+		}
+	}
+	std::cout<<"\033[1;32mExiting...\033[0m"<<std::endl;
+	run.store(false);
+	gameSocket.shutdown();
 
 	return 0;
 }

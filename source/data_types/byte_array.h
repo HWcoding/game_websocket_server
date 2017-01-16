@@ -110,13 +110,7 @@ private:
 
 
 
-template<class T>
-inline T ByteArray::getNext() const
-{
-	T output;
-	getBytes(&output, sizeof (T));
-	return output;
-}
+
 
 
 inline void ByteArray::append(const ByteArray &arr)
@@ -137,87 +131,81 @@ inline void ByteArray::append(const T &num)
 	appendBytes(&num, sizeof (T));
 }
 
+template<class T>
+inline T ByteArray::getNext() const
+{
+	T output;
+	getBytes(&output, sizeof (T));
+	return output;
+}
+
+template<>
+inline bool ByteArray::getNext<bool>() const
+{
+	int8_t flag = getNext<int8_t>();
+	return flag != 0;
+}
+
 inline int8_t ByteArray::getNextInt8() const
 {
-	int8_t output;
-	getBytes(&output, sizeof (output));
-	return output;
+	return getNext<int8_t>();
 }
 
 inline int16_t ByteArray::getNextInt16() const
 {
-	int16_t output;
-	getBytes(&output, sizeof (output));
-	return output;
+	return getNext<int16_t>();
 }
 
 inline int32_t ByteArray::getNextInt32() const
 {
-	int32_t output;
-	getBytes(&output, sizeof (output));
-	return output;
+	return getNext<int32_t>();
 }
 
 inline int64_t ByteArray::getNextInt64() const
 {
-	int64_t output;
-	getBytes(&output, sizeof (output));
-	return output;
+	return getNext<int64_t>();
 }
 
 inline uint8_t ByteArray::getNextUint8() const
 {
-	uint8_t output;
-	getBytes(&output, sizeof (output));
-	return output;
+	return getNext<uint8_t>();
 }
 
 inline uint16_t ByteArray::getNextUint16() const
 {
-	uint16_t output;
-	getBytes(&output, sizeof (output));
-	return output;
+	return getNext<uint16_t>();
 }
 
 inline uint32_t ByteArray::getNextUint32() const
 {
-	uint32_t output;
-	getBytes(&output, sizeof (output));
-	return output;
+	return getNext<uint32_t>();
 }
 
 inline uint64_t ByteArray::getNextUint64() const
 {
-	uint64_t output;
-	getBytes(&output, sizeof (output));
-	return output;
+	return getNext<uint64_t>();
 }
 
 inline float ByteArray::getNextFloat() const
 {
-	float output;
-	getBytes(&output, sizeof (output));
-	return output;
+	return getNext<float>();
 }
 
 inline double ByteArray::getNextDouble() const
 {
-	double output;
-	getBytes(&output, sizeof (output));
-	return output;
+	return getNext<double>();
 }
 
 inline bool ByteArray::getNextBool() const
 {
-	int8_t flag;
-	getBytes(&flag, sizeof (flag));
-	return flag != 0;
+	return getNext<bool>();
 }
 
 inline size_t ByteArray::tell() const
 {
 	return currentIndex;
 }
+
 
 //constructors
 inline ByteArray::ByteArray() noexcept :
@@ -261,6 +249,7 @@ inline ByteArray::ByteArray(std::string str) :
 	this->append(str);
 }
 
+
 //copy constructors
 inline ByteArray::ByteArray( const ByteArray& other ) :
 	std::vector<uint8_t>(other),
@@ -268,7 +257,7 @@ inline ByteArray::ByteArray( const ByteArray& other ) :
 {}
 
 inline ByteArray::ByteArray( const ByteArray& other,
-	                         const std::allocator<int8_t>& alloc ) :
+                             const std::allocator<int8_t>& alloc ) :
 	std::vector<uint8_t> (other, alloc),
 	currentIndex(other.currentIndex)
 {}
@@ -279,11 +268,10 @@ inline ByteArray::ByteArray( ByteArray&& other ) :
 {}
 
 inline ByteArray::ByteArray( ByteArray&& other,
-	                         const std::allocator<int8_t>& alloc ) :
+                             const std::allocator<int8_t>& alloc ) :
 	std::vector<uint8_t>( std::move(other), alloc ),
 	currentIndex(other.currentIndex)
 {}
-
 
 
 //assignment

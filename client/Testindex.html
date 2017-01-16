@@ -21,10 +21,10 @@
 		var renderer = new THREE.WebGLRenderer();
 		renderer.setSize( screenWidth, screenHeight );
 		renderer.shadowMapEnabled = true;
-		renderer.shadowMapSoft = true;
+//		renderer.shadowMapSoft = true;
 		renderer.shadowMapWidth = 1024;
 		renderer.shadowMapHeight = 1024;
-		renderer.shadowMapType = THREE.PCFSoftShadowMap;
+//		renderer.shadowMapType = THREE.PCFSoftShadowMap;
 		document.body.appendChild( renderer.domElement );
 
 		var light = new THREE.AmbientLight(0x202020); // soft white light
@@ -130,9 +130,7 @@
 
 		render();
 
-		//var render = true;
 		var exampleSocket;
-
 		var sendMessage = function(message){
 			if(exampleSocket.readyState == 1){
 				exampleSocket.send(message);
@@ -141,7 +139,7 @@
 
 		function connectToSocket(key){
 			var webSocketHostname = window.location.hostname;
-			var webSocketPort = ":5600"; //for testting
+			var webSocketPort = ":5590"; //for testting
 			var webSocketURL = "ws://"+webSocketHostname+webSocketPort;
 
 			exampleSocket = new WebSocket(webSocketURL, key);
@@ -165,7 +163,7 @@
 		StartSocketHandshake();
 
 
-		function StartSocketHandshake(){ //inform server we wish to login then get Cookie and CSRF token from server
+		function StartSocketHandshake(){
 			connectToSocket("DkslIDLrksl29005");
 		}
 

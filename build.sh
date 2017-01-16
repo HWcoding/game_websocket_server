@@ -417,10 +417,17 @@ function printProjectLineCount() {
 function buildDocs() {
 	if [ "$(getCleanFlag)" == "false" ]; then
 		cd ./doxy
-		doxygen Doxyfile
+		if [ $(isNotInstalled doxygen) == "false" ]; then
+			if [ $(isNotInstalled graphviz) == "false" ]; then
+				doxygen Doxyfile
+			else
+				printHighlight "Error: graphviz is not installed"
+			fi
+		else
+			printHighlight "Error: doxygen is not installed"
+		fi
 		cd ../
 	else
-
 		#clean docs
 		cd ./docs
 		if [ -d "html" ]; then
@@ -599,7 +606,7 @@ function buildExternals() {
 		mkdir external
 	fi
 	cd ./external
-	installPackages
+#	installPackages
 	installThreeJS
 	buildCppcheck
 	buildGoogleTest

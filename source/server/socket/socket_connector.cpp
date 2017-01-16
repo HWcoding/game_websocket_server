@@ -54,9 +54,11 @@ SocketServerConnector::SocketServerConnector(const std::string &_port, SystemInt
 SocketServerConnector::~SocketServerConnector(){
 	if(epollFD != -1){
 		systemWrap->closeFD(epollFD);
+		epollFD = -1;
 	}
 	if(listeningFD != -1){
-		systemWrap->closeFD(listeningFD);
+		fileDescriptors->removeFD(listeningFD);
+		listeningFD = -1;
 	}
 }
 
@@ -93,6 +95,7 @@ bool SocketServerConnector::handleEpollErrors(epoll_event &event){
 		closeFD(event.data.fd);
 
 		if(event.data.fd == listeningFD){ //error is on listening FD
+			listeningFD = -1;
 			throwInt(std::strerror(errno)<<" in epoll"); //server can't continue
 		}
 		return true; //there was an error
@@ -269,7 +272,7 @@ void SocketServerConnector::waitForHandshake(int FD){
 void SocketServerConnector::closeFD(int FD){
 	Authenticator->closeFD(FD);
 	int ret= fileDescriptors->removeFD(FD);
-	if(ret == -1)LOG_ERROR("File descriptor "<<FD<<"failed to close properly. ");
+	if(ret == -1)LOG_ERROR("File descriptor "<<FD<<" failed to close properly. ");
 }
 
 

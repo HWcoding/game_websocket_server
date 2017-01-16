@@ -14,8 +14,9 @@
 
 #define LOG_LOCATION                    " in "<<"\033[35m "<<__PRETTY_FUNCTION__<<"\033[0m"<<" in file "<<"\033[36m"<<__FILE__<<"\033[0m"<<" line: "<<__LINE__
 #define LOG_FUNCTION					" in "<<"\033[35m "<<__PRETTY_FUNCTION__<<"\033[0m"<<" line: "<<__LINE__
-#define LOG_ERROR(text)                 PRINT_ERROR("\033[31m[ERROR]:\033[0m ",text)
+
 #define LOG_EXCEPTION(text)             PRINT_ERROR("[\033[1;37;41mEXCEPTION\033[0m]: ",text<<LOG_FUNCTION)
+#define LOG_ERROR(text)                 PRINT_ERROR("\033[31m[ERROR]:\033[0m ",text)
 
 #ifdef DEBUG
 #define LOG_VERBOSE(text)               PRINT_LOG("VERBOSE: ",text)

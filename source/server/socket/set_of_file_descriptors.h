@@ -17,6 +17,7 @@ public:
 	void addNewConnectionCallback(std::function<void(int)> callback);
 	int  addFD(int FD);
 	int  tellServerAboutNewConnection(int FD);
+	bool callCloseCallbacks(int FD);
 	int  removeFD(int FD);
 	bool isFDOpen(int FD);
 	void stopPollingFD(int epoll, int FD);

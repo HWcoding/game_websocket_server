@@ -5,14 +5,18 @@
 
 SetOfFileDescriptors::SetOfFileDescriptors(SystemInterface *_systemWrap) : systemWrap(_systemWrap), openFDs(), FDmut(), closeCallbacks(), newConnectionCallbacks(){}
 
-SetOfFileDescriptors::~SetOfFileDescriptors(){
+SetOfFileDescriptors::~SetOfFileDescriptors()
+{
 	std::lock_guard<std::recursive_mutex> lck(FDmut); //don't destroy while other threads are accessing this
 	for (auto& elem: openFDs){ //close remaining FDs
-		systemWrap->closeFD( elem.second.getFD() );
+		int FD = elem.second.getFD();
+		systemWrap->closeFD(FD);
+		LOG_INFO("removed FD "<<FD);
 	}
 }
 
-ByteArray SetOfFileDescriptors::getIP(int FD){
+ByteArray SetOfFileDescriptors::getIP(int FD)
+{
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		return openFDs.at(FD).getIP();
@@ -24,7 +28,8 @@ ByteArray SetOfFileDescriptors::getIP(int FD){
 	}
 }
 
-ByteArray SetOfFileDescriptors::getPort(int FD){
+ByteArray SetOfFileDescriptors::getPort(int FD)
+{
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		return openFDs.at(FD).getPort();
@@ -36,7 +41,8 @@ ByteArray SetOfFileDescriptors::getPort(int FD){
 	}
 }
 
-ByteArray SetOfFileDescriptors::getCSRFkey(int FD){
+ByteArray SetOfFileDescriptors::getCSRFkey(int FD)
+{
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		return openFDs.at(FD).getCSRFkey();
@@ -48,7 +54,8 @@ ByteArray SetOfFileDescriptors::getCSRFkey(int FD){
 	}
 }
 
-void SetOfFileDescriptors::setIP(int FD, ByteArray s){
+void SetOfFileDescriptors::setIP(int FD, ByteArray s)
+{
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		openFDs.at(FD).setIP(s);
@@ -56,7 +63,8 @@ void SetOfFileDescriptors::setIP(int FD, ByteArray s){
 	else throwInt(FD<<" is an invalid file descriptor");
 }
 
-void SetOfFileDescriptors::setPort(int FD, ByteArray s){
+void SetOfFileDescriptors::setPort(int FD, ByteArray s)
+{
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		openFDs.at(FD).setPort(s);
@@ -64,7 +72,8 @@ void SetOfFileDescriptors::setPort(int FD, ByteArray s){
 	else throwInt(FD<<" is an invalid file descriptor");
 }
 
-void SetOfFileDescriptors::setCSRFkey(int FD, ByteArray s){
+void SetOfFileDescriptors::setCSRFkey(int FD, ByteArray s)
+{
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		openFDs.at(FD).setCSRFkey(s);
@@ -72,17 +81,20 @@ void SetOfFileDescriptors::setCSRFkey(int FD, ByteArray s){
 	else throwInt(FD<<" is an invalid file descriptor");
 }
 
-void SetOfFileDescriptors::addCloseFDCallback(std::function<void(int)> callback){
+void SetOfFileDescriptors::addCloseFDCallback(std::function<void(int)> callback)
+{
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	closeCallbacks.push_back(callback);
 }
 
-void SetOfFileDescriptors::addNewConnectionCallback(std::function<void(int)> callback){
+void SetOfFileDescriptors::addNewConnectionCallback(std::function<void(int)> callback)
+{
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	newConnectionCallbacks.push_back(callback);
 }
 
-int SetOfFileDescriptors::addFD(int FD){
+int SetOfFileDescriptors::addFD(int FD)
+{
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	if(FD>0 && openFDs.count(FD)==0){ //a negative number is an error message passed through this function. Don't add to FDs. Just return the error.
 		openFDs.emplace(std::piecewise_construct,
@@ -93,7 +105,8 @@ int SetOfFileDescriptors::addFD(int FD){
 	return FD;
 }
 
-int SetOfFileDescriptors::tellServerAboutNewConnection(int FD){
+int SetOfFileDescriptors::tellServerAboutNewConnection(int FD)
+{
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	if(isFDOpen(FD)){ //check to see if FD is in list of open FD's.
 		for(unsigned int i =0; i< newConnectionCallbacks.size(); i++){
@@ -103,20 +116,29 @@ int SetOfFileDescriptors::tellServerAboutNewConnection(int FD){
 	return FD;
 }
 
-int SetOfFileDescriptors::removeFD(int FD){
+bool SetOfFileDescriptors::callCloseCallbacks(int FD)
+{
+	bool callbackThrew = false;
+	for(unsigned int i =0; i< closeCallbacks.size(); ++i){
+		//call all of the callbacks associated with this socket's closure.
+		try{ closeCallbacks[i](FD); }
+		catch(...){
+			BACKTRACE_PRINT();
+			callbackThrew = true;
+		}
+	}
+	return callbackThrew;
+
+}
+
+int SetOfFileDescriptors::removeFD(int FD)
+{
 	int ret = 0;
 	bool callbackThrew = false;
 	try{
 		std::lock_guard<std::recursive_mutex> lock_FD(FDmut);
 		if(isFDOpen(FD)){ //check to see if FD is in list of open FD's.
-			for(unsigned int i =0; i< closeCallbacks.size(); ++i){
-				//call all of the callbacks associated with this socket's closure.
-				try{ closeCallbacks[i](FD); }
-				catch(...){
-					BACKTRACE_PRINT();
-					callbackThrew = true;
-				}
-			}
+			callbackThrew = callCloseCallbacks(FD);
 			systemWrap->closeFD(FD);
 			openFDs.erase(FD);
 		}
@@ -126,11 +148,12 @@ int SetOfFileDescriptors::removeFD(int FD){
 		ret = -1;
 	}
 	if(callbackThrew) ret = -1;
-	LOG_INFO(" removed FD "<<FD);
+	LOG_INFO("removed FD "<<FD);
 	return ret;
 }
 
-bool SetOfFileDescriptors::isFDOpen(int FD){
+bool SetOfFileDescriptors::isFDOpen(int FD)
+{
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.
 		return true;
@@ -138,7 +161,8 @@ bool SetOfFileDescriptors::isFDOpen(int FD){
 	else return false;
 }
 
-void SetOfFileDescriptors::stopPollingFD(int epoll, int FD){
+void SetOfFileDescriptors::stopPollingFD(int epoll, int FD)
+{
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.
 		openFDs.at(FD).stopPollingFD(epoll);
@@ -146,7 +170,8 @@ void SetOfFileDescriptors::stopPollingFD(int epoll, int FD){
 	else throwInt(FD<<" is an invalid file descriptor");
 }
 
-void SetOfFileDescriptors::startPollingForWrite(int epoll, int FD){
+void SetOfFileDescriptors::startPollingForWrite(int epoll, int FD)
+{
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.
 		openFDs.at(FD).startPollingForWrite(epoll);
@@ -154,7 +179,8 @@ void SetOfFileDescriptors::startPollingForWrite(int epoll, int FD){
 	else throwInt(FD<<" is an invalid file descriptor");
 }
 
-void SetOfFileDescriptors::startPollingForRead(int epoll, int FD){
+void SetOfFileDescriptors::startPollingForRead(int epoll, int FD)
+{
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.
 		openFDs.at(FD).startPollingForRead(epoll);
@@ -162,7 +188,8 @@ void SetOfFileDescriptors::startPollingForRead(int epoll, int FD){
 	else throwInt(FD<<" is an invalid file descriptor");
 }
 
-void SetOfFileDescriptors::makeNonblocking(int FD){
+void SetOfFileDescriptors::makeNonblocking(int FD)
+{
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.
 		openFDs.at(FD).makeNonblocking();
@@ -170,7 +197,8 @@ void SetOfFileDescriptors::makeNonblocking(int FD){
 	else throwInt(FD<<" is an invalid file descriptor");
 }
 
-std::unique_lock<std::recursive_mutex> SetOfFileDescriptors::getAndLockFD(FileDescriptor* &FDPointer, int FD){
+std::unique_lock<std::recursive_mutex> SetOfFileDescriptors::getAndLockFD(FileDescriptor* &FDPointer, int FD)
+{
 	FDPointer = NULL;
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.

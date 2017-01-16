@@ -21,6 +21,7 @@ public:
 	virtual void setClientValidator(ClientValidatorInterface * validator) =0;
 	virtual void sendMessage(SocketMessage &message) =0;
 	virtual void disconnectClient(int FD) =0;
+	virtual void shutdown() =0;
 	virtual bool isRunning() =0;
 	virtual ~SocketInterface();
 protected:
@@ -49,6 +50,7 @@ public:
 
 	void sendMessage(SocketMessage &message);
 	void disconnectClient(int FD);
+	void shutdown();
 
 	bool isRunning();
 	~Socket();

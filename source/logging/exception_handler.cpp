@@ -14,7 +14,8 @@ void * last_frames[frameSize];
 int last_size = 0;
 std::string exception_name;
 std::string demangle(const char *name);
-std::string demangle(const char *name) {
+std::string demangle(const char *name)
+{
 	int status;
 	std::unique_ptr<char,void(*)(void*)> realname(abi::__cxa_demangle(name, 0, 0, &status), &std::free);
 	return status ? "failed" : &*realname;
