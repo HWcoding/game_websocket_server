@@ -70,7 +70,11 @@ void messageLoop(Socket *gameSocket, std::atomic<bool> *run)
 			}
 		}
 	}
+	//runs in separate thread so we need to catch all exceptions to avoid ABORT
 	catch(...) {
+		//set flag to indicate the thread has stopped running
+		run->store(false);
+
 		BACKTRACE_PRINT();
 	}
 }
