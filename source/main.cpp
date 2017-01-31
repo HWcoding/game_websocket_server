@@ -3,37 +3,11 @@
 #include "source/data_types/socket_message.h"
 #include "source/logging/exception_handler.h"
 #include "source/server/socket/websocket/websocket_authenticator.h"
-
-
-class MyClientValidator : public ClientValidatorInterface
-{
-public:
-	bool areClientHeadersValid(ConnectionHeaders &headers)
-	{
-		/*struct ConnectionHeaders
-		{
-			std::string IP {};
-			std::string port {};
-			std::string SecWebSocketProtocol {};
-			std::string Cookie {};
-		};*/
-
-		(void)headers;
-		//accept all connections
-		return true;
-	}
-	bool isClientIPValid(std::string &IP, std::string &port)
-	{
-		(void)IP;
-		(void)port;
-		//accept all connections
-		return true;
-	}
-	~MyClientValidator(){};
-};
-
+#include "source/signal_handler.h"
 #include <thread>
 #include <atomic>
+
+
 class ThreadWrapper
 {
 public:
@@ -60,7 +34,6 @@ namespace {
 void messageLoop(Socket *gameSocket, std::atomic<bool> *run)
 {
 	try {
-
 		MessageDispatcher dispatcher;
 
 		while(run->load()) {
@@ -82,12 +55,11 @@ void messageLoop(Socket *gameSocket, std::atomic<bool> *run)
 
 
 
-#include "source/signal_handler.h"
+
 int main()
 {
 	std::atomic<bool> run(true);
-	SignalHandler *sigHandler = SignalHandler::getSignalHandler(&run);
-	if(sigHandler == nullptr) throwInt("sigHandler is null");
+	SignalHandler::setSignalHandler(&run);
 
 	std::cout<<"Work in progress"<<std::endl;
 	std::cout<<"Navigate a browser to localhost to test"<<std::endl;
@@ -99,8 +71,30 @@ int main()
 	config.port = std::string("5590");
 	Socket gameSocket(config);
 
+
+	class MyClientValidator : public ClientValidatorInterface
+	{
+	public:
+		bool areClientHeadersValid(ConnectionHeaders &headers)
+		{
+			(void)headers;
+			//accept all connections
+			return true;
+		}
+		bool isClientIPValid(std::string &IP, std::string &port)
+		{
+			(void)IP;
+			(void)port;
+			//accept all connections
+			return true;
+		}
+		~MyClientValidator(){};
+	};
+
 	MyClientValidator validator;
 	gameSocket.setClientValidator(&validator);
+
+
 
 	ThreadWrapper loop(&::messageLoop, &gameSocket, &run);
 
@@ -112,6 +106,7 @@ int main()
 			break;
 		}
 	}
+
 	std::cout<<"\033[1;32mExiting...\033[0m"<<std::endl;
 	run.store(false);
 	gameSocket.shutdown();

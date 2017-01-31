@@ -8,15 +8,26 @@
 class SignalHandler
 {
 public:
-	static SignalHandler *getSignalHandler(std::atomic<bool> *run = nullptr);
+	static SignalHandler * getSignalHandler();
+	static SignalHandler * setSignalHandler(std::atomic<bool> *run);
+	static SignalHandler * resetSignalHandler(std::atomic<bool> *run);
 	void SetStopFlag();
 	~SignalHandler();
 private:
+	static SignalHandler *getsetSignalHandler(std::atomic<bool> *run = nullptr);
+	void initialize(std::atomic<bool> *run);
+	void revertToDefault();
+
 	SignalHandler(std::atomic<bool> *run);
 	struct sigaction sigAction {};
 	std::atomic<bool> *ptr_run {nullptr};
 
-	SignalHandler& operator=(const SignalHandler&)=delete;
+	SignalHandler& operator=(const SignalHandler& s)
+	{
+		sigAction = s.sigAction;
+		ptr_run = s.ptr_run;
+		return *this;
+	}
 	SignalHandler(const SignalHandler&)=delete;
 };
 

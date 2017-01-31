@@ -20,12 +20,11 @@ StrongWarnings=" -Winvalid-pch -fmax-errors=5 -Wall -Wextra -Wformat=2 -Wformat-
 WeakWarnings=" -Wall -Wextra -pedantic -ansi -Weffc++ -Wno-odr"
 TestWarnings=" -Wall -Wno-odr"
 
-
 ReleaseOptimizations=" -Ofast -falign-functions=16 -falign-loops=16 -march=native"
 DebugBuild="CFLAGS=-DDEBUG -Og -g3 -fno-omit-frame-pointer -fno-inline"
 ReleaseBuild="CFLAGS=-DNDEBUG -flto ${ReleaseOptimizations}"
 TestBuild="CFLAGS=-DDEBUG -DTESTING -O0"
-#-flto
+
 # convert arguments to lower case
 FirstArg=$( echo "${1}" | tr '[:upper:]' '[:lower:]')
 SecondArg=$( echo "${2}" | tr '[:upper:]' '[:lower:]')
@@ -567,47 +566,12 @@ function buildCppcheck() {
 }
 
 
-function installPackages() {
-	#apt-get install lighttpd
-	#service lighttpd start
-	printHighlight "This will install graphviz and doxygen"
-
-	if [ $(isNotInstalled graphviz) == "true" ]; then
-		printHighlight "Installing graphviz"
-		sudo apt-get install graphviz
-	else
-		printHighlight "graphviz is already installed"
-	fi
-
-	if [ $(isNotInstalled doxygen) == "true" ]; then
-		printHighlight "Installing doxygen"
-		sudo apt-get install doxygen
-	else
-		printHighlight "doxygen is already installed"
-	fi
-}
-
-
-function installThreeJS() {
-	cd ../client
-	if [  ! -f "./three.min.js" ]; then
-		printHighlight "Downloading three.min.js from github"
-		wget "https://github.com/mrdoob/three.js/raw/dev/build/three.min.js"
-	else
-		printHighlight "three.js already downloaded"
-	fi
-	cd ../external
-}
-
-
 # build external dependencies
 function buildExternals() {
 	if [ ! -d "external" ]; then
 		mkdir external
 	fi
 	cd ./external
-#	installPackages
-	installThreeJS
 	buildCppcheck
 	buildGoogleTest
 	printHighlight "Waiting for packages to finish compiling"
@@ -667,7 +631,6 @@ function buildDirecrories(){
 function copyClientToTestServer(){
 	set +e
 	cp "./client/Testindex.html" "/var/www/html/index.html"
-	cp "./client/three.min.js" "/var/www/html/three.js"
 	set -e
 }
 

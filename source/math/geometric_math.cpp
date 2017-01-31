@@ -213,7 +213,7 @@ bool doesRayIntersectSphere(const Ray &ray, const Sphere &sphere)
 
 	double dotOfRayAndCenter = dotProduct(vectorToCenter, ray.direction);
 
-	// if starting poit is outside sphere and points away from sphere, we miss
+	// if starting point is outside sphere and points away from sphere, we miss
 	if(dotOfRayAndCenter > 0.0) return false;
 
 	double discriminant = dotOfRayAndCenter * dotOfRayAndCenter - distanceToEdgeOfSphere;
