@@ -4,7 +4,7 @@
 
 #include "gtest/gtest.h"
 
-#define STAY_SILENT_ON_SUCCESS StaySilentOnSuccess STAY_SILENT_ON_SUCESS_OBJECT
+#define STAY_SILENT_ON_SUCCESS() StaySilentOnSuccess STAY_SILENT_ON_SUCESS_OBJECT
 
 class StaySilentOnSuccess
 {
@@ -73,12 +73,5 @@ public:
 		listeners.Append(new SilentOnSuccessListener(listener));
 	}
 };
-
-
-
-
-
-
-
 
 #endif /* TESTS_TEST_H */

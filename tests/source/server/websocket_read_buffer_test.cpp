@@ -213,6 +213,6 @@ TEST(WebsocketReadBufferTest, extractFracture)
 int main(int argc, char *argv[])
 {
 	::testing::InitGoogleTest(&argc, argv);
-	STAY_SILENT_ON_SUCCESS;
+	STAY_SILENT_ON_SUCCESS();
 	return RUN_ALL_TESTS();
 }

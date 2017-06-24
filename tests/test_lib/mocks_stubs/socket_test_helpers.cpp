@@ -23,21 +23,6 @@
 +---------------------------------------------------------------+*/
 
 
-/* std::string vectorUint8_to_string(const std::vector<uint8_t> &input){
-	const char* strPointer = reinterpret_cast<const char *>(&input[0]);
-	std::string output(strPointer, input.size());
-	return output;
-}
-
-std::vector<uint8_t> string_to_vectorUint8(const std::string &input){
-	std::vector<uint8_t> output;
-	output.resize(input.size());
-	memcpy( &output[0], input.c_str(), input.size() );
-	return output;
-}
-*/
-
-
 
 
 std::string generateTestString(size_t size, size_t offset){ //makes a string of repeating acsii codes 33 through 126 (printable characters). Offset causes the string to start later in the pattern
@@ -84,14 +69,14 @@ std::string applyMask(const std::string &in, uint32_t mask){
 			tempMask[j] = pMask[i % 4]; //build new 64bit mask starting were the previous loop left off (at i)
 		}
 
-		for (i = 0; i < length64; i+=4){//reset i to zero and start unmasking at the output64 pointer
-			output64[i]   ^= mask64;	//unmask data by 64bit 'XOR'ing
+		for (i = 0; i < length64; i+=4){//reset i to zero and start masking at the output64 pointer
+			output64[i]   ^= mask64;	//mask data by 64bit 'XOR'ing
 			output64[i+1] ^= mask64;
 			output64[i+2] ^= mask64;
 			output64[i+3] ^= mask64;
 		}
 
-		offset += i*8; //unmask the last remaining bits
+		offset += i*8; //mask the last remaining bits
 		endBytes += offset;
 		for(i = offset; i<endBytes; i++){
 			output[i] ^= pMask[i % 4];
@@ -226,25 +211,3 @@ ByteArray createTestHandshakeHeader(){
 	output.appendWithNoSize(std::string("Sec-WebSocket-Protocol: 05fcc56b7cb916d5e5a82081223b3357\r\n\r\n") );
 	return output;
 }
-
-/*std::vector< ByteArray > createTestHandshakeHeaderVector(){
-	std::vector< ByteArray > Output;
-
-	Output.push_back( ByteArray(std::string("GET /socket HTTP/1.1")) );
-	Output.push_back( ByteArray(std::string("Host: localhost")) );
-	Output.push_back( ByteArray(std::string("Connection: keep-alive, Upgrade")) );
-	Output.push_back( ByteArray(std::string("Pragma: no-cache")) );
-	Output.push_back( ByteArray(std::string("Cache-Control: no-cache")) );
-	Output.push_back( ByteArray(std::string("Upgrade: websocket")) );
-	Output.push_back( ByteArray(std::string("Origin: http://localhost:8080")) );
-	Output.push_back( ByteArray(std::string("Sec-WebSocket-Version: 13")) );
-	Output.push_back( ByteArray(std::string("User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.94 Safari/537.36")) );
-	Output.push_back( ByteArray(std::string("Accept-Encoding: gzip, deflate, sdch")) );
-	Output.push_back( ByteArray(std::string("Accept-Language: en-US,en;q=0.8")) );
-	Output.push_back( ByteArray(std::string("Cookie: GameServer=CJP5G89v2O30Dx-StfclobgZ0AuIH8Nh74SEzHxvBJEZWG6yJ3smhW73TZgDMO0HEy8AvYhKgzxVry5Yby75oT-250dW6PTdm74rhmQyACSwbiAbvp67108QZid7KoPJjf-OuP1cf5Z31_eHimsW8JTIf9KINfG0yy31WuDb21XU-nH9EJcVKhdoXrQB_35DPIRymBxV85cENsxScjjMIBnI60mUR1koC5k_XcwSiTgnoT9ApEPwIX6Z9iw0tV2X7")) );
-	Output.push_back( ByteArray(std::string("Sec-WebSocket-Key: +40NMxLMogWjfV/0HyjlxA==")) );
-	Output.push_back( ByteArray(std::string("Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits")) );
-	Output.push_back( ByteArray(std::string("Sec-WebSocket-Protocol: 05fcc56b7cb916d5e5a82081223b3357")) );
-
-	return Output;
-}*/

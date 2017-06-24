@@ -11,8 +11,8 @@ namespace profiling {
 //calculate the minimum number of cpu cycles required to run func
 int64_t countCpuCycles(void (*func)(void), int64_t iterations)
 {
-	volatile int64_t baseCycleCount = ::getFunctionCycleCount(::emptyFunction,iterations);
-	volatile int64_t cycleCount = ::getFunctionCycleCount(func,iterations);
+	volatile int64_t baseCycleCount = ::getFunctionCycleCount(::emptyFunction, iterations);
+	volatile int64_t cycleCount = ::getFunctionCycleCount(func, iterations);
 	return (cycleCount-baseCycleCount);
 }
 
@@ -24,7 +24,7 @@ int64_t countCpuCycles(void (*func)(void), int64_t iterations)
 namespace {
 
 //runs func through a number of iterations and
-//return the quickest time to complete a single call
+//returns the quickest time to complete a single call
 int64_t getFunctionCycleCount(void (*func)(void), int64_t iterations)
 {
 	volatile int64_t cycleCount = INT64_MAX;

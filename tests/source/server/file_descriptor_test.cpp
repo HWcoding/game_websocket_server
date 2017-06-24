@@ -117,8 +117,8 @@ TEST(FileDescriptorTest, Setters)
 {
 	FD_TestFactory testDescriptor(1);
 	std::string test = "";
-	test.reserve(1000);
-	for(int i = 0; i<1000; i++) {
+	test.reserve(100);
+	for(int i = 0; i<100; i++) {
 		test.append("a");
 	}
 	testDescriptor->setIP(test);
@@ -134,6 +134,6 @@ TEST(FileDescriptorTest, Setters)
 int main(int argc, char *argv[])
 {
 	::testing::InitGoogleTest(&argc, argv);
-	STAY_SILENT_ON_SUCCESS;
+	STAY_SILENT_ON_SUCCESS();
 	return RUN_ALL_TESTS();
 }

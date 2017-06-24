@@ -21,7 +21,7 @@ WeakWarnings=" -Wall -Wextra -pedantic -ansi -Weffc++ -Wno-odr"
 TestWarnings=" -Wall -Wno-odr"
 
 ReleaseOptimizations=" -Ofast -falign-functions=16 -falign-loops=16 -march=native"
-DebugBuild="CFLAGS=-DDEBUG -g3 -fno-omit-frame-pointer -fno-inline"
+DebugBuild="CFLAGS=-DDEBUG -O0 -g3 -fno-omit-frame-pointer -fno-inline"
 ReleaseBuild="CFLAGS=-DNDEBUG -flto ${ReleaseOptimizations}"
 
 # convert arguments to lower case
@@ -214,7 +214,7 @@ ProductionBuildFlag=""
 function getProductionBuildFlag() {
 	if [ "${ProductionBuildFlag}" = "" ]; then
 		ProductionBuildFlag="$(getBuildFlag)"
-		if [ $(getIsArgument weak) == "true" ]; then
+		if [ $(getBuildType) == "release" ]; then
 			ProductionBuildFlag+="${WeakWarnings}"
 		else
 			ProductionBuildFlag+="${StrongWarnings}"
@@ -228,7 +228,7 @@ function getProductionBuildFlag() {
 TestBuildFlag=""
 function getTestBuildFlag() {
 	if [ "${TestBuildFlag}" = "" ]; then
-		if [ $(getIsArgument release) == "true" ]; then
+		if [ $(getBuildType) == "release" ]; then
 			TestBuildFlag="${ReleaseBuild}"
 		else
 			TestBuildFlag="${DebugBuild}"
@@ -250,32 +250,6 @@ function getBuildType() {
 		fi
 	fi
 	echo "${BuildType}"
-}
-
-
-# checks to see if previous build used the same build flags
-CompatableBuild=""
-function checkBuildCompatabilty() {
-	if [ "${CompatableBuild}" = "" ]; then
-		local previousBuildType=""
-		if [ -f "./deps/lastBuildType.txt" ]; then
-			while read -r line;	do
-				previousBuildType="${line}"
-			done < "./deps/lastBuildType.txt"
-		fi
-		if [ "${previousBuildType}" = "$(getBuildType)" ]; then
-			CompatableBuild="true"
-		else
-			CompatableBuild="false"
-		fi
-	fi
-	echo "${CompatableBuild}"
-}
-
-
-# writes the current build type to file.
-function writeBuildType() {
-	echo "$(getBuildType)" > "./deps/lastBuildType.txt"
 }
 
 
