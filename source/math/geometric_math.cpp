@@ -3,9 +3,8 @@
 #include <cstdint>
 #include <math.h>
 #include <string.h>
-
-
 #include <xmmintrin.h>
+
 double fastInvSqrt(double input)
 {
 /*	int64_t bits;
@@ -14,8 +13,8 @@ double fastInvSqrt(double input)
 	double halfInput = 0.5*input;
 	memcpy(&input, &bits, sizeof(int64_t));
 	input *= 1.5 - halfInput*input*input;
-	return input;
-*/
+	return input;*/
+
 	float f = (float)input;
 	float out;
 	_mm_store_ss( &out, _mm_rsqrt_ss( _mm_load_ss( &f ) ) );
@@ -32,9 +31,8 @@ double fastSqrt(double f)
 	i -= 0x3FF0000000000000;
 	i = i>>1;
 	i += 0x3FF0000000000000;
-	double ret;
-	memcpy(&ret, &i, sizeof(uint64_t));
-	return ret;
+	memcpy(&f, &i, sizeof(uint64_t));
+	return f;
 }
 
 

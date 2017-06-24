@@ -6,64 +6,12 @@
 #include <unordered_map>
 #include <vector>
 #include "source/data_types/byte_array.h"
-
+#include "source/server/socket/websocket/websocket_client_validator.h"
+#include "source/server/socket/authenticator_interface.h"
 
 class SystemInterface;
 class SetOfFileDescriptors;
 class HandshakeHeaders;
-
-struct ConnectionHeaders
-{
-	std::string IP {};
-	std::string port {};
-	std::string SecWebSocketProtocol {};
-	std::string Cookie {};
-};
-
-
-class ClientValidatorInterface
-{
-public:
-	virtual bool areClientHeadersValid(ConnectionHeaders &headers) =0;
-	virtual bool isClientIPValid(std::string &IP, std::string &port) =0;
-	virtual ~ClientValidatorInterface();
-protected:
-	ClientValidatorInterface(){}
-};
-
-
-class DefaultClientValidator : public ClientValidatorInterface
-{
-public:
-	bool areClientHeadersValid(ConnectionHeaders &headers)
-	{
-		(void)headers;
-		//reject all traffic
-		return false;
-	}
-	bool isClientIPValid(std::string &IP, std::string &port)
-	{
-		(void)IP;
-		(void)port;
-		//reject all traffic
-		return false;
-	}
-	~DefaultClientValidator(){};
-};
-
-
-class AuthenticatorInterface
-{
-public:
-	virtual void processHandshake(const ByteArray &in, int FD) =0;
-	virtual bool sendHandshake(int FD) =0;
-	virtual void closeFD(int FD) =0;
-	virtual bool isNotValidConnection(const ByteArray &IP, const ByteArray &port) const =0;
-	virtual void setClientValidator(ClientValidatorInterface * validator) =0;
-	virtual ~AuthenticatorInterface();
-protected:
-	AuthenticatorInterface(){}
-};
 
 
 class WebsocketAuthenticator : public AuthenticatorInterface
@@ -98,6 +46,7 @@ private:
 	std::unordered_map<int,ByteArray > handshakeWriteBuffer;
 	size_t maxHandshakeSize;
 	SetOfFileDescriptors *fileDescriptors;
+
 	DefaultClientValidator defaultClientValidator {};
 	ClientValidatorInterface * ClientValidator { &defaultClientValidator };
 };

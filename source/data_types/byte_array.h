@@ -118,6 +118,7 @@ inline void ByteArray::append(const ByteArray &arr)
 	appendBytes(&arr[0], arr.size());
 }
 
+
 inline void ByteArray::append(const bool &num)
 {
 	int8_t flag = 0;
@@ -246,7 +247,7 @@ inline ByteArray::ByteArray( std::initializer_list<uint8_t> &init,
 inline ByteArray::ByteArray(std::string str) :
 	std::vector<uint8_t>( std::allocator<int8_t>() ), currentIndex(0)
 {
-	this->append(str);
+	this->appendWithNoSize(str);
 }
 
 

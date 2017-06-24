@@ -1,23 +1,11 @@
-//#include "tests/mock_header.h"
-/*#define TESTING //to activate conditional macros for test logging and access
+#define TEST_FILE_LINK_DEPENDENCIES "source/data_types/byte_array.cpp, \
+									source/server/socket/file_descriptor.cpp \
+									source/server/socket/system_wrapper.cpp"
+
+#include "source/server/socket/file_descriptor.h"
+#include "tests/test_lib/mocks_stubs/mock_system_wrapper.h"
+
 #include "tests/test.h"
-
-#include "tests/server/mocks_stubs/mock_system_wrapper.h"
-#include "tests/server/mocks_stubs/socket_test_helpers.h"
-#include "server/socket/file_descriptor.h"
-#include "tests/server/file_descriptor_test/file_descriptor_test.h"
-
-#include <cgreen/cgreen.h>
-#include <string>
-using namespace cgreen;
-
-Describe(FileDescriptorTest)
-BeforeEach(FileDescriptorTest) {}
-AfterEach(FileDescriptorTest) {}
-
-
-namespace FileDescriptor_Test{
-
 
 class FD_TestFactory{
 	MockSystemWrapper systemWrap;
@@ -38,103 +26,114 @@ public:
 };
 
 
-Ensure(FileDescriptorTest, move_constructor_test) {
+
+TEST(FileDescriptorTest, MoveConstructor)
+{
 	FD_TestFactory testDescriptor(1);
 
-	FileDescriptor MovedCopy(std::move( *testDescriptor ));
+	FileDescriptor movedCopy(std::move( *testDescriptor ));
 
-	assert_that( MovedCopy.getIP().toString().c_str(),is_equal_to_string("testIP") );
-	assert_that( testDescriptor->getIP().toString().c_str(),is_equal_to_string("") );
+	EXPECT_EQ( movedCopy.getIP().toString(), "testIP");
+	EXPECT_EQ( testDescriptor->getIP().toString(), "");
 
-	assert_that( MovedCopy.getPort().toString().c_str(),is_equal_to_string("testPort") );
-	assert_that( testDescriptor->getPort().toString().c_str(),is_equal_to_string("") );
+	EXPECT_EQ( movedCopy.getPort().toString(), "testPort");
+	EXPECT_EQ( testDescriptor->getPort().toString(), "");
 
-	assert_that( MovedCopy.getCSRFkey().toString().c_str(),is_equal_to_string("testCSRFkey") );
-	assert_that( testDescriptor->getCSRFkey().toString().c_str(),is_equal_to_string("") );
+	EXPECT_EQ( movedCopy.getCSRFkey().toString(), "testCSRFkey");
+	EXPECT_EQ( testDescriptor->getCSRFkey().toString(), "");
 
-	assert_that( MovedCopy.getFD(), is_equal_to(1));
-	assert_that( testDescriptor->getFD(), is_equal_to(-1));
+	EXPECT_EQ( movedCopy.getFD(), 1);
+	EXPECT_EQ( testDescriptor->getFD(), -1);
 }
 
 
 
-Ensure(FileDescriptorTest, copy_constructor_test) {
+TEST(FileDescriptorTest, CopyConstructor)
+{
 	FD_TestFactory testDescriptor(1);
 
-	FileDescriptor CopyDescriptor( *testDescriptor );
+	FileDescriptor copyDescriptor(*testDescriptor );
 
-	assert_that( CopyDescriptor.getIP().toString().c_str(),is_equal_to_string("testIP") );
-	assert_that( testDescriptor->getIP().toString().c_str(),is_equal_to_string("testIP") );
+	EXPECT_EQ( copyDescriptor.getIP().toString(), "testIP");
+	EXPECT_EQ( testDescriptor->getIP().toString(), "testIP");
 
-	assert_that( CopyDescriptor.getPort().toString().c_str(),is_equal_to_string("testPort") );
-	assert_that( testDescriptor->getPort().toString().c_str(),is_equal_to_string("testPort") );
+	EXPECT_EQ( copyDescriptor.getPort().toString(), "testPort");
+	EXPECT_EQ( testDescriptor->getPort().toString(), "testPort");
 
-	assert_that( CopyDescriptor.getCSRFkey().toString().c_str(),is_equal_to_string("testCSRFkey") );
-	assert_that( testDescriptor->getCSRFkey().toString().c_str(),is_equal_to_string("testCSRFkey") );
+	EXPECT_EQ( copyDescriptor.getCSRFkey().toString(), "testCSRFkey");
+	EXPECT_EQ( testDescriptor->getCSRFkey().toString(), "testCSRFkey");
 
-	assert_that( CopyDescriptor.getFD(), is_equal_to(1));
-	assert_that( testDescriptor->getFD(), is_equal_to(1));
+	EXPECT_EQ( copyDescriptor.getFD(), 1);
+	EXPECT_EQ( testDescriptor->getFD(), 1);
 }
 
 
 
-Ensure(FileDescriptorTest, move_assignment_test) {
+TEST(FileDescriptorTest, MoveAssignment)
+{
 	MockSystemWrapper systemWrap;
 	FD_TestFactory testDescriptor(1);
-	FileDescriptor MovedCopy(&systemWrap,-1);
+	FileDescriptor movedCopy(&systemWrap,-1);
 
-	MovedCopy = std::move( *testDescriptor );
+	movedCopy = std::move( *testDescriptor );
 
-	assert_that( MovedCopy.getIP().toString().c_str(),is_equal_to_string("testIP") );
-	assert_that( testDescriptor->getIP().toString().c_str(),is_equal_to_string("") );
+	EXPECT_EQ( movedCopy.getIP().toString(), "testIP");
+	EXPECT_EQ( testDescriptor->getIP().toString(), "");
 
-	assert_that( MovedCopy.getPort().toString().c_str(),is_equal_to_string("testPort") );
-	assert_that( testDescriptor->getPort().toString().c_str(),is_equal_to_string("") );
+	EXPECT_EQ( movedCopy.getPort().toString(), "testPort");
+	EXPECT_EQ( testDescriptor->getPort().toString(), "");
 
-	assert_that( MovedCopy.getCSRFkey().toString().c_str(),is_equal_to_string("testCSRFkey") );
-	assert_that( testDescriptor->getCSRFkey().toString().c_str(),is_equal_to_string("") );
+	EXPECT_EQ( movedCopy.getCSRFkey().toString(), "testCSRFkey");
+	EXPECT_EQ( testDescriptor->getCSRFkey().toString(), "");
 
-	assert_that( MovedCopy.getFD(), is_equal_to(1));
-	assert_that( testDescriptor->getFD(), is_equal_to(-1));
+	EXPECT_EQ( movedCopy.getFD(), 1);
+	EXPECT_EQ( testDescriptor->getFD(), -1);
 }
 
 
-
-Ensure(FileDescriptorTest, copy_assignment_test) {
+TEST(FileDescriptorTest, CopyAssignment)
+{
 	FD_TestFactory testDescriptor(1);
-	FD_TestFactory CopyDescriptor(-1);
-//std::cout<<"calling copy assignment"<<std::endl;
-	*CopyDescriptor = *testDescriptor;
+	FD_TestFactory copyDescriptor(-1);
 
-	assert_that( CopyDescriptor->getIP().toString().c_str(),is_equal_to_string("testIP") );
-	assert_that( testDescriptor->getIP().toString().c_str(),is_equal_to_string("testIP") );
+	copyDescriptor.FD = testDescriptor.FD;
 
-	assert_that( CopyDescriptor->getPort().toString().c_str(),is_equal_to_string("testPort") );
-	assert_that( testDescriptor->getPort().toString().c_str(),is_equal_to_string("testPort") );
+	EXPECT_EQ( copyDescriptor->getIP().toString(), "testIP");
+	EXPECT_EQ( testDescriptor->getIP().toString(), "testIP");
 
-	assert_that( CopyDescriptor->getCSRFkey().toString().c_str(),is_equal_to_string("testCSRFkey") );
-	assert_that( testDescriptor->getCSRFkey().toString().c_str(),is_equal_to_string("testCSRFkey") );
+	EXPECT_EQ( copyDescriptor->getPort().toString(), "testPort");
+	EXPECT_EQ( testDescriptor->getPort().toString(), "testPort");
 
-	assert_that( CopyDescriptor->getFD(), is_equal_to(1));
-	assert_that( testDescriptor->getFD(), is_equal_to(1));
+	EXPECT_EQ( copyDescriptor->getCSRFkey().toString(), "testCSRFkey");
+	EXPECT_EQ( testDescriptor->getCSRFkey().toString(), "testCSRFkey");
+
+	EXPECT_EQ( copyDescriptor->getFD(), 1);
+	EXPECT_EQ( testDescriptor->getFD(), 1);
 }
 
 
 
-int test(){
-	TestSuite *suite = create_named_test_suite("File Descriptor");
-	add_test_with_context(suite, FileDescriptorTest, move_constructor_test);
-	add_test_with_context(suite, FileDescriptorTest, copy_constructor_test);
-	add_test_with_context(suite, FileDescriptorTest, move_assignment_test);
-	add_test_with_context(suite, FileDescriptorTest, copy_assignment_test);
-	return run_test_suite(suite, create_text_reporter());
+TEST(FileDescriptorTest, Setters)
+{
+	FD_TestFactory testDescriptor(1);
+	std::string test = "";
+	test.reserve(1000);
+	for(int i = 0; i<1000; i++) {
+		test.append("a");
+	}
+	testDescriptor->setIP(test);
+	testDescriptor->setPort(test);
+	testDescriptor->setCSRFkey(test);
+
+	EXPECT_EQ( testDescriptor->getIP().toString(), test);
+	EXPECT_EQ( testDescriptor->getPort().toString(), test);
+	EXPECT_EQ( testDescriptor->getCSRFkey().toString(), test);
 }
 
 
-
+int main(int argc, char *argv[])
+{
+	::testing::InitGoogleTest(&argc, argv);
+	STAY_SILENT_ON_SUCCESS;
+	return RUN_ALL_TESTS();
 }
-int main(){
-	return FileDescriptor_Test::test();
-}*/
-
-int main(){return 0;}

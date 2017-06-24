@@ -81,7 +81,7 @@ void debugBackTrace()
 extern "C" {
 
 // Imposter __cxa_throw function. Called when an exception is thrown
-void __cxa_throw(void *ex, void *info, void (*dest)(void *))
+void __cxa_throw(void *ex, void* info, void (*dest)(void *))
 {
 	//save exception name and backtrace in globals
 	{ //lock
@@ -94,7 +94,7 @@ void __cxa_throw(void *ex, void *info, void (*dest)(void *))
 	// get a pointer to the real __cxa_throw function
 	static void (*const real_cxa_throw)(void*,void*,void(*)(void*)) __attribute__ ((noreturn)) = (void (*)(void*,void*,void(*)(void*)))dlsym(RTLD_NEXT, "__cxa_throw");
 	// call the real __cxa_throw so it can do default behavior
-	real_cxa_throw(ex,info,dest);
+	real_cxa_throw(ex, info, dest);
 }
 
 } // extern "C"

@@ -35,6 +35,9 @@ public:
 	bool areHeadersFilled() const;
 	HandshakeHeaders();
 	HandshakeHeaders(const HandshakeHeaders& h) noexcept;
+	HandshakeHeaders& operator=(const HandshakeHeaders& h) noexcept;
+	HandshakeHeaders& operator=(HandshakeHeaders&& h) noexcept;
+
 	~HandshakeHeaders(){}
 protected:
 	bool checkHeaders() const;

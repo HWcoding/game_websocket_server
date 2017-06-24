@@ -5,8 +5,6 @@
 #include <vector>
 #include <unordered_map>
 
-#include "source/logging/exception_handler.h"
-
 
 template<class K, class T>
 class MappedVector
@@ -23,9 +21,6 @@ private:
 	std::vector<T> d{};
 	std::unordered_map<K, size_t> IdToIndex{};
 };
-
-
-
 
 
 template<class K, class T>
@@ -92,7 +87,7 @@ void MappedVector<K, T>::changeKeyIndex(size_t index, size_t changeTo)
 			return;
 		}
 	}
-	throwInt("could not find Index "<<index<< " in map.");
+	throw -1;
 }
 
 #endif /* SOURCE_DATA_TYPES_MAPPED_VECTOR_H */

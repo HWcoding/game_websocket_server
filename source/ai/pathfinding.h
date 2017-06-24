@@ -31,9 +31,9 @@ struct PathSearchNode
 struct PathSearchNodeGraph : public std::vector<PathSearchNode>
 {
 	//void addNode(void * proxy, Point3D pos);
-	void addNode(size_t proxy, Point3D pos);
+	void addNode(size_t proxy, const Point3D &pos);
 
-	void addEdge(size_t vertA, size_t vertB, double AdditionalCost = 0);
+	void addEdge(size_t vertA, size_t vertB, double additionalCost = 0);
 };
 
 // Calculates the sequence of PathSearchNodes needed to be traveled to reach goal from start using A*.

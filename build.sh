@@ -4,7 +4,7 @@
 #	debug
 #		builds a debug build (this is the default)
 #	release
-#		builds a release build#
+#		builds a release build
 #	clean
 #		runs 'make clean' to remove temparary objs
 #	weak
@@ -21,9 +21,8 @@ WeakWarnings=" -Wall -Wextra -pedantic -ansi -Weffc++ -Wno-odr"
 TestWarnings=" -Wall -Wno-odr"
 
 ReleaseOptimizations=" -Ofast -falign-functions=16 -falign-loops=16 -march=native"
-DebugBuild="CFLAGS=-DDEBUG -Og -g3 -fno-omit-frame-pointer -fno-inline"
+DebugBuild="CFLAGS=-DDEBUG -g3 -fno-omit-frame-pointer -fno-inline"
 ReleaseBuild="CFLAGS=-DNDEBUG -flto ${ReleaseOptimizations}"
-TestBuild="CFLAGS=-DDEBUG -DTESTING -O0"
 
 # convert arguments to lower case
 FirstArg=$( echo "${1}" | tr '[:upper:]' '[:lower:]')
@@ -229,7 +228,11 @@ function getProductionBuildFlag() {
 TestBuildFlag=""
 function getTestBuildFlag() {
 	if [ "${TestBuildFlag}" = "" ]; then
-		TestBuildFlag="${TestBuild}"
+		if [ $(getIsArgument release) == "true" ]; then
+			TestBuildFlag="${ReleaseBuild}"
+		else
+			TestBuildFlag="${DebugBuild}"
+		fi
 		TestBuildFlag+="${TestWarnings}"
 	fi
 	echo "${TestBuildFlag}"
@@ -385,21 +388,6 @@ function compileTestLibs() {
 }
 
 
-# checks to see if this build uses the same build type as the last
-# if not, it cleans the temp files and starts the build from scratch
-function makeBuildCompatable() {
-	if [ "$(getCleanFlag)" = "false" ]; then
-		if [ "$(checkBuildCompatabilty)" = "false" ]; then
-			CleanFlag="true"
-			compileProductionFiles
-			compileTestFiles
-			CleanFlag="false"
-		fi
-		writeBuildType
-	fi
-}
-
-
 function printProjectLineCount() {
 	# get line count
 	cd ./source
@@ -505,7 +493,6 @@ function buildGoogleTest(){
 		cp ${GLIB_SOURCE}/README.md ${GLIB_DEST}/googletest_README.md
 		cp ${GLIB_SOURCE}/googletest/LICENSE ${GLIB_DEST}/googletest_LICENSE
 		cp ${GLIB_SOURCE}/googlemock/LICENSE ${GLIB_DEST}/googlemock_LICENSE
-		cp ${GLIB_SOURCE}/googlemock/LICENSE ${GLIB_DEST}/googlemock_LICENSE
 		cp ${GLIB_SOURCE}/googletest/CONTRIBUTORS ${GLIB_DEST}/googletest_CONTRIBUTORS
 		cp ${GLIB_SOURCE}/googlemock/CONTRIBUTORS ${GLIB_DEST}/googlemock_CONTRIBUTORS
 
@@ -584,6 +571,14 @@ function buildExternals() {
 
 function buildDirecrories(){
 
+	if [ ! -d "source" ]; then
+		mkdir source
+	fi
+
+	if [ ! -d "tests" ]; then
+		mkdir tests
+	fi
+
 	if [ ! -d "analysis" ]; then
 		mkdir analysis
 	fi
@@ -599,6 +594,7 @@ function buildDirecrories(){
 	if [ ! -d "deps" ]; then
 		mkdir deps
 	fi
+
 	cd ./deps
 
 	if [ ! -d "temp" ]; then
@@ -606,6 +602,10 @@ function buildDirecrories(){
 	fi
 
 	cd ../tests
+
+	if [ ! -d "source" ]; then
+		mkdir source
+	fi
 
 	if [ ! -d "bin" ]; then
 		mkdir bin
@@ -628,18 +628,10 @@ function buildDirecrories(){
 }
 
 
-function copyClientToTestServer(){
-	set +e
-	cp "./client/Testindex.html" "/var/www/html/index.html"
-	set -e
-}
-
 
 function main() {
 	# set the script to stop on error
 	set -e
-	printMajorHeader "Building "${PWD##*/}""
-	printProjectLineCount
 
 	#check for and build missing dependencies
 	printMinorHeader "Checking Externals"
@@ -649,9 +641,8 @@ function main() {
 	#create missing directories
 	buildDirecrories
 
-#	copyClientToTestServer
-
-	makeBuildCompatable
+	printMajorHeader "Building "${PWD##*/}""
+	printProjectLineCount
 
 	# cppcheck
 	printMinorHeader "Performing Code Analysis"

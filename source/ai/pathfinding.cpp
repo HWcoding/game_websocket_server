@@ -41,7 +41,7 @@ void PathSearchNode::addNeighbor(size_t node, double cost)
 	connectedNodes.push_back(newNode);
 }
 
-void PathSearchNodeGraph::addNode(size_t proxy, Point3D pos)
+void PathSearchNodeGraph::addNode(size_t proxy, const Point3D &pos)
 {
 	PathSearchNode node;
 	node.pos = pos;
@@ -50,13 +50,13 @@ void PathSearchNodeGraph::addNode(size_t proxy, Point3D pos)
 }
 
 
-void PathSearchNodeGraph::addEdge(size_t vertA, size_t vertB, double AdditionalCost)
+void PathSearchNodeGraph::addEdge(size_t vertA, size_t vertB, double additionalCost)
 {
-	assert(AdditionalCost >= 0.0);
+	assert(additionalCost >= 0.0);
 	Point3D posA = std::vector<PathSearchNode>::operator[](vertA).pos;
 	Point3D posB = std::vector<PathSearchNode>::operator[](vertB).pos;
 
-	double cost = v_math::distance(posA, posB)+AdditionalCost;
+	double cost = v_math::distance(posA, posB)+additionalCost;
 
 	std::vector<PathSearchNode>::operator[](vertA).addNeighbor(vertB, cost);
 	std::vector<PathSearchNode>::operator[](vertB).addNeighbor(vertA, cost);

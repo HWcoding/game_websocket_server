@@ -12,11 +12,11 @@ void debugBackTrace();
 }
 
 extern "C" {
-	void __cxa_throw(void *ex, void *info, void (*dest)(void *));
+	void __cxa_throw(void *ex, void* info, void (*dest)(void *)) __attribute__ ((noreturn));
 }
 
 
-#define BACKTRACE_PRINT()	(LOG_ERROR("Caught Exception in file: " __FILE__<<" in function: "<<__PRETTY_FUNCTION__<<" line: "<<__LINE__));((DEBUG_BACKTRACE::debugBackTrace()), (void)0)
+#define BACKTRACE_PRINT()	(LOG_ERROR("Caught Exception on line: "<<__LINE__<<" in file: " __FILE__<<" in function: "<<__PRETTY_FUNCTION__));((DEBUG_BACKTRACE::debugBackTrace()), (void)0)
 
 #else
 #define BACKTRACE_PRINT() IM_AN_EMPTY_STATEMENT

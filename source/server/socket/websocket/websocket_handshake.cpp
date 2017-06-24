@@ -30,6 +30,27 @@ HandshakeHeaders::HandshakeHeaders(const HandshakeHeaders& h) noexcept : Connect
 																		SecWebSocketProtocol(h.SecWebSocketProtocol),
 																		Cookie(h.Cookie) {} // copy constructor
 
+HandshakeHeaders& HandshakeHeaders::operator=(const HandshakeHeaders& h) noexcept
+{
+	Connection = h.Connection;
+	Upgrade = h.Upgrade;
+	SecWebSocketKey = h.SecWebSocketKey;
+	SecWebSocketProtocol = h.SecWebSocketProtocol;
+	Cookie = h.Cookie;
+	return *this;
+}
+
+HandshakeHeaders& HandshakeHeaders::operator=(HandshakeHeaders&& h) noexcept
+{
+	Connection = std::move(h.Connection);
+	Upgrade = std::move(h.Upgrade);
+	SecWebSocketKey = std::move(h.SecWebSocketKey);
+	SecWebSocketProtocol = std::move(h.SecWebSocketProtocol);
+	Cookie = std::move(h.Cookie);
+	return *this;
+}
+
+
 HandshakeHeadersInterface::~HandshakeHeadersInterface(){}
 
 
