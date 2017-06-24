@@ -569,7 +569,7 @@ function buildExternals() {
 }
 
 
-function buildDirecrories(){
+function buildDirectories(){
 
 	if [ ! -d "source" ]; then
 		mkdir source
@@ -591,17 +591,47 @@ function buildDirecrories(){
 		mkdir objs
 	fi
 
+	cd ./objs
+
+	if [ ! -d "debug" ]; then
+		mkdir debug
+	fi
+
+	if [ ! -d "release" ]; then
+		mkdir release
+	fi
+
+	cd ../
+
 	if [ ! -d "deps" ]; then
 		mkdir deps
 	fi
 
 	cd ./deps
 
+	if [ ! -d "debug" ]; then
+		mkdir debug
+	fi
+
+	cd ./debug
+
 	if [ ! -d "temp" ]; then
 		mkdir temp
 	fi
 
-	cd ../tests
+	cd ../
+
+	if [ ! -d "release" ]; then
+		mkdir release
+	fi
+
+	cd ./release
+
+	if [ ! -d "temp" ]; then
+		mkdir temp
+	fi
+
+	cd ../../tests
 
 	if [ ! -d "source" ]; then
 		mkdir source
@@ -611,20 +641,63 @@ function buildDirecrories(){
 		mkdir bin
 	fi
 
+	cd ./bin
+
+	if [ ! -d "debug" ]; then
+		mkdir debug
+	fi
+
+	if [ ! -d "release" ]; then
+		mkdir release
+	fi
+
+	cd ../
+
 	if [ ! -d "objs" ]; then
 		mkdir objs
 	fi
 
+	cd ./objs
+
+	if [ ! -d "debug" ]; then
+		mkdir debug
+	fi
+
+	if [ ! -d "release" ]; then
+		mkdir release
+	fi
+
+	cd ../
+
 	if [ ! -d "deps" ]; then
 		mkdir deps
 	fi
+
 	cd ./deps
+
+	if [ ! -d "debug" ]; then
+		mkdir debug
+	fi
+
+	cd ./debug
 
 	if [ ! -d "temp" ]; then
 		mkdir temp
 	fi
 
-	cd ../../
+	cd ../
+
+	if [ ! -d "release" ]; then
+		mkdir release
+	fi
+
+	cd ./release
+
+	if [ ! -d "temp" ]; then
+		mkdir temp
+	fi
+
+	cd ../../../
 }
 
 
@@ -639,7 +712,7 @@ function main() {
 	printHighlight "Finished"
 
 	#create missing directories
-	buildDirecrories
+	buildDirectories
 
 	printMajorHeader "Building "${PWD##*/}""
 	printProjectLineCount
