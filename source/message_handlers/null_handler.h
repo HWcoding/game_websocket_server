@@ -8,7 +8,7 @@ class SocketMessage;
 class NullHandler : public Listener
 {
 public:
-	void callback( const SocketMessage &message);
+	void callback( const SocketMessage &message) override;
 };
 
 #endif /* SOURCE_MESSAGE_HANDLERS_NULL_HANDLER_H */

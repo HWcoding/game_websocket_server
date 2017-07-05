@@ -8,7 +8,7 @@ class SocketMessage;
 class LogoutHandler : public Listener
 {
 public:
-	void callback( const SocketMessage &message);
+	void callback( const SocketMessage &message) override;
 };
 
 #endif /* SOURCE_MESSAGE_HANDLERS_LOGOUT_HANDLER_H */

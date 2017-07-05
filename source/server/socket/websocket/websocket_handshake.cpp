@@ -51,7 +51,7 @@ HandshakeHeaders& HandshakeHeaders::operator=(HandshakeHeaders&& h) noexcept
 }
 
 
-HandshakeHeadersInterface::~HandshakeHeadersInterface(){}
+HandshakeHeadersInterface::~HandshakeHeadersInterface() = default;
 
 
 bool HandshakeHeaders::fillHeaders(const ByteArray &input){

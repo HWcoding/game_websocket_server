@@ -51,7 +51,7 @@ endif
 
 DEP_TEMP = $(DEP_DIR)temp/
 HEAD_PATH = $(PROJECT_DIRECTORY)
-
+TEST_FRAMEWORK_HEADER = $(PROJECT_DIRECTORY)external/google_test/include/
 
 #compiler flags for generating dependency file
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP_TEMP)$*.Td
@@ -63,7 +63,7 @@ DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP_TEMP)$*.Td
 # command to move dependencies from the temp folder into the deps folder
 MOV_DEPS = mv -f $(DEP_TEMP)$*.Td $(DEP_DIR)$*.d
 
-CXX = $(COMP) -I $(HEAD_PATH) $(CFLAGS) $(DEPFLAGS) $(CPP_VERSION)
+CXX = $(COMP) -I $(HEAD_PATH) -isystem $(TEST_FRAMEWORK_HEADER) $(CFLAGS) $(DEPFLAGS) $(CPP_VERSION)
 
 all: $(LIBRARY_NAME)
 

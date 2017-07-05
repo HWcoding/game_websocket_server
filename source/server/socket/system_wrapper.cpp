@@ -7,7 +7,7 @@
 #include <errno.h>
 #include "source/logging/exception_handler.h"
 
-SystemInterface::~SystemInterface(){}
+SystemInterface::~SystemInterface() = default;
 
 size_t SystemWrapper::epollWait(int epollFD,  struct epoll_event *events, int MAXEVENTS, int timeout) const{
 	int n = 0;
@@ -75,7 +75,7 @@ void SystemWrapper::closeFD(int FD) const{
 }
 
 size_t SystemWrapper::writeFD(int FD, const void *buf, size_t count) const{
-	if(buf == NULL || FD<0){
+	if(buf == nullptr || FD<0){
 		throwInt("bad input. buf: "<<(reinterpret_cast<uint64_t>(buf))<<" FD: "<<FD);	//error
 	}
 	if(count == 0)return 0;
@@ -92,7 +92,7 @@ size_t SystemWrapper::writeFD(int FD, const void *buf, size_t count) const{
 
 size_t SystemWrapper::readFD(int FD, void *buf, size_t count, bool &done) const{
 	done = false;
-	if(buf == NULL || FD<0){
+	if(buf == nullptr || FD<0){
 		throwInt("bad input. buf: "<<(reinterpret_cast<uint64_t>(buf))<<" FD: "<<FD);	//error
 	}
 	if(count == 0)return 0;
@@ -109,7 +109,7 @@ size_t SystemWrapper::readFD(int FD, void *buf, size_t count, bool &done) const{
 }
 
 void SystemWrapper::getNameInfo(const struct sockaddr *sa, unsigned int salen, char *host , unsigned int hostlen,  char *serv, unsigned int servlen, int flags) const{
-	if(sa == NULL || host == NULL || serv == NULL) throwInt("Input pointer was null. ");
+	if(sa == nullptr || host == nullptr || serv == nullptr) throwInt("Input pointer was null. ");
 	int ret = getnameinfo(sa, salen, host , hostlen,  serv, servlen, flags);
 	if(ret != 0) throwInt(" failed to get name Info for file descriptor. ");
 }

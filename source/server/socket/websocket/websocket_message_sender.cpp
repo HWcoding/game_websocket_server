@@ -5,10 +5,10 @@
 #include "source/server/socket/system_wrapper.h"
 #include "source/logging/exception_handler.h"
 
-MessageSenderInterface::~MessageSenderInterface(){}
+MessageSenderInterface::~MessageSenderInterface() = default;
 
 
-WebsocketMessageSender::~WebsocketMessageSender(){}
+WebsocketMessageSender::~WebsocketMessageSender() = default;
 
 WebsocketMessageSender::WebsocketMessageSender(SystemInterface *_systemWrap) : writeBuffers( new WebsocketWriteBuffers(_systemWrap) ), MaxWriteBufferSize(1999999999){}
 

@@ -10,7 +10,7 @@
 #include "source/logging/exception_handler.h"
 
 
-SocketInterface::~SocketInterface(){}
+SocketInterface::~SocketInterface() = default;
 
 Socket::Socket(const ServerConfig &config) : shouldContinueRunning(),
 									systemWrap( new SystemWrapper()),

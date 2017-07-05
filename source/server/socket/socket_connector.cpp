@@ -17,7 +17,7 @@
 class getaddrinfoWrap{
 public:
 	getaddrinfoWrap(SystemInterface* _systemWrap, std::string address, std::string port, addrinfo * hints, addrinfo * &res) : systemWrap(_systemWrap), result(res), success(false){
-		if(address.empty()) systemWrap->getAddrInfo(NULL, port.c_str(), hints, &result);
+		if(address.empty()) systemWrap->getAddrInfo(nullptr, port.c_str(), hints, &result);
 		else systemWrap->getAddrInfo(address.c_str(), port.c_str(), hints, &result);
 		success = true;
 		res = result;
@@ -142,9 +142,9 @@ void SocketServerConnector::setupEpoll(){
 
 
 bool SocketServerConnector::createAndBindListeningFD(struct addrinfo *addressInfo){
-	struct addrinfo *rp = NULL;
+	struct addrinfo *rp = nullptr;
 
-	for(rp = addressInfo; rp != NULL; rp = rp->ai_next){
+	for(rp = addressInfo; rp != nullptr; rp = rp->ai_next){
 		try{ listeningFD = systemWrap->createSocket(rp->ai_family, rp->ai_socktype, rp->ai_protocol); }
 		catch(int & ret){ continue; }
 
@@ -172,7 +172,7 @@ void SocketServerConnector::createAddressInfoHints(struct addrinfo &hints){
 int SocketServerConnector::getListeningPort(){
 	struct addrinfo hints;
 	struct addrinfo *result;
-	result = NULL;
+	result = nullptr;
 	createAddressInfoHints(hints);
 
 	getaddrinfoWrap getinfo(systemWrap, std::string(),port, &hints, result);

@@ -9,14 +9,14 @@
 
 
 WebsocketMessageProcessor::WebsocketMessageProcessor(SetOfFileDescriptors *_FDs) :
-	readerQueue(NULL),
+	readerQueue(nullptr),
 	MaxReadBufferSize(999999999),
 	ReadBuffers( new WebsocketReadBuffers(_FDs, MaxReadBufferSize) ),
 	fileDescriptors(_FDs)
 {}
 
 
-WebsocketMessageProcessor::~WebsocketMessageProcessor(){}
+WebsocketMessageProcessor::~WebsocketMessageProcessor() = default;
 
 
 MessageQueue * WebsocketMessageProcessor::getQueue()

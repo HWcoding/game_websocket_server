@@ -8,9 +8,9 @@
 
 class SocketMessage{
 public:
-	void setMessage(int _FD, uint32_t _type, uint32_t _priority, const ByteArray & _IP,
-							const ByteArray & _port, const ByteArray & _CSRFkey,
-							const ByteArray & _message);
+	void setMessage(int _FD, uint32_t _type, uint32_t _priority, const ByteArray &_IP,
+							const ByteArray &_port, const ByteArray &_CSRFkey,
+							const ByteArray &_message);
 
 	void setMessage(const ByteArray & _message);
 
@@ -119,13 +119,9 @@ public:
 	// constructors
 	SocketMessage() noexcept;
 
-	SocketMessage(int _FD, uint32_t _type, uint32_t _priority, const ByteArray &_IP,
-							const ByteArray &_port, const ByteArray &_CSRFkey,
-							const ByteArray &_message) noexcept;
-
-	SocketMessage(int _FD, uint32_t _type, uint32_t _priority, const ByteArray &_IP,
-							const ByteArray &_port, const ByteArray &_CSRFkey,
-							ByteArray &&_message) noexcept;
+	SocketMessage(int _FD, uint32_t _type, uint32_t _priority, const ByteArray _IP,
+							const ByteArray _port, const ByteArray _CSRFkey,
+							const ByteArray _message) noexcept;
 
 	SocketMessage(const SocketMessage &m) noexcept; //copy constructor
 

@@ -75,20 +75,21 @@ int main()
 	class MyClientValidator : public ClientValidatorInterface
 	{
 	public:
-		bool areClientHeadersValid(ConnectionHeaders &headers)
+
+		bool areClientHeadersValid(ConnectionHeaders &headers) override
 		{
 			(void)headers;
 			//accept all connections
 			return true;
 		}
-		bool isClientIPValid(std::string &IP, std::string &port)
+		bool isClientIPValid(std::string &IP, std::string &port) override
 		{
 			(void)IP;
 			(void)port;
 			//accept all connections
 			return true;
 		}
-		~MyClientValidator(){};
+		~MyClientValidator() override = default;
 	};
 
 	MyClientValidator validator;

@@ -13,7 +13,7 @@
 #include "source/logging/exception_handler.h"
 
 
-SocketWriterInterface::~SocketWriterInterface(){}
+SocketWriterInterface::~SocketWriterInterface() = default;
 
 SocketWriter::SocketWriter(SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, std::atomic<bool>* run) : 	systemWrap(_systemWrap), sender( new WebsocketMessageSender(_systemWrap) ), writePollingMut(),
 																					fileDescriptors(FDs), running(run), MAXEVENTS(9999), epollFD(-1) {
@@ -53,7 +53,7 @@ void SocketWriter::startPoll(){
 	}
 }
 
-SocketWriter::~SocketWriter(){}
+SocketWriter::~SocketWriter() = default;
 
 void SocketWriter::setupEpoll(){
 	epollFD = systemWrap->epollCreate(0);

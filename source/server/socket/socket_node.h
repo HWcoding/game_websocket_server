@@ -25,7 +25,7 @@ public:
 	virtual bool isRunning() =0;
 	virtual ~SocketInterface();
 protected:
-	SocketInterface(){}
+	SocketInterface() = default;
 };
 
 
@@ -45,23 +45,23 @@ class Socket : public SocketInterface{ ///class starts new threads to handle soc
 
 public:
 	Socket(const ServerConfig &config);
-	SocketMessage getNextMessage();
-	void setClientValidator(ClientValidatorInterface * validator);
+	SocketMessage getNextMessage() override;
+	void setClientValidator(ClientValidatorInterface * validator) override;
 
-	void sendMessage(SocketMessage &message);
-	void disconnectClient(int FD);
-	void shutdown();
+	void sendMessage(SocketMessage &message) override;
+	void disconnectClient(int FD) override;
+	void shutdown() final;
 
-	bool isRunning();
-	~Socket();
+	bool isRunning() override;
+	~Socket() override;
 
 private:
 	void startReader();
 	void startWriter();
 	void startConnector();
 
-	Socket& operator=(const Socket&)=delete;
-	Socket(const Socket&)=delete;
+	Socket& operator=(const Socket&) = delete;
+	Socket(const Socket&) = delete;
 
 	std::atomic<bool> shouldContinueRunning; //flag to tell the thread to end looping and exit //TODO  make sure access to this is atomic
 	std::unique_ptr<SystemWrapper> systemWrap;

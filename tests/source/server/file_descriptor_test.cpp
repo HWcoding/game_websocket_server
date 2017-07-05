@@ -1,5 +1,5 @@
 #define TEST_FILE_LINK_DEPENDENCIES "source/data_types/byte_array.cpp, \
-									source/server/socket/file_descriptor.cpp \
+									source/server/socket/file_descriptor.cpp, \
 									source/server/socket/system_wrapper.cpp"
 
 #include "source/server/socket/file_descriptor.h"
@@ -134,6 +134,6 @@ TEST(FileDescriptorTest, Setters)
 int main(int argc, char *argv[])
 {
 	::testing::InitGoogleTest(&argc, argv);
-	STAY_SILENT_ON_SUCCESS();
+	StaySilentOnSuccess();
 	return RUN_ALL_TESTS();
 }

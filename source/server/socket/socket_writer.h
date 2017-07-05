@@ -18,25 +18,25 @@ public:
 	virtual void sendMessage(SocketMessage &message) =0;
 	virtual ~SocketWriterInterface();
 protected:
-	SocketWriterInterface(){}
+	SocketWriterInterface() = default;
 };
 
 class SocketWriter : public SocketWriterInterface {
 public:
-	void startPoll();
-	void closeFDHandler(int FD);
-	void newConnectionHandler(int FD);
-	void sendMessage(SocketMessage &message);
+	void startPoll() override;
+	void closeFDHandler(int FD) override;
+	void newConnectionHandler(int FD) override;
+	void sendMessage(SocketMessage &message) override;
 
 	SocketWriter(SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, std::atomic<bool>* run);
-	~SocketWriter();
+	~SocketWriter() override;
 private:
 	void setupEpoll();
 	void closeFD(int FD);
 	void writeData(int FD);
 
-	SocketWriter& operator=(const SocketWriter&)=delete;
-	SocketWriter(const SocketWriter&)=delete;
+	SocketWriter& operator=(const SocketWriter&) = delete;
+	SocketWriter(const SocketWriter&) = delete;
 
 	SystemInterface *systemWrap;
 	std::unique_ptr<MessageSenderInterface> sender;

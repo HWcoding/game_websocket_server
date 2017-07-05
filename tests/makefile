@@ -23,14 +23,14 @@ TEST_OBJECTS_NAME = $(subst  /,+., $(basename $(CPP_FILE_NAME)))
 #release
 RELEASE_OBJ_DIR = $(PROJECT_DIRECTORY)tests/objs/release/
 RELEASE_DEP_DIR = $(PROJECT_DIRECTORY)tests/deps/release/
-RELEASE_EXECUTABLE = $(PROJECT_DIRECTORY)tests/bin/release/$(EXECUTABLE_NAME).bin
+RELEASE_EXECUTABLE = $(PROJECT_DIRECTORY)tests/bin/release/$(EXECUTABLE_NAME).test
 RELEASE_TEST_OBJECTS = $(addsuffix .o, $(addprefix $(RELEASE_OBJ_DIR), $(TEST_OBJECTS_NAME)))
 RELEASE_DEPFILES := $(patsubst %,$(RELEASE_DEP_DIR)%.d,$(basename $(notdir $(RELEASE_TEST_OBJECTS))))
 
 #debug
 DEBUG_OBJ_DIR = $(PROJECT_DIRECTORY)tests/objs/debug/
 DEBUG_DEP_DIR = $(PROJECT_DIRECTORY)tests/deps/debug/
-DEBUG_EXECUTABLE = $(PROJECT_DIRECTORY)tests/bin/debug/$(EXECUTABLE_NAME).bin
+DEBUG_EXECUTABLE = $(PROJECT_DIRECTORY)tests/bin/debug/$(EXECUTABLE_NAME).test
 DEBUG_TEST_OBJECTS = $(addsuffix .o, $(addprefix $(DEBUG_OBJ_DIR), $(TEST_OBJECTS_NAME)))
 DEBUG_DEPFILES := $(patsubst %,$(DEBUG_DEP_DIR)%.d,$(basename $(notdir $(DEBUG_TEST_OBJECTS))))
 

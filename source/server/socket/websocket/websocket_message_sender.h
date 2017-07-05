@@ -14,24 +14,24 @@ class WebsocketWriteBuffers;
 
 class MessageSenderInterface {
 public:
-	virtual void addMessage(SocketMessage &message) =0;
-	virtual bool writeData(int FD) =0;
-	virtual void closeFDHandler(int FD) =0;
+	virtual void addMessage(SocketMessage &message) = 0;
+	virtual bool writeData(int FD) = 0;
+	virtual void closeFDHandler(int FD) = 0;
 	virtual ~MessageSenderInterface();
 protected:
-	MessageSenderInterface(){}
+	MessageSenderInterface() = default;
 };
 
 class WebsocketMessageSender : public MessageSenderInterface {
 public:
 	WebsocketMessageSender(SystemInterface *_systemWrap);
 	WebsocketMessageSender(WebsocketWriteBuffers *_writeBuffers );
-	void addMessage(SocketMessage &message);
-	bool writeData(int FD);
-	void closeFDHandler(int FD);
-	WebsocketMessageSender& operator=(const WebsocketMessageSender&)=delete;
-	WebsocketMessageSender(const WebsocketMessageSender&)=delete;
-	~WebsocketMessageSender();
+	void addMessage(SocketMessage &message) override;
+	bool writeData(int FD) override;
+	void closeFDHandler(int FD) override;
+	WebsocketMessageSender& operator=(const WebsocketMessageSender&) = delete;
+	WebsocketMessageSender(const WebsocketMessageSender&) = delete;
+	~WebsocketMessageSender() override;
 protected:
 	std::unique_ptr<WebsocketWriteBuffers> writeBuffers;
 	ByteArray createFrameHeader(const ByteArray &in, uint8_t opcode);

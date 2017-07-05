@@ -16,11 +16,11 @@ struct ConnectionHeaders
 class ClientValidatorInterface
 {
 public:
-	virtual bool areClientHeadersValid(ConnectionHeaders &headers) =0;
-	virtual bool isClientIPValid(std::string &IP, std::string &port) =0;
+	virtual bool areClientHeadersValid(ConnectionHeaders &headers) = 0;
+	virtual bool isClientIPValid(std::string &IP, std::string &port) = 0;
 	virtual ~ClientValidatorInterface();
 protected:
-	ClientValidatorInterface(){}
+	ClientValidatorInterface() = default;
 };
 
 

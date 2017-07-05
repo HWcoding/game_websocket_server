@@ -22,13 +22,8 @@ private:
 	struct sigaction sigAction {};
 	std::atomic<bool> *ptr_run {nullptr};
 
-	SignalHandler& operator=(const SignalHandler& s)
-	{
-		sigAction = s.sigAction;
-		ptr_run = s.ptr_run;
-		return *this;
-	}
-	SignalHandler(const SignalHandler&)=delete;
+	SignalHandler& operator=(const SignalHandler& s) = default;
+	SignalHandler(const SignalHandler&) = delete;
 };
 
 #endif /* SOURCE_SIGNAL_HANDLER_H_ */

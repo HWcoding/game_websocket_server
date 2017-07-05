@@ -18,8 +18,8 @@ private:
 
 	SetOfFileDescriptors *fileDescriptors;
 
-	WebsocketReadBuffers& operator=(const WebsocketReadBuffers&)=delete;
-	WebsocketReadBuffers(const WebsocketReadBuffers&)=delete;
+	WebsocketReadBuffers& operator=(const WebsocketReadBuffers&) = delete;
+	WebsocketReadBuffers(const WebsocketReadBuffers&) = delete;
 protected:
 	struct Fracture{
 		std::vector< ByteArray > buffer;

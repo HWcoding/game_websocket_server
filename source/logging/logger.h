@@ -33,6 +33,6 @@
 #define LOG_DEBUG(text)                 IM_AN_EMPTY_STATEMENT
 #endif
 
-#define writeError(text)	((LOG_ERROR("errno: "<<std::strerror(errno))))
+#define writeError(text)	LOG_ERROR("errno: "<<std::strerror(errno))
 
 #endif /* SOURCE_LOGGING_LOGGER_H */

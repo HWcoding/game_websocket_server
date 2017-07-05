@@ -252,10 +252,7 @@ inline ByteArray::ByteArray(std::string str) :
 
 
 //copy constructors
-inline ByteArray::ByteArray( const ByteArray& other ) :
-	std::vector<uint8_t>(other),
-	currentIndex(other.currentIndex)
-{}
+inline ByteArray::ByteArray( const ByteArray& ) = default;
 
 inline ByteArray::ByteArray( const ByteArray& other,
                              const std::allocator<int8_t>& alloc ) :

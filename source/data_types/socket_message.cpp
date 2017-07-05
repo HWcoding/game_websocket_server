@@ -41,30 +41,18 @@ SocketMessage::SocketMessage() noexcept :
 	message()
 {}
 
-SocketMessage::SocketMessage(int _FD, uint32_t _type, uint32_t _priority, const ByteArray &_IP,
-						const ByteArray &_port, const ByteArray &_CSRFkey,
-						const ByteArray &_message) noexcept :
+SocketMessage::SocketMessage(int _FD, uint32_t _type, uint32_t _priority, const ByteArray _IP,
+						const ByteArray _port, const ByteArray _CSRFkey,
+						const ByteArray _message) noexcept :
 	FD(_FD),
 	type(_type),
 	priority(_priority),
 	sentTime(calculateTime()),
-	IP(_IP),
-	port(_port),
-	CSRFkey(_CSRFkey),
-	message(_message)
-{}
 
-SocketMessage::SocketMessage(int _FD, uint32_t _type, uint32_t _priority, const ByteArray &_IP,
-						const ByteArray &_port, const ByteArray &_CSRFkey,
-						ByteArray &&_message) noexcept :
-	FD(_FD),
-	type(_type),
-	priority(_priority),
-	sentTime(calculateTime()),
-	IP(_IP),
-	port(_port),
-	CSRFkey(_CSRFkey),
-	message( std::move(_message))
+	IP(std::move(_IP)),
+	port(std::move(_port)),
+	CSRFkey(std::move(_CSRFkey)),
+	message(std::move(_message))
 {}
 
 SocketMessage::SocketMessage(const SocketMessage &m) noexcept : //copy constructor

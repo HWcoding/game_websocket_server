@@ -1,6 +1,6 @@
-#define TEST_FILE_LINK_DEPENDENCIES "source/server/socket/file_descriptor.cpp \
-									source/server/socket/system_wrapper.cpp \
-									source/logging/exception_handler.cpp \
+#define TEST_FILE_LINK_DEPENDENCIES "source/server/socket/file_descriptor.cpp, \
+									source/server/socket/system_wrapper.cpp, \
+									source/logging/exception_handler.cpp, \
 									source/server/socket/set_of_file_descriptors.cpp"
 
 #include "tests/test_lib/mocks_stubs/mock_system_wrapper.h"
@@ -68,6 +68,6 @@ TEST(SetOfFileDescriptorsTest, FDIsRemovedFromList) {
 int main(int argc, char *argv[])
 {
 	::testing::InitGoogleTest(&argc, argv);
-	STAY_SILENT_ON_SUCCESS();
+	StaySilentOnSuccess();
 	return RUN_ALL_TESTS();
 }

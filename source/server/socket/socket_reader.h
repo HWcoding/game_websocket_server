@@ -35,8 +35,8 @@ private:
 	void removeFromWaitingFDs(int FD);
 	void processSockMessage(ByteArray &in,  int FD);
 
-	SocketReader& operator=(const SocketReader&)=delete;
-	SocketReader(const SocketReader&)=delete;
+	SocketReader& operator=(const SocketReader&) = delete;
+	SocketReader(const SocketReader&) = delete;
 
 	SystemInterface *systemWrap;
 	std::unique_ptr<WebsocketMessageProcessor> processor;

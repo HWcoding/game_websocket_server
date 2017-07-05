@@ -135,7 +135,7 @@ void FileDescriptor::setFDReadWrite(epoll_event event, int epoll){
 
 void FileDescriptor::stopPollingFD(int epoll){
 	std::lock_guard<std::recursive_mutex> lck(mut);
-	systemWrap->epollControlDelete(epoll, FD, NULL);
+	systemWrap->epollControlDelete(epoll, FD, nullptr);
 }
 
 void FileDescriptor::startPollingForWrite(int epoll){

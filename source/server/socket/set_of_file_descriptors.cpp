@@ -109,8 +109,8 @@ int SetOfFileDescriptors::tellServerAboutNewConnection(int FD)
 {
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	if(isFDOpen(FD)){ //check to see if FD is in list of open FD's.
-		for(unsigned int i =0; i< newConnectionCallbacks.size(); i++){
-			newConnectionCallbacks[i](FD);
+		for(auto callback : newConnectionCallbacks) {
+			callback(FD);
 		}
 	}
 	return FD;
@@ -119,9 +119,9 @@ int SetOfFileDescriptors::tellServerAboutNewConnection(int FD)
 bool SetOfFileDescriptors::callCloseCallbacks(int FD)
 {
 	bool callbackThrew = false;
-	for(unsigned int i =0; i< closeCallbacks.size(); ++i){
+	for(auto callback : closeCallbacks){
 		//call all of the callbacks associated with this socket's closure.
-		try{ closeCallbacks[i](FD); }
+		try{ callback(FD); }
 		catch(...){
 			BACKTRACE_PRINT();
 			callbackThrew = true;
@@ -199,7 +199,7 @@ void SetOfFileDescriptors::makeNonblocking(int FD)
 
 std::unique_lock<std::recursive_mutex> SetOfFileDescriptors::getAndLockFD(FileDescriptor* &FDPointer, int FD)
 {
-	FDPointer = NULL;
+	FDPointer = nullptr;
 	std::lock_guard<std::recursive_mutex> lck(FDmut);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.
 		std::unique_lock<std::recursive_mutex> newLock(openFDs.at(FD).lock()); //lock the fd so it won't get destroyed or changed

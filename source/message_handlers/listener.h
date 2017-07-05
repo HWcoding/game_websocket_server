@@ -7,7 +7,7 @@ class Listener
 {
 public:
 	virtual void callback(const SocketMessage&) = 0;
-	virtual ~Listener() {}
+	virtual ~Listener() = default;
 };
 
 #endif /* SOURCE_MESSAGE_HANDLERS_LISTENER_H */

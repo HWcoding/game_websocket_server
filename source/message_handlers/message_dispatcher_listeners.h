@@ -25,7 +25,7 @@ struct MessageDispatcherListeners : public MessageDispatcherListenersBase
 	LoginHandler loginHandler {};
 	LogoutHandler logoutHandler {};
 	NullHandler nullHandler {};
-	~MessageDispatcherListeners(){}
+	~MessageDispatcherListeners() override = default;
 	MessageDispatcherListeners(){
 		listeners[MessageType::null]    = &nullHandler;
 		listeners[MessageType::move]    = &moveHandler;

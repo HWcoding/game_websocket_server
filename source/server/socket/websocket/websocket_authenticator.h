@@ -18,12 +18,12 @@ class WebsocketAuthenticator : public AuthenticatorInterface
 {
 public:
 	WebsocketAuthenticator(SystemInterface *_systemWrap, SetOfFileDescriptors*FDs);
-	~WebsocketAuthenticator(){}
-	void processHandshake(const ByteArray &in, int FD);
-	bool sendHandshake(int FD);
-	void closeFD(int FD);
-	bool isNotValidConnection(const ByteArray &IP, const ByteArray &port) const;
-	void setClientValidator(ClientValidatorInterface * validator)
+	~WebsocketAuthenticator() override = default;
+	void processHandshake(const ByteArray &in, int FD) override;
+	bool sendHandshake(int FD) override;
+	void closeFD(int FD) override;
+	bool isNotValidConnection(const ByteArray &IP, const ByteArray &port) const override;
+	void setClientValidator(ClientValidatorInterface * validator) override
 	{
 		ClientValidator = validator;
 	}
@@ -39,8 +39,8 @@ private:
 	void toBase64(const ByteArray &in, ByteArray &out) const;
 	uint8_t convertTo64(uint8_t in) const;
 
-	WebsocketAuthenticator& operator=(const WebsocketAuthenticator&)=delete;
-	WebsocketAuthenticator(const WebsocketAuthenticator&)=delete;
+	WebsocketAuthenticator& operator=(const WebsocketAuthenticator&) = delete;
+	WebsocketAuthenticator(const WebsocketAuthenticator&) = delete;
 	SystemInterface *systemWrap;
 	std::unordered_map<int,ByteArray > handshakeReadBuffer;
 	std::unordered_map<int,ByteArray > handshakeWriteBuffer;

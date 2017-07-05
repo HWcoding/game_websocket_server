@@ -9,13 +9,13 @@
 
 class WriteBuffersInterface {
 public:
-	virtual void addMessage(int index, const ByteArray &in) =0;
-	virtual bool writeData(int index)				=0;
-	virtual size_t messageSize(int index) const		=0;
-	virtual void eraseBuffers(int index)			=0;
+	virtual void addMessage(int index, const ByteArray &in) = 0;
+	virtual bool writeData(int index) = 0;
+	virtual size_t messageSize(int index) const = 0;
+	virtual void eraseBuffers(int index) = 0;
 	virtual ~WriteBuffersInterface();
 protected:
-	WriteBuffersInterface(){}
+	WriteBuffersInterface() = default;
 };
 
 class SystemInterface;
@@ -26,8 +26,8 @@ private:
 	SystemInterface *systemWrap;
 	mutable std::mutex mut; // used for multi threaded writing.  A lock needs to be done before accessing the following variables
 
-	WebsocketWriteBuffers& operator=(const WebsocketWriteBuffers&)=delete;
-	WebsocketWriteBuffers(const WebsocketWriteBuffers&)=delete;
+	WebsocketWriteBuffers& operator=(const WebsocketWriteBuffers&) = delete;
+	WebsocketWriteBuffers(const WebsocketWriteBuffers&) = delete;
 protected:
 	struct pendingMessage{
 		ByteArray message;
@@ -36,12 +36,12 @@ protected:
 	};
 	std::unordered_map<int,pendingMessage> writeBuffer;	//buffer to hold messages waiting to be written to socket
 public:
-	void addMessage(int index, const ByteArray &in);
-	bool writeData(int index);
-	size_t messageSize(int index) const;
-	void eraseBuffers(int index);
+	void addMessage(int index, const ByteArray &in) override;
+	bool writeData(int index) override;
+	size_t messageSize(int index) const override;
+	void eraseBuffers(int index) override;
 	WebsocketWriteBuffers(SystemInterface *_systemWrap);
-	~WebsocketWriteBuffers();
+	~WebsocketWriteBuffers() override;
 };
 
 #endif /* SERVER_SOCKET_WEBSOCKET_WEBSOCKET_WRITE_BUFFER_H_ */

@@ -3,7 +3,7 @@
 #include "source/server/socket/system_wrapper.h"
 #include <string.h>
 
-WriteBuffersInterface::~WriteBuffersInterface(){}
+WriteBuffersInterface::~WriteBuffersInterface() = default;
 
 void WebsocketWriteBuffers::addMessage(int index, const ByteArray &in){
 	std::lock_guard<std::mutex> lck(mut);

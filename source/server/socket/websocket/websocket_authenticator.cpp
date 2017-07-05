@@ -12,9 +12,9 @@
 
 
 
-AuthenticatorInterface::~AuthenticatorInterface(){}
+AuthenticatorInterface::~AuthenticatorInterface() = default;
 
-ClientValidatorInterface::~ClientValidatorInterface(){}
+ClientValidatorInterface::~ClientValidatorInterface() = default;
 
 
 WebsocketAuthenticator::WebsocketAuthenticator(SystemInterface *_systemWrap, SetOfFileDescriptors*FDs) :

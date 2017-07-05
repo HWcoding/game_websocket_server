@@ -36,8 +36,8 @@ private:
 	std::unique_ptr<WebsocketReadBuffers> ReadBuffers;
 	SetOfFileDescriptors *fileDescriptors;
 
-	WebsocketMessageProcessor& operator=(const WebsocketMessageProcessor&)=delete;
-	WebsocketMessageProcessor(const WebsocketMessageProcessor&)=delete;
+	WebsocketMessageProcessor& operator=(const WebsocketMessageProcessor&) = delete;
+	WebsocketMessageProcessor(const WebsocketMessageProcessor&) = delete;
 };
 
 #endif /* SOURCE_SERVER_SOCKET_WEBSOCKET_WEBSOCKET_MESSAGE_PROCESSOR_H_ */

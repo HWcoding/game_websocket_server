@@ -1,6 +1,6 @@
 #define TEST_FILE_LINK_DEPENDENCIES "source/data_types/byte_array.cpp, \
-									source/data_types/socket_message.cpp \
-									source/server/socket/message_queue.cpp \
+									source/data_types/socket_message.cpp, \
+									source/server/socket/message_queue.cpp, \
 									source/logging/exception_handler.cpp"
 
 #include "source/data_types/socket_message.h"
@@ -40,6 +40,6 @@ TEST(MessageQueueTest, getNextMessage)
 int main(int argc, char *argv[])
 {
 	::testing::InitGoogleTest(&argc, argv);
-	STAY_SILENT_ON_SUCCESS();
+	StaySilentOnSuccess();
 	return RUN_ALL_TESTS();
 }

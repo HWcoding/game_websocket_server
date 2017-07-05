@@ -40,8 +40,8 @@ private:
 	void closeFD(int FD);
 	int addFD(int FD);
 
-	SocketServerConnector& operator=(const SocketServerConnector&)=delete;
-	SocketServerConnector(const SocketServerConnector&)=delete;
+	SocketServerConnector& operator=(const SocketServerConnector&) = delete;
+	SocketServerConnector(const SocketServerConnector&) = delete;
 
 	SystemInterface *systemWrap;
 	std::unique_ptr<WebsocketAuthenticator> Authenticator;

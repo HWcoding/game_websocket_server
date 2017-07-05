@@ -359,6 +359,6 @@ int main(int argc, char *argv[])
 	//std::cout<<"fastSqrtProf cycles taken =    "<<profiling::countCpuCycles(fastSqrtProf,1000000)<<std::endl;
 
 	::testing::InitGoogleTest(&argc, argv);
-	STAY_SILENT_ON_SUCCESS();
+	StaySilentOnSuccess();
 	return RUN_ALL_TESTS();
 }

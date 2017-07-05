@@ -13,13 +13,13 @@ MessageDispatcher::MessageDispatcher(MessageDispatcherListenersBase *base) : d(b
 
 void MessageDispatcher::dispatchMessages(const std::vector<SocketMessage> &messages)
 {
-	for(size_t i=0; i<messages.size(); ++i){
+	for(auto message : messages){
 		// call the correct function based on the message type
-		uint32_t type =messages[i].getType();
+		uint32_t type = message.getType();
 		if(type<MessageType::NumberOfMessageTypes)
-			d->listeners[type]->callback(messages[i]);
+			d->listeners[type]->callback(message);
 		else
-			d->listeners[MessageType::null]->callback(messages[i]);
+			d->listeners[MessageType::null]->callback(message);
 	}
 }
 #include <iostream>

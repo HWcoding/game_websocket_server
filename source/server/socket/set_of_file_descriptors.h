@@ -35,8 +35,8 @@ public:
 	void setCSRFkey(int FD, ByteArray s);
 
 private:
-	SetOfFileDescriptors& operator=(const SetOfFileDescriptors&)=delete;
-	SetOfFileDescriptors(const SetOfFileDescriptors&)=delete;
+	SetOfFileDescriptors& operator=(const SetOfFileDescriptors&) = delete;
+	SetOfFileDescriptors(const SetOfFileDescriptors&) = delete;
 
 	std::unique_lock<std::recursive_mutex> getAndLockFD(FileDescriptor* &FDpointer, int FD);
 

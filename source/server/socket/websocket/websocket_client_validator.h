@@ -10,20 +10,20 @@
 class DefaultClientValidator : public ClientValidatorInterface
 {
 public:
-	bool areClientHeadersValid(ConnectionHeaders &headers)
+	bool areClientHeadersValid(ConnectionHeaders &headers) override
 	{
 		(void)headers;
 		//reject all traffic
 		return false;
 	}
-	bool isClientIPValid(std::string &IP, std::string &port)
+	bool isClientIPValid(std::string &IP, std::string &port) override
 	{
 		(void)IP;
 		(void)port;
 		//reject all traffic
 		return false;
 	}
-	~DefaultClientValidator(){};
+	~DefaultClientValidator() override = default;
 };
 
 #endif /* SERVER_SOCKET_WEBSOCKET_WEBSOCKET_CLIENT_VALIDATOR_H */

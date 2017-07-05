@@ -19,8 +19,8 @@ public:
 	int pushMessage(SocketMessage &message);
 	void shutdown();
 private:
-	MessageQueue& operator=(const MessageQueue&)=delete;
-	MessageQueue(const MessageQueue&)=delete;
+	MessageQueue& operator=(const MessageQueue&) = delete;
+	MessageQueue(const MessageQueue&) = delete;
 
 	std::mutex mut;
 	std::queue<SocketMessage> Queue;

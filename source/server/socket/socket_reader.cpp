@@ -14,7 +14,7 @@
 
 SocketReader::SocketReader(SystemInterface *_systemWrap, SetOfFileDescriptors *_FDs, std::atomic<bool>* run) : systemWrap(_systemWrap),
 																										processor( new WebsocketMessageProcessor(_FDs) ),
-																										running(run), fileDescriptors(_FDs), readerQueue(NULL),
+																										running(run), fileDescriptors(_FDs), readerQueue(nullptr),
 																										waitingFDs(), waitingMut(),
 																										epollFD(-1), MAXEVENTS(9999), maxBufferSize(32760)
 																										{
@@ -27,8 +27,8 @@ SocketReader::SocketReader(SystemInterface *_systemWrap, SetOfFileDescriptors *_
 
 
 SocketReader::~SocketReader(){
-	if(readerQueue != NULL ) delete readerQueue;
-	readerQueue = NULL;
+	if(readerQueue != nullptr ) delete readerQueue;
+	readerQueue = nullptr;
 }
 
 

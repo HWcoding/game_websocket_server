@@ -15,8 +15,8 @@ public:
 	MoveHandler& operator=(const MoveHandler&) = delete;
 
 	MoveHandler();
-	~MoveHandler();
-	void callback( const SocketMessage &message);
+	~MoveHandler() override;
+	void callback( const SocketMessage &message) override;
 };
 
 #endif /* SOURCE_MESSAGE_HANDLERS_MOVE_HANDLER_H */

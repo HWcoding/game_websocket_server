@@ -1,7 +1,7 @@
 #define TEST_FILE_LINK_DEPENDENCIES "source/server/socket/websocket/websocket_write_buffer.cpp, \
                                      source/server/socket/websocket/websocket_message_sender.cpp, \
                                      source/data_types/byte_array.cpp, \
-                                     source/data_types/socket_message.cpp \
+                                     source/data_types/socket_message.cpp, \
                                      source/server/socket/system_wrapper.cpp"
 
 #include "source/server/socket/websocket/websocket_write_buffer.h"
@@ -186,6 +186,6 @@ TEST(WebsocketMessageSenderTest, addMessage)
 int main(int argc, char *argv[])
 {
 	::testing::InitGoogleTest(&argc, argv);
-	STAY_SILENT_ON_SUCCESS();
+	StaySilentOnSuccess();
 	return RUN_ALL_TESTS();
 }
