@@ -1,62 +1,35 @@
 #include "source/signal_handler.h"
 #include "source/logging/exception_handler.h"
 #include <cstring>
+#include <mutex>
+
 
 namespace {
-
-void RecievedInteruptSignal(int)
-{
-	SignalHandler *sigHandler = nullptr;
-	try {
-		sigHandler = SignalHandler::getSignalHandler();
-		sigHandler->SetStopFlag();
-	}
-	catch(...){ abort(); }
+std::mutex mut;
 }
-
-} //namespace
-
 
 //statics
-SignalHandler * SignalHandler::getsetSignalHandler(std::atomic<bool> *run)
+std::atomic<bool> SignalHandler::init(false);
+SignalHandler SignalHandler::handler;
+
+void SignalHandler::recievedInteruptSignal(int)
 {
-	static bool init = false;
-	if( init == false && run == nullptr) {
-		throwInt("SignalHandler is not initialized and run is null");
-		return nullptr;
-	}
-	else if(run != nullptr && init != false) {
-		throwInt("non-null run used when SignalHandler is already initialized");
-		return nullptr;
-	}
-	else {
-		static SignalHandler handler(run);
-		init = true;
-		return &handler;
-	}
+	std::unique_lock<std::mutex> lck(::mut);
+	handler.SetStopFlag();
 }
 
-SignalHandler * SignalHandler::getSignalHandler()
+void SignalHandler::setSignalHandler(std::atomic<bool> *run)
 {
-	return getsetSignalHandler(nullptr);
-}
+	std::unique_lock<std::mutex> lck(::mut);
+	handler.revertToDefault();
+	handler.initialize(run);
 
-SignalHandler * SignalHandler::setSignalHandler(std::atomic<bool> *run)
-{
-	return getsetSignalHandler(run);
-}
-
-SignalHandler * SignalHandler::resetSignalHandler(std::atomic<bool> *run)
-{
-	SignalHandler *sigHandler = SignalHandler::getSignalHandler();
-	sigHandler->revertToDefault();
-	sigHandler->initialize(run);
-	return sigHandler;
 }
 
 
 
 //non statics
+
 void SignalHandler::SetStopFlag()
 {
 	ptr_run->store(false);
@@ -64,18 +37,14 @@ void SignalHandler::SetStopFlag()
 
 void SignalHandler::initialize(std::atomic<bool> *run)
 {
-	if(run == nullptr) throwInt("null run used to initialize SignalHandler");
 	ptr_run = run;
 	memset( &sigAction, 0, sizeof(sigAction) );
-	sigAction.sa_handler = ::RecievedInteruptSignal;
+	sigAction.sa_handler = recievedInteruptSignal;
 	sigfillset(&sigAction.sa_mask);
 	sigaction(SIGINT,&sigAction, nullptr);
+	init.store(true);
 }
 
-SignalHandler::SignalHandler(std::atomic<bool> *run)
-{
-	initialize(run);
-}
 
 void SignalHandler::revertToDefault()
 {
@@ -85,6 +54,7 @@ void SignalHandler::revertToDefault()
 	sigaction(SIGINT,&sigAction, nullptr);
 	ptr_run = nullptr;
 }
+
 
 SignalHandler::~SignalHandler()
 {

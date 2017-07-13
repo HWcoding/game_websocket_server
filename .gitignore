@@ -1,10 +1,10 @@
-analysis/*.txt
-analysis/*.a1
+analysis/*
 client/three.min.js
 deps/*
 docs/html
 objs/*
-program
+program_Debug
+program_Release
 .git
 tests/bin/*
 tests/deps/*

@@ -9,6 +9,8 @@
 #		runs 'make clean' to remove temparary objs
 #	weak
 #		uses weaker warnings while building
+#	docs
+#		builds documentation
 #	tidy
 #		runs clang-tidy static analyzer
 
@@ -415,8 +417,8 @@ def codeAnalysis():
 						if file.endswith('.cpp'):
 							fullpath = os.path.join(root, file)
 							make_process = subprocess.Popen(["clang-tidy", fullpath,
-								"-extra-arg=-I../", "-extra-arg=-std=c++14", "-header-filter=./*",
-								"-checks=modernize-*,clang-analyzer-*,-clang-analyzer-alpha.deadcode.UnreachableCode"],
+								"-extra-arg=-I../", "-extra-arg=-std=c++14",
+								"-checks=modernize-*,clang-analyzer-*,clang-analyzer-alpha.deadcode.UnreachableCode,-clang-analyzer-alpha.core.CastToStruct"],
 								stderr=subprocess.STDOUT)
 							if make_process.wait() != 0:
 								raise SystemExit
@@ -601,6 +603,7 @@ def compileTestFiles():
 
 
 def buildDocs():
+
 	if getCleanFlag():
 		#clean docs
 		os.chdir( "./docs" )
@@ -652,9 +655,10 @@ def run():
 	printHighlight( "Finished" )
 
 	# doxygen
-	printMinorHeader( "Building Documentation" )
-	buildDocs()
-	printHighlight( "Finished" )
+	if getIsArgument("docs"):
+		printMinorHeader( "Building Documentation" )
+		buildDocs()
+		printHighlight( "Finished" )
 	print("")
 	printHighlight( "****Build Complete****" )
 	print("")

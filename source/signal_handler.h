@@ -8,22 +8,24 @@
 class SignalHandler
 {
 public:
-	static SignalHandler * getSignalHandler();
-	static SignalHandler * setSignalHandler(std::atomic<bool> *run);
-	static SignalHandler * resetSignalHandler(std::atomic<bool> *run);
-	void SetStopFlag();
+	static void setSignalHandler(std::atomic<bool> *run);
 	~SignalHandler();
+
 private:
-	static SignalHandler *getsetSignalHandler(std::atomic<bool> *run = nullptr);
+	static void recievedInteruptSignal(int);
+	void SetStopFlag();
 	void initialize(std::atomic<bool> *run);
 	void revertToDefault();
 
-	SignalHandler(std::atomic<bool> *run);
+	SignalHandler() = default;
 	struct sigaction sigAction {};
 	std::atomic<bool> *ptr_run {nullptr};
 
-	SignalHandler& operator=(const SignalHandler& s) = default;
+	SignalHandler& operator=(const SignalHandler& s) = delete;
 	SignalHandler(const SignalHandler&) = delete;
+
+	static std::atomic<bool> init;
+	static SignalHandler handler;
 };
 
 #endif /* SOURCE_SIGNAL_HANDLER_H_ */
