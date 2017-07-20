@@ -44,7 +44,7 @@ struct ServerConfig {
 class Socket : public SocketInterface{ ///class starts new threads to handle socket io and cleans up on destruction
 
 public:
-	Socket(const ServerConfig &config);
+	Socket(const ServerConfig &config, std::atomic<bool> * _shouldContinueRunning);
 	SocketMessage getNextMessage() override;
 	void setClientValidator(ClientValidatorInterface * validator) override;
 
@@ -63,7 +63,7 @@ private:
 	Socket& operator=(const Socket&) = delete;
 	Socket(const Socket&) = delete;
 
-	std::atomic<bool> shouldContinueRunning; //flag to tell the thread to end looping and exit //TODO  make sure access to this is atomic
+	std::atomic<bool> * shouldContinueRunning; //flag to tell the thread to end looping and exit //TODO  make sure access to this is atomic
 	std::unique_ptr<SystemWrapper> systemWrap;
 	std::unique_ptr<SetOfFileDescriptors> FDs;
 	std::unique_ptr<SocketReader> reader;

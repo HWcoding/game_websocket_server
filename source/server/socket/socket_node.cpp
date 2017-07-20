@@ -12,19 +12,18 @@
 
 SocketInterface::~SocketInterface() = default;
 
-Socket::Socket(const ServerConfig &config) : shouldContinueRunning(),
+Socket::Socket(const ServerConfig &config, std::atomic<bool> * _shouldContinueRunning) : shouldContinueRunning(_shouldContinueRunning),
 									systemWrap( new SystemWrapper()),
 									FDs( new SetOfFileDescriptors( systemWrap.get() ) ),
-									reader(  new SocketReader(systemWrap.get(), FDs.get(), &shouldContinueRunning) ),
-									writer( new SocketWriter(systemWrap.get(), FDs.get(), &shouldContinueRunning) ),
-									connector( new SocketServerConnector(config.port, systemWrap.get(), FDs.get(), &shouldContinueRunning) ),
+									reader(  new SocketReader(systemWrap.get(), FDs.get(), shouldContinueRunning) ),
+									writer( new SocketWriter(systemWrap.get(), FDs.get(), shouldContinueRunning) ),
+									connector( new SocketServerConnector(config.port, systemWrap.get(), FDs.get(), shouldContinueRunning) ),
 									readerThread(),
 									writerThread(),
 									connectorThread() {
 
 	signal(SIGPIPE, SIG_IGN); //ignore sinal when writing to closed sockets to prevent crash on client disconnect
 	LOG_INFO("starting Socket");
-	shouldContinueRunning.store(true);
 	readerThread = std::thread(&Socket::startReader, this);
 	writerThread = std::thread(&Socket::startWriter, this);
 	connectorThread = std::thread(&Socket::startConnector, this);
@@ -36,7 +35,7 @@ void Socket::disconnectClient(int FD){
 
 void Socket::shutdown()
 {
-	shouldContinueRunning.store(false); //tell loop in socket thread to exit and return
+	shouldContinueRunning->store(false); //tell loop in socket thread to exit and return
 	reader->shutdown();
 
 	if(connectorThread.joinable()){
@@ -76,7 +75,7 @@ void Socket::sendMessage(SocketMessage &message){
 }
 
 bool Socket::isRunning() {
-	return shouldContinueRunning.load();
+	return shouldContinueRunning->load();
 }
 
 
@@ -100,7 +99,7 @@ void Socket::startReader(){ //blocking! should only be called in a new thread
 		LOG_ERROR("unknown exception thrown. Shutting down.");
 	}
 	LOG_INFO("ending");
-	shouldContinueRunning.store(false); //update the status of the server
+	shouldContinueRunning->store(false); //update the status of the server
 	return;
 }
 
@@ -125,7 +124,7 @@ void Socket::startWriter(){ //blocking! should only be called in a new thread
 		LOG_ERROR("unknown exception thrown. Shutting down.");
 	}
 	LOG_INFO("ending");
-	shouldContinueRunning.store(false); //update the status of the server
+	shouldContinueRunning->store(false); //update the status of the server
 	return;
 }
 
@@ -149,6 +148,6 @@ void Socket::startConnector(){ //blocking! should only be called in a new thread
 		LOG_ERROR("unknown exception thrown. Shutting down.");
 	}
 	LOG_INFO("ending");
-	shouldContinueRunning.store(false); //update the status of the server
+	shouldContinueRunning->store(false); //update the status of the server
 	return;
 }

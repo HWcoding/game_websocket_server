@@ -35,12 +35,8 @@ void messageLoop(Socket *gameSocket, std::atomic<bool> *run)
 {
 	try {
 		MessageDispatcher dispatcher;
-
 		while(run->load()) {
-			if(gameSocket->isRunning()){
-				//blocks thread if message queue is empty
-				dispatcher.dispatchMessage( gameSocket->getNextMessage() );
-			}
+			dispatcher.dispatchMessage( gameSocket->getNextMessage() );
 		}
 	}
 	//runs in separate thread so we need to catch all exceptions to avoid ABORT
@@ -69,7 +65,7 @@ int main()
 
 	ServerConfig config;
 	config.port = std::string("5590");
-	Socket gameSocket(config);
+	Socket gameSocket(config, &run);
 
 
 	class MyClientValidator : public ClientValidatorInterface
