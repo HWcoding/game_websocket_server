@@ -16,13 +16,17 @@ void ByteArray::getBytes(void* bytes, size_t sizeOfBytes) const
 		currentIndex += sizeOfBytes;
 	}
 	else {
-		throwInt("ByteArray::getBytes tried to read past end of buffer of size "<<std::vector<uint8_t>::size()<<" using value of "<<currentIndex+sizeOfBytes);
+		throw std::runtime_error(LOG_EXCEPTION(std::string()+"ByteArray::getBytes tried to read past end of buffer of size "+ \
+			std::to_string(std::vector<uint8_t>::size())+ \
+			" using value of "+std::to_string(currentIndex+sizeOfBytes)));
 	}
 }
 
 void ByteArray::append(const std::string &str)
 {
-	if(str.size() > 65535 ) throw -1;
+	if(str.size() > 65535 ){
+		throw std::runtime_error(LOG_EXCEPTION("string is too large"));
+	}
 	uint16_t strSize = static_cast<uint16_t>( str.size() );
 	appendBytes(&strSize, sizeof (strSize));
 	appendBytes(str.c_str(), strSize);
@@ -60,6 +64,8 @@ void ByteArray::seek(size_t pos) const
 {
 	if( pos < std::vector<uint8_t>::size() ) currentIndex = pos;
 	else {
-		throwInt("ByteArray::seek tried to seek to: "<<pos<<", which is past end of buffer with size: "<<std::vector<uint8_t>::size());
+		throw std::runtime_error(LOG_EXCEPTION(std::string()+"ByteArray::seek tried to seek to: "+ \
+			std::to_string(pos)+", which is past end of buffer with size: "+ \
+			std::to_string(std::vector<uint8_t>::size())));
 	}
 }

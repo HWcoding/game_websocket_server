@@ -9,7 +9,6 @@ std::mutex mut;
 }
 
 //statics
-std::atomic<bool> SignalHandler::init(false);
 SignalHandler SignalHandler::handler;
 
 void SignalHandler::recievedInteruptSignal(int)
@@ -27,7 +26,6 @@ void SignalHandler::setSignalHandler(std::atomic<bool> *run)
 }
 
 
-
 //non statics
 
 void SignalHandler::SetStopFlag()
@@ -42,9 +40,7 @@ void SignalHandler::initialize(std::atomic<bool> *run)
 	sigAction.sa_handler = recievedInteruptSignal;
 	sigfillset(&sigAction.sa_mask);
 	sigaction(SIGINT,&sigAction, nullptr);
-	init.store(true);
 }
-
 
 void SignalHandler::revertToDefault()
 {
@@ -55,8 +51,8 @@ void SignalHandler::revertToDefault()
 	ptr_run = nullptr;
 }
 
-
 SignalHandler::~SignalHandler()
 {
+	std::unique_lock<std::mutex> lck(::mut);
 	revertToDefault();
 }

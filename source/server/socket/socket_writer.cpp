@@ -44,7 +44,7 @@ void SocketWriter::startPoll(){
 			}
 			if((events[i].events & EPOLLOUT)){			//the socket is ready for writing
 				try{ writeData(events[i].data.fd); }	//write data to client
-				catch( int &ret){
+				catch( std::runtime_error &ret){
 					BACKTRACE_PRINT();
 					closeFD(events[i].data.fd);			//drop connection on failure
 				}
@@ -70,7 +70,7 @@ void SocketWriter::closeFD(int FD){
 void SocketWriter::closeFDHandler(int FD){
 	LOG_INFO("closed connection on FD "<<FD);
 	try{ fileDescriptors->stopPollingFD(epollFD, FD); }
-	catch(int &ret) {
+	catch(std::runtime_error &ret) {
 		BACKTRACE_PRINT();
 		writeError("epoll_ctl");
 	}

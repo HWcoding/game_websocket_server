@@ -14,7 +14,7 @@ void WebsocketReadBuffers::addMessage(int index, ByteArray &in)
 			tempBuff.buffer.push_back(std::move(in));
 		}
 		else {
-			throwInt("Message expected size too large. Expectedsize: "<<tempBuff.expectedSize);
+			throw std::runtime_error(LOG_EXCEPTION("Message expected size too large. Expectedsize: "+std::to_string(tempBuff.expectedSize)));
 		}
 	}
 }
@@ -43,7 +43,7 @@ bool WebsocketReadBuffers::extractMessage(ByteArray &out, size_t position, int i
 		if(!tempBuff.buffer.empty()) {
 			if(out.size()+tempBuff.size() <= maxMessageSize) {
 				if( tempBuff.expectedSize > static_cast<int64_t>(maxMessageSize) ) {
-					throwInt("Message expected size too large. Expectedsize: "<<tempBuff.expectedSize);
+					throw std::runtime_error(LOG_EXCEPTION("Message expected size too large. Expectedsize: "+std::to_string(tempBuff.expectedSize)));
 				}
 				if( static_cast<int64_t>( out.size()+tempBuff.size() ) >= tempBuff.expectedSize ) {
 					ByteArray message;
@@ -61,7 +61,7 @@ bool WebsocketReadBuffers::extractMessage(ByteArray &out, size_t position, int i
 				}
 			}
 			else {
-				throwInt("Client sent too much data.  Size: "<<(out.size()+messageBuffer[index].size()) );
+				throw std::runtime_error(LOG_EXCEPTION("Client sent too much data.  Size: "+std::to_string(out.size()+messageBuffer[index].size()) ));
 			}
 		}
 	}

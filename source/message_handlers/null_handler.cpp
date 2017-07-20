@@ -3,6 +3,6 @@
 
 void NullHandler::callback( const SocketMessage &message){
 	// stops an unused warning for message
-	while(false){ (void)message; }
+	(void)message;
 	return;
 }

@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include "source/logging/exception_handler.h"
 
 
 template<class K, class T>
@@ -87,7 +88,7 @@ void MappedVector<K, T>::changeKeyIndex(size_t index, size_t changeTo)
 			return;
 		}
 	}
-	throw -1;
+	throw std::runtime_error("");
 }
 
 #endif /* SOURCE_DATA_TYPES_MAPPED_VECTOR_H */

@@ -153,7 +153,8 @@ uint64_t WebsocketMessageProcessor::getMessageSize (ByteArray &in, uint64_t &mes
 {
 	uint64_t size = in[start+1]^128;
 	if(size >= 128){
-		throwInt("maskbit was not set on descriptor "<<FD<<" start: "<<start<<" in.size(): "<<in.size()<<". First bit "<<  static_cast<unsigned int>( in[start] ) ); //maskbit was not set
+		throw std::runtime_error(LOG_EXCEPTION("maskbit was not set on descriptor "+std::to_string(FD)+" start: "+std::to_string(start)+ \
+		" in.size(): "+std::to_string(in.size())+". First bit "+std::to_string(static_cast<unsigned int>( in[start] )) )); //maskbit was not set
 	}
 	messageStart = start+6; //start of mask start
 	if(size == 126){
@@ -181,7 +182,7 @@ uint64_t WebsocketMessageProcessor::getMessageSize (ByteArray &in, uint64_t &mes
 		size = getNet64bit(&in[start+2]);
 	}
 	if(size>MaxReadBufferSize){
-		throwInt("Message too large on on descriptor "<< FD <<".  Size: "<<size );
+		throw std::runtime_error(LOG_EXCEPTION("Message too large on on descriptor "+std::to_string(FD)+".  Size: "+std::to_string(size) ));
 	}
 	return size;
 }
@@ -210,7 +211,7 @@ void WebsocketMessageProcessor::handleFragment (ByteArray &in, uint8_t opcode, i
 		ReadBuffers->addFracture(FD,in);
 	}
 	else{
-		throwInt("bad Opcode "<< static_cast<int>(opcode) <<" on descriptor "<<FD);
+		throw std::runtime_error(LOG_EXCEPTION("bad Opcode "+std::to_string(static_cast<int>(opcode))+" on descriptor "+std::to_string(FD)));
 	}
 }
 
@@ -218,8 +219,12 @@ void WebsocketMessageProcessor::handleFragment (ByteArray &in, uint8_t opcode, i
 void WebsocketMessageProcessor::unmask (ByteArray &in, ByteArray &out, uint64_t messageStart, uint64_t length)
 {
 	//this function is nasty because it represented 97% of execution time. Its now optimised, and ugly, and illegal (strict-aliasing rules are broken)
-	if(messageStart < 4) throwInt("Message start position too low to allow for mask");
-	if(in.size() < messageStart+length) throwInt("Message size is smaller than reported length");
+	if(messageStart < 4){
+		throw std::runtime_error(LOG_EXCEPTION("Message start position too low to allow for mask"));
+	}
+	if(in.size() < messageStart+length) {
+		throw std::runtime_error(LOG_EXCEPTION("Message size is smaller than reported length"));
+	}
 
 	uint64_t begin  = out.size(); //save end position of string to begin writing to
 	size_t capacity = begin+length; //new size needed to hold the concatenated strings

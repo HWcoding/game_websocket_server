@@ -66,13 +66,17 @@ void SocketReader::startPoll(){
 				if (systemWrap->getSockOpt(events[i].data.fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void *>(&error), &errlen) == 0){
 					LOG_ERROR("epoll error on FD "<<events[i].data.fd<<". Error: "<<strerror(error));
 				}
-				else LOG_ERROR("epoll error");
+				else {
+					LOG_ERROR("epoll error");
+				}
 				closeFD(events[i].data.fd);
 			}
 			else if((events[i].events & EPOLLIN)){	// the socket is ready for reading
 				addToWaitingFDs(events[i].data.fd);
 			}
-			else LOG_ERROR("FD "<<events[i].data.fd<< " was not EPOLLIN "<< events[i].events);
+			else {
+				LOG_ERROR("FD "<<events[i].data.fd<< " was not EPOLLIN "<< events[i].events);
+			}
 		}
 		readChunk();
 	}
@@ -86,13 +90,17 @@ void SocketReader::setupEpoll(){
 
 void SocketReader::closeFD(int FD){
 	int ret = fileDescriptors->removeFD(FD);
-	if(ret == -1)LOG_ERROR(" File descriptor "<<FD<<"failed to close properly. ");
+	if(ret == -1){
+		LOG_ERROR(" File descriptor "<<FD<<"failed to close properly. ");
+	}
 }
 
 void SocketReader::closeFDHandler(int FD){
 	LOG_INFO("closed connection on FD "<<FD);
-	try{ fileDescriptors->stopPollingFD(epollFD, FD); }
-	catch(int &ret) {
+	try{
+		fileDescriptors->stopPollingFD(epollFD, FD);
+	}
+	catch(std::runtime_error &ret) {
 		BACKTRACE_PRINT();
 		writeError("epoll_ctl");
 	}
@@ -102,8 +110,10 @@ void SocketReader::closeFDHandler(int FD){
 
 void SocketReader::newConnectionHandler(int FD){
 	LOG_INFO("New connection on FD "<<FD);
-	try{ fileDescriptors->startPollingForRead(epollFD, FD); }
-	catch(int &ret) {
+	try{
+		fileDescriptors->startPollingForRead(epollFD, FD);
+	}
+	catch(std::runtime_error &ret) {
 		BACKTRACE_PRINT();
 		LOG_ERROR("threw while calling fileDescriptors->startPollingForRead("<<epollFD<<", "<<FD<<")");
 		closeFD(FD);
@@ -119,24 +129,30 @@ void SocketReader::readChunk(){
 			bool done = readChunkFromFD(FD);
 			if(done) removeList.push_back(FD);
 		}
-		catch(int &ret){
+		catch(std::runtime_error &ret){
 			BACKTRACE_PRINT();
 			LOG_ERROR("threw while calling readChunkFromFD("<<FD<<")");
 			closeList.push_back(FD); // drop connection on failure
 		}
-		if(waitingFDs.empty()) return;
+		if(waitingFDs.empty()){
+			return;
+		}
 	}
 	for(auto FD : closeList){
 		LOG_ERROR("FD "<<FD<<"added to closeList and closed");
 		closeFD(FD);
 	}
-	for(auto FD : removeList){ removeFromWaitingFDs(FD); }
+	for(auto FD : removeList){
+		removeFromWaitingFDs(FD);
+	}
 }
 
 bool SocketReader::readChunkFromFD(int FD){
 	{ // lock
 	std::lock_guard<std::recursive_mutex> lck(waitingMut);
-	if(waitingFDs.count(FD) == 0) throwInt("invalid FD "<<FD);
+	if(waitingFDs.count(FD) == 0){
+		throw std::runtime_error(LOG_EXCEPTION("invalid FD "+std::to_string(FD)));
+	}
 	} // unlock
 
 	ByteArray buffer(maxBufferSize);
@@ -147,7 +163,7 @@ bool SocketReader::readChunkFromFD(int FD){
 	}
 
 	else if (count == 0){ // End of file. Remote closed connection.
-		throwInt("client closed connection disconnected");
+		throw std::runtime_error(LOG_EXCEPTION("client closed connection disconnected"));
 	}
 	else {
 		buffer.resize(count);

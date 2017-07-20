@@ -21,11 +21,8 @@ ByteArray SetOfFileDescriptors::getIP(int FD)
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		return openFDs.at(FD).getIP();
 	}
-	else {
-		throwInt(FD<<" is an invalid file descriptor");
-		ByteArray dummy;
-		return dummy;
-	}
+
+	throw std::runtime_error(LOG_EXCEPTION(std::string()+std::to_string(FD)+" is an invalid file descriptor"));
 }
 
 ByteArray SetOfFileDescriptors::getPort(int FD)
@@ -34,11 +31,7 @@ ByteArray SetOfFileDescriptors::getPort(int FD)
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		return openFDs.at(FD).getPort();
 	}
-	else {
-		throwInt(FD<<" is an invalid file descriptor");
-		ByteArray dummy;
-		return dummy;
-	}
+	throw std::runtime_error(LOG_EXCEPTION(std::string()+std::to_string(FD)+" is an invalid file descriptor"));
 }
 
 ByteArray SetOfFileDescriptors::getCSRFkey(int FD)
@@ -47,11 +40,7 @@ ByteArray SetOfFileDescriptors::getCSRFkey(int FD)
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		return openFDs.at(FD).getCSRFkey();
 	}
-	else {
-		throwInt(FD<<" is an invalid file descriptor");
-		ByteArray dummy;
-		return dummy;
-	}
+	throw std::runtime_error(LOG_EXCEPTION(std::string()+std::to_string(FD)+" is an invalid file descriptor"));
 }
 
 void SetOfFileDescriptors::setIP(int FD, ByteArray s)
@@ -60,7 +49,9 @@ void SetOfFileDescriptors::setIP(int FD, ByteArray s)
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		openFDs.at(FD).setIP(s);
 	}
-	else throwInt(FD<<" is an invalid file descriptor");
+	else {
+		throw std::runtime_error(LOG_EXCEPTION(std::string()+std::to_string(FD)+" is an invalid file descriptor"));
+	}
 }
 
 void SetOfFileDescriptors::setPort(int FD, ByteArray s)
@@ -69,7 +60,9 @@ void SetOfFileDescriptors::setPort(int FD, ByteArray s)
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		openFDs.at(FD).setPort(s);
 	}
-	else throwInt(FD<<" is an invalid file descriptor");
+	else {
+		throw std::runtime_error(LOG_EXCEPTION(std::string()+std::to_string(FD)+" is an invalid file descriptor"));
+	}
 }
 
 void SetOfFileDescriptors::setCSRFkey(int FD, ByteArray s)
@@ -78,7 +71,9 @@ void SetOfFileDescriptors::setCSRFkey(int FD, ByteArray s)
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		openFDs.at(FD).setCSRFkey(s);
 	}
-	else throwInt(FD<<" is an invalid file descriptor");
+	else {
+		throw std::runtime_error(LOG_EXCEPTION(std::string()+std::to_string(FD)+" is an invalid file descriptor"));
+	}
 }
 
 void SetOfFileDescriptors::addCloseFDCallback(std::function<void(int)> callback)
@@ -158,7 +153,7 @@ bool SetOfFileDescriptors::isFDOpen(int FD)
 	if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.
 		return true;
 	}
-	else return false;
+	return false;
 }
 
 void SetOfFileDescriptors::stopPollingFD(int epoll, int FD)
@@ -167,7 +162,9 @@ void SetOfFileDescriptors::stopPollingFD(int epoll, int FD)
 	if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.
 		openFDs.at(FD).stopPollingFD(epoll);
 	}
-	else throwInt(FD<<" is an invalid file descriptor");
+	else {
+		throw std::runtime_error(LOG_EXCEPTION(std::string()+std::to_string(FD)+" is an invalid file descriptor"));
+	}
 }
 
 void SetOfFileDescriptors::startPollingForWrite(int epoll, int FD)
@@ -176,7 +173,9 @@ void SetOfFileDescriptors::startPollingForWrite(int epoll, int FD)
 	if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.
 		openFDs.at(FD).startPollingForWrite(epoll);
 	}
-	else throwInt(FD<<" is an invalid file descriptor");
+	else {
+		throw std::runtime_error(LOG_EXCEPTION(std::string()+std::to_string(FD)+" is an invalid file descriptor"));
+	}
 }
 
 void SetOfFileDescriptors::startPollingForRead(int epoll, int FD)
@@ -185,7 +184,9 @@ void SetOfFileDescriptors::startPollingForRead(int epoll, int FD)
 	if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.
 		openFDs.at(FD).startPollingForRead(epoll);
 	}
-	else throwInt(FD<<" is an invalid file descriptor");
+	else {
+		throw std::runtime_error(LOG_EXCEPTION(std::string()+std::to_string(FD)+" is an invalid file descriptor"));
+	}
 }
 
 void SetOfFileDescriptors::makeNonblocking(int FD)
@@ -194,7 +195,9 @@ void SetOfFileDescriptors::makeNonblocking(int FD)
 	if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.
 		openFDs.at(FD).makeNonblocking();
 	}
-	else throwInt(FD<<" is an invalid file descriptor");
+	else {
+		throw std::runtime_error(LOG_EXCEPTION(std::string()+std::to_string(FD)+" is an invalid file descriptor"));
+	}
 }
 
 std::unique_lock<std::recursive_mutex> SetOfFileDescriptors::getAndLockFD(FileDescriptor* &FDPointer, int FD)
@@ -206,6 +209,8 @@ std::unique_lock<std::recursive_mutex> SetOfFileDescriptors::getAndLockFD(FileDe
 		FDPointer = &(openFDs.at(FD));
 		return newLock;
 	}
-	else throwInt(FD<<" is an invalid file descriptor");
+	else {
+		throw std::runtime_error(LOG_EXCEPTION(std::string()+std::to_string(FD)+" is an invalid file descriptor"));
+	}
 	return std::unique_lock<std::recursive_mutex>();
 }

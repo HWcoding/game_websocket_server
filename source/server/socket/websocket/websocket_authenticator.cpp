@@ -45,7 +45,7 @@ void WebsocketAuthenticator::closeFD(int FD)
 	if(handshakeWriteBuffer.count(FD) != 0)handshakeWriteBuffer.erase(FD);
 }
 
-void WebsocketAuthenticator::checkForValidHeaders(int FD, HandshakeHeaders &headers) const
+void WebsocketAuthenticator::checkForValidHeaders(int FD, const HandshakeHeadersInterface &headers) const
 {
 	ConnectionHeaders connectionHeaders;
 
@@ -55,23 +55,24 @@ void WebsocketAuthenticator::checkForValidHeaders(int FD, HandshakeHeaders &head
 	connectionHeaders.Cookie = headers.getCookie().toString();
 
 	if( ! ClientValidator->areClientHeadersValid(connectionHeaders) ) {
-		throwInt("Client headers were not valid");
+		throw std::runtime_error(LOG_EXCEPTION("Client headers were not valid"));
 	}
 }
+
 
 void WebsocketAuthenticator::processHandshake(const ByteArray &in, int FD)
 {
 	if(in.size()+handshakeReadBuffer[FD].size() > maxHandshakeSize){
-		throwInt("Client sent too much data.  Size: "<<(in.size()+handshakeReadBuffer[FD].size()) );
+		throw std::runtime_error(LOG_EXCEPTION("Client sent too much data.  Size: "+std::to_string(in.size()+handshakeReadBuffer[FD].size()) ));
 	}
 	handshakeReadBuffer[FD].append(in);
 	if(in.size()>=20){
 		if(!isHandshake(in)){
-			throwInt("Message is not a handshake");
+			throw std::runtime_error(LOG_EXCEPTION("Message is not a handshake"));
 		}
 	}
 	if(!isCompleteHandshake(handshakeReadBuffer[FD])) return;
-	HandshakeHeaders headers = getHandshakeHeaders(handshakeReadBuffer[FD]);
+	const HandshakeHeadersInterface &headers = getHandshakeHeaders(handshakeReadBuffer[FD]);
 
 	checkForValidHeaders(FD, headers);
 
@@ -80,7 +81,8 @@ void WebsocketAuthenticator::processHandshake(const ByteArray &in, int FD)
 	handshakeReadBuffer.erase(FD);
 }
 
-bool WebsocketAuthenticator::isHandshake(const ByteArray &in) const
+
+bool WebsocketAuthenticator::isHandshake(const ByteArray &in)
 {
 	std::string requestType("GET ");
 	bool ret = memcmp(&in[0], &requestType[0], 4) == 0;
@@ -91,29 +93,33 @@ bool WebsocketAuthenticator::isHandshake(const ByteArray &in) const
 	return ret;
 }
 
-bool WebsocketAuthenticator::isCompleteHandshake(const ByteArray &in) const
+
+bool WebsocketAuthenticator::isCompleteHandshake(const ByteArray &in)
 {
 	if(in.size()<4)return false;
-	size_t end = in.size()-1;
-	uint8_t carriageReturn = static_cast<uint8_t>('\r');
-	uint8_t newLine = static_cast<uint8_t>('\n');
+	const size_t end = in.size()-1;
+	const uint8_t carriageReturn = static_cast<uint8_t>('\r');
+	const uint8_t newLine = static_cast<uint8_t>('\n');
 
 	if(in[end-3] != carriageReturn || in[end-2] != newLine || in[end-1] != carriageReturn || in[end] != newLine) return false; //check for "\r\n\r\n" ending
 	return true;
 }
 
-HandshakeHeaders WebsocketAuthenticator::getHandshakeHeaders(const ByteArray &in) const
+
+HandshakeHeaders WebsocketAuthenticator::getHandshakeHeaders(const ByteArray &in)
 {
+	//TODO: remove concreate HandshakeHeaders so the dependancy can be removed
 	HandshakeHeaders headers;
 	if(isHandshakeInvalid(in))
-		throwInt("Headers not valid");
+		throw std::runtime_error(LOG_EXCEPTION("Headers not valid"));
 	headers.fillHeaders(in);
 	if(headers.areHeadersFilled() == false)
-		throwInt("header read failed");
+		throw std::runtime_error(LOG_EXCEPTION("header read failed"));
 	return headers;
 }
 
-ByteArray WebsocketAuthenticator::createHandshake(const HandshakeHeaders &headers) const
+
+ByteArray WebsocketAuthenticator::createHandshake(const HandshakeHeadersInterface &headers)
 {
 	ByteArray output;
 	output.reserve(195);
@@ -127,7 +133,8 @@ ByteArray WebsocketAuthenticator::createHandshake(const HandshakeHeaders &header
 	return output;
 }
 
-ByteArray WebsocketAuthenticator::createSecWebSocketAccept(const ByteArray &SecWebSocketKey) const
+
+ByteArray WebsocketAuthenticator::createSecWebSocketAccept(const ByteArray &SecWebSocketKey)
 {
 	ByteArray magicKey = SecWebSocketKey;
 	magicKey.appendWithNoSize( std::string("258EAFA5-E914-47DA-95CA-C5AB0DC85B11", 36) ); //append magic number spec requires
@@ -140,7 +147,8 @@ ByteArray WebsocketAuthenticator::createSecWebSocketAccept(const ByteArray &SecW
 	return SocketAccept;
 }
 
-bool WebsocketAuthenticator::isHandshakeInvalid(const ByteArray &handShake) const
+
+bool WebsocketAuthenticator::isHandshakeInvalid(const ByteArray &handShake)
 {
 	if(handShake.size() > 2048){
 		writeError("handshake header too large");
@@ -151,27 +159,26 @@ bool WebsocketAuthenticator::isHandshakeInvalid(const ByteArray &handShake) cons
 	else return false;
 }
 
+
 //converts an 8bit int less than 64 into a base64 char
-uint8_t WebsocketAuthenticator::convertTo64(uint8_t in) const
+uint8_t WebsocketAuthenticator::convertTo64(uint8_t in)
 {
 	if(in < 26)  		return static_cast<uint8_t>(in+65);
 	else if(in < 52)  	return static_cast<uint8_t>(in+71);
 	else if(in < 62)  	return static_cast<uint8_t>(in-4);
 	else if(in == 62)	return 43;
 	else if(in == 63)	return 47;
-	LOG_ERROR("input out of range: "<<static_cast<int>(in)<<" should be less than 64" );
-	throw -1;
-	//will not reach here but there is a compiler error without next line
-	return static_cast<uint8_t>('\\');	//return an invalid base64 char on error
+
+	throw std::runtime_error(LOG_EXCEPTION("input out of range: "+std::to_string(static_cast<int>(in))+" should be less than 64"));
 }
 
+
 //converts an array of data into a base64 string for calculating the Sec-WebSocket-Accept header field (won't work for general conversion)
-void WebsocketAuthenticator::toBase64(const ByteArray &input, ByteArray &out) const
+void WebsocketAuthenticator::toBase64(const ByteArray &input, ByteArray &out)
 {
 	out = ByteArray();
 	if(input.size() != 20) { //the incoming SHA-1 hash should be exactly 20 long.  This simplified function breaks for other lengths
-		LOG_ERROR("wrong input length: "<<input.size()<<" should be 20" );
-		return;
+		throw std::runtime_error(LOG_EXCEPTION("wrong input length: "+std::to_string(input.size())+" should be 20" ));
 	}
 	out.resize(28);
 	uint8_t temp;
@@ -187,7 +194,7 @@ void WebsocketAuthenticator::toBase64(const ByteArray &input, ByteArray &out) co
 		temp = input[i] & 0x03;								//zero top 6 bits of first byte by & with 0000 0011
 		temp = static_cast <uint8_t>(temp<<4);				//move the bottom 2 bits of the first byte to the 5th and 6th bits of temp
 		temp = static_cast <uint8_t>((input[i+1]>>4)+temp);	//add the top 4 bits of the second byte to the bottom 4 bits of temp
-		out[j+1] = convertTo64(temp);   					//convert to base64 and store temp in the second char
+		out[j+1] = convertTo64(temp);						//convert to base64 and store temp in the second char
 
 		//out[2] will be the bottom 4 bits of in[1] followed by the top 2 bits of in[2]
 		temp = input[i+1] & 0x0F;							//zero top 4 bits of second byte by & with 0000 1111
@@ -217,6 +224,7 @@ void WebsocketAuthenticator::toBase64(const ByteArray &input, ByteArray &out) co
 	out[26] = convertTo64(temp);				//convert to base64 and store temp in 27th char
 	out[27] = '=';								//cap with '=' in 28th char to signify the last group only has 2 bytes instead of 3
 }
+
 
 bool WebsocketAuthenticator::sendHandshake(int FD)
 {

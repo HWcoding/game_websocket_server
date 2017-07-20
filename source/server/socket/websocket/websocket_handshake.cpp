@@ -222,7 +222,9 @@ bool isHeaderValid(const ByteArray &vec, const std::string &expectedValue){
 }
 
 ByteArray getHeader(const ByteArray &header, size_t headerBegin){
-	if(header.size()< headerBegin+1) throwInt("header size was less than start index");
+	if(header.size()< headerBegin+1){
+		throw std::runtime_error(LOG_EXCEPTION("header size was less than start index"));
+	}
 	ByteArray ret;
 	size_t retSize = header.size()- headerBegin;
 	ret.resize(retSize);

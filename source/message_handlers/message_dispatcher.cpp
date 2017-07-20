@@ -22,7 +22,8 @@ void MessageDispatcher::dispatchMessages(const std::vector<SocketMessage> &messa
 			d->listeners[MessageType::null]->callback(message);
 	}
 }
-#include <iostream>
+
+//#include <iostream>
 void MessageDispatcher::dispatchMessage(const SocketMessage &message)
 {
 

@@ -4,6 +4,6 @@
 
 void AbilityHandler::callback( const SocketMessage &message){
 	std::cout<<"used ability"<<std::endl;
-	while(false){ (void)message; }
+	(void)message;
 	return;
 }

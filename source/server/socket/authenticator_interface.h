@@ -4,6 +4,7 @@
 
 class ByteArray;
 class ClientValidatorInterface;
+class HandshakeHeadersInterface;
 
 class AuthenticatorInterface
 {

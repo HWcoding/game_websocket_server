@@ -29,7 +29,8 @@ bool WebsocketMessageSender::writeData(int FD)
 	size_t writeAmount = writeBuffers->messageSize(FD);
 
 	if(writeAmount>MaxWriteBufferSize){
-		throwInt("writeAmount > MaxWriteBufferSize on descriptor "<< static_cast<unsigned int>(FD)<< ". MaxWriteBufferSize: "<<MaxWriteBufferSize);
+		throw std::runtime_error(LOG_EXCEPTION("writeAmount > MaxWriteBufferSize on descriptor "+ \
+			std::to_string(static_cast<unsigned int>(FD))+". MaxWriteBufferSize: "+std::to_string(MaxWriteBufferSize)));
 	}
 	return writeBuffers->writeData(FD);
 }

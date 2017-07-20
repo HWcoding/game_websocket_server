@@ -4,6 +4,6 @@
 
 void LogoutHandler::callback( const SocketMessage &message){
 	std::cout<<"used logout"<<std::endl;
-	while(false){ (void)message; }
+	(void)message;
 	return;
 }

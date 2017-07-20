@@ -8,7 +8,7 @@
 
 class SystemInterface;
 class SetOfFileDescriptors;
-class WebsocketAuthenticator;
+class AuthenticatorInterface;
 class ByteArray;
 class ClientValidatorInterface;
 struct epoll_event;
@@ -23,6 +23,7 @@ public:
 
 private:
 	void setupEpoll();
+	void processEvents(std::vector<epoll_event> &events);
 	bool handleEpollErrors(epoll_event &event);
 	void handleEpollRead(epoll_event &event);
 	void handleEpollWrite(epoll_event &event);
@@ -44,7 +45,7 @@ private:
 	SocketServerConnector(const SocketServerConnector&) = delete;
 
 	SystemInterface *systemWrap;
-	std::unique_ptr<WebsocketAuthenticator> Authenticator;
+	std::unique_ptr<AuthenticatorInterface> Authenticator;
 	std::atomic<bool> *running;
 	size_t maxMessageSize;
 	SetOfFileDescriptors *fileDescriptors;

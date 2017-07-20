@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <set>
+#include "source/logging/exception_handler.h"
 
 #include <assert.h>
 
@@ -122,5 +123,5 @@ std::vector<size_t> Astar(size_t start, size_t goal, PathSearchNodeGraph &nodeGr
 		}
 	}
 	//no path from start to goal
-	throw -1;
+	throw std::runtime_error("");
 }

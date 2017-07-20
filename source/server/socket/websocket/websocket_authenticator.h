@@ -12,6 +12,7 @@
 class SystemInterface;
 class SetOfFileDescriptors;
 class HandshakeHeaders;
+class HandshakeHeadersInterface;
 
 
 class WebsocketAuthenticator : public AuthenticatorInterface
@@ -29,15 +30,15 @@ public:
 	}
 
 private:
-	void checkForValidHeaders( int FD, HandshakeHeaders &headers) const;
-	bool isHandshake(const ByteArray &in) const;
-	bool isCompleteHandshake(const ByteArray &in) const;
-	HandshakeHeaders getHandshakeHeaders(const ByteArray &handShake) const;
-	ByteArray createHandshake(const HandshakeHeaders &headers) const;
-	ByteArray createSecWebSocketAccept(const ByteArray &SecWebSocketKey) const;
-	bool isHandshakeInvalid(const ByteArray &handShake) const;
-	void toBase64(const ByteArray &in, ByteArray &out) const;
-	uint8_t convertTo64(uint8_t in) const;
+	void checkForValidHeaders( int FD, const HandshakeHeadersInterface &headers) const;
+	static bool isHandshake(const ByteArray &in);
+	static bool isCompleteHandshake(const ByteArray &in);
+	static HandshakeHeaders getHandshakeHeaders(const ByteArray &in);
+	static ByteArray createHandshake(const HandshakeHeadersInterface &headers);
+	static ByteArray createSecWebSocketAccept(const ByteArray &SecWebSocketKey);
+	static bool isHandshakeInvalid(const ByteArray &handShake);
+	static void toBase64(const ByteArray &in, ByteArray &out);
+	static uint8_t convertTo64(uint8_t in);
 
 	WebsocketAuthenticator& operator=(const WebsocketAuthenticator&) = delete;
 	WebsocketAuthenticator(const WebsocketAuthenticator&) = delete;

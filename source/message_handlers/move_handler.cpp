@@ -24,7 +24,7 @@ struct PositionData
 		//rot.z = message.getNextDouble();
 
 		if(isValid() == false){
-			throwInt("Position Data was invalid");
+			throw std::runtime_error(LOG_EXCEPTION("Position Data was invalid"));
 		}
 	}
 
@@ -47,6 +47,7 @@ struct PositionData
 
 	bool isValid()
 	{
+		//TODO: check if position is in a valid state
 		return true;
 	}
 };

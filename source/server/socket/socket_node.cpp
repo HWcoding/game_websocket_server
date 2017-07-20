@@ -87,20 +87,20 @@ void Socket::startReader(){ //blocking! should only be called in a new thread
 	try{
 		reader->startPoll(); //loops until *shouldContinueRunning == false or error
 	}
+	catch(std::runtime_error &e) {
+		BACKTRACE_PRINT();
+		LOG_ERROR("runtime exception thrown: " << e.what() );
+	}
 	catch(std::exception const &e) {
 		BACKTRACE_PRINT();
 		LOG_ERROR("exception thrown: " << e.what() );
-	}
-	catch(int &e) {
-		BACKTRACE_PRINT();
-		LOG_ERROR("int exception thrown: " << e);
 	}
 	catch(...){
 		BACKTRACE_PRINT();
 		LOG_ERROR("unknown exception thrown. Shutting down.");
 	}
 	LOG_INFO("ending");
-	shouldContinueRunning = false; //update the status of the server
+	shouldContinueRunning.store(false); //update the status of the server
 	return;
 }
 
@@ -112,20 +112,20 @@ void Socket::startWriter(){ //blocking! should only be called in a new thread
 	try{
 		writer->startPoll(); //loops until *shouldContinueRunning == false
 	}
+	catch(std::runtime_error &e) {
+		BACKTRACE_PRINT();
+		LOG_ERROR("runtime exception thrown: " << e.what());
+	}
 	catch(std::exception const &e) {
 		BACKTRACE_PRINT();
 		LOG_ERROR("exception thrown: " << e.what() );
-	}
-	catch(int &e) {
-		BACKTRACE_PRINT();
-		LOG_ERROR("int exception thrown: " << e);
 	}
 	catch(...){
 		BACKTRACE_PRINT();
 		LOG_ERROR("unknown exception thrown. Shutting down.");
 	}
 	LOG_INFO("ending");
-	shouldContinueRunning = false; //update the status of the server
+	shouldContinueRunning.store(false); //update the status of the server
 	return;
 }
 
@@ -136,19 +136,19 @@ void Socket::startConnector(){ //blocking! should only be called in a new thread
 	try{
 		connector->startPoll(); //loops until *shouldContinueRunning == false
 	}
+	catch(std::runtime_error &e) {
+		BACKTRACE_PRINT();
+		LOG_ERROR("runtime exception thrown: " << e.what());
+	}
 	catch(std::exception const &e) {
 		BACKTRACE_PRINT();
 		LOG_ERROR("exception thrown: " << e.what() );
-	}
-	catch(int &e) {
-		BACKTRACE_PRINT();
-		LOG_ERROR("int exception thrown: " << e);
 	}
 	catch(...){
 		BACKTRACE_PRINT();
 		LOG_ERROR("unknown exception thrown. Shutting down.");
 	}
 	LOG_INFO("ending");
-	shouldContinueRunning = false; //update the status of the server
+	shouldContinueRunning.store(false); //update the status of the server
 	return;
 }

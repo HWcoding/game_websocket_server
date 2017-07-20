@@ -4,6 +4,6 @@
 
 void LoginHandler::callback(  const SocketMessage &message){
 	std::cout<<"used login"<<std::endl;
-	while(false){ (void)message; }
+	(void)message;
 	return;
 }

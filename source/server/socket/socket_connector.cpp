@@ -17,13 +17,19 @@
 class getaddrinfoWrap{
 public:
 	getaddrinfoWrap(SystemInterface* _systemWrap, std::string address, std::string port, addrinfo * hints, addrinfo * &res) : systemWrap(_systemWrap), result(res), success(false){
-		if(address.empty()) systemWrap->getAddrInfo(nullptr, port.c_str(), hints, &result);
-		else systemWrap->getAddrInfo(address.c_str(), port.c_str(), hints, &result);
+		if(address.empty()){
+			systemWrap->getAddrInfo(nullptr, port.c_str(), hints, &result);
+		}
+		else {
+			systemWrap->getAddrInfo(address.c_str(), port.c_str(), hints, &result);
+		}
 		success = true;
 		res = result;
 	}
 	~getaddrinfoWrap(){
-		if(success)systemWrap->freeAddrInfo (result);
+		if(success){
+			systemWrap->freeAddrInfo (result);
+		}
 	}
 private:
 	SystemInterface *systemWrap;
@@ -35,21 +41,22 @@ private:
 
 
 
-
-
-SocketServerConnector::SocketServerConnector(const std::string &_port, SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, std::atomic<bool>* run) :
-																														systemWrap(_systemWrap),
-																														Authenticator( new WebsocketAuthenticator( _systemWrap, FDs) ),
-																														running(run),
-																														maxMessageSize(99999),
-																														fileDescriptors(FDs),
-																														port(_port),
-																														MAXEVENTS(9999),
-																														epollFD(-1),
-																														listeningFD(-1)
-																														{
+SocketServerConnector::SocketServerConnector(const std::string &_port,
+                                             SystemInterface *_systemWrap,
+                                             SetOfFileDescriptors *FDs,
+                                             std::atomic<bool>* run) : systemWrap(_systemWrap),
+                                                                       Authenticator(new WebsocketAuthenticator(_systemWrap, FDs)),
+                                                                       running(run),
+                                                                       maxMessageSize(99999),
+                                                                       fileDescriptors(FDs),
+                                                                       port(_port),
+                                                                       MAXEVENTS(9999),
+                                                                       epollFD(-1),
+                                                                       listeningFD(-1)
+{
 	signal(SIGPIPE, SIG_IGN); //ignore error when writing to closed sockets to prevent crash on client disconnect
 }
+
 
 SocketServerConnector::~SocketServerConnector(){
 	if(epollFD != -1){
@@ -62,27 +69,20 @@ SocketServerConnector::~SocketServerConnector(){
 	}
 }
 
-void SocketServerConnector::startPoll(){
-	LOG_INFO("poll started");
-	setupEpoll();
 
-	std::vector<epoll_event> events;
-	events.resize( static_cast<size_t>(MAXEVENTS) );
-
-	while(running->load()){	//The event loop
-		size_t numberOfEvents = systemWrap->epollWait(epollFD, &events[0], MAXEVENTS, 2000);
-		for (size_t i = 0; i < numberOfEvents; ++i){
-			if(handleEpollErrors(events[i])) continue; //an error occured; move to next event
-			handleEpollRead(events[i]);
-			handleEpollWrite(events[i]);
-		}
+void SocketServerConnector::closeFD(int FD){
+	Authenticator->closeFD(FD);
+	int ret= fileDescriptors->removeFD(FD);
+	if(ret == -1){
+		LOG_ERROR("File descriptor "<<FD<<" failed to close properly. ");
 	}
 }
 
-void SocketServerConnector::setClientValidator(ClientValidatorInterface * validator)
-{
-	Authenticator->setClientValidator(validator);
+
+int SocketServerConnector::addFD(int FD){
+	return fileDescriptors->addFD(FD);
 }
+
 
 bool SocketServerConnector::handleEpollErrors(epoll_event &event){
 	if ( (event.events & EPOLLERR) || (event.events & EPOLLHUP) ){// An error occured
@@ -96,24 +96,29 @@ bool SocketServerConnector::handleEpollErrors(epoll_event &event){
 
 		if(event.data.fd == listeningFD){ //error is on listening FD
 			listeningFD = -1;
-			throwInt(std::strerror(errno)<<" in epoll"); //server can't continue
+			throw std::runtime_error(LOG_EXCEPTION(std::string()+std::strerror(errno)+" in epoll")); //server can't continue
 		}
 		return true; //there was an error
 	}
 	return false;
 }
 
+
 void SocketServerConnector::handleEpollRead(epoll_event &event){
 	if((event.events & EPOLLIN)) {			//the socket is ready for reading
 		if(listeningFD == event.data.fd) {	//There is a notification on the listening socket. one or more new connections.
-			try{ newConnection(); }			//connect to new client
-			catch(int &ret) {
+			try{
+				newConnection(); 			//connect to new client
+			}
+			catch(std::runtime_error &ret) {
 				BACKTRACE_PRINT();
 			}
 		}
 		else{ //there is a handshake from client
-			try{ readHandshake(event.data.fd); }
-			catch(int &ret) {
+			try{
+				readHandshake(event.data.fd);
+			}
+			catch(std::runtime_error &ret) {
 				BACKTRACE_PRINT();
 				LOG_INFO("threw while calling readHandshake("<<event.data.fd<<")");
 				closeFD(event.data.fd);
@@ -122,15 +127,49 @@ void SocketServerConnector::handleEpollRead(epoll_event &event){
 	}
 }
 
+
 void SocketServerConnector::handleEpollWrite(epoll_event &event){
 	if(event.events & EPOLLOUT){			//the socket is ready for Writing; client is waiting on handshake
-		try{ sendHandshake(event.data.fd); }
-		catch(int &ret){
+		try{
+			sendHandshake(event.data.fd);
+		}
+		catch(std::runtime_error &ret){
 			BACKTRACE_PRINT();
 			LOG_INFO("threw while calling sendHandshake("<<event.data.fd<<")");
 			closeFD(event.data.fd);
 		}
 	}
+}
+
+
+void SocketServerConnector::processEvents(std::vector<epoll_event> &events){
+	size_t numberOfEvents = systemWrap->epollWait(epollFD, &events[0], MAXEVENTS, 2000);
+	for (size_t i = 0; i < numberOfEvents; ++i){
+		if(handleEpollErrors(events[i])){
+			continue; //an error occured; move to next event
+		}
+		handleEpollRead(events[i]);
+		handleEpollWrite(events[i]);
+	}
+}
+
+
+void SocketServerConnector::startPoll(){
+	LOG_INFO("poll started");
+	setupEpoll();
+
+	std::vector<epoll_event> events;
+	events.resize( static_cast<size_t>(MAXEVENTS) );
+
+	while(running->load()){	//The event loop
+		processEvents(events);
+	}
+}
+
+
+void SocketServerConnector::setClientValidator(ClientValidatorInterface * validator)
+{
+	Authenticator->setClientValidator(validator);
 }
 
 
@@ -145,21 +184,26 @@ bool SocketServerConnector::createAndBindListeningFD(struct addrinfo *addressInf
 	struct addrinfo *rp = nullptr;
 
 	for(rp = addressInfo; rp != nullptr; rp = rp->ai_next){
-		try{ listeningFD = systemWrap->createSocket(rp->ai_family, rp->ai_socktype, rp->ai_protocol); }
-		catch(int & ret){ continue; }
+		try{
+			listeningFD = systemWrap->createSocket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+		}
+		catch(std::runtime_error & ret){
+			continue;
+		}
 
 		try{
 			systemWrap->bindSocket(listeningFD, rp->ai_addr, rp->ai_addrlen);
 			addFD(listeningFD);
 			return true;
 		}
-		catch(int & ret){
+		catch(std::runtime_error & ret){
 			systemWrap->closeFD(listeningFD);
 			listeningFD = -1;
 		}
 	}
 	return false;
 }
+
 
 void SocketServerConnector::createAddressInfoHints(struct addrinfo &hints){
 	memset (&hints, 0, sizeof (struct addrinfo));
@@ -181,10 +225,12 @@ int SocketServerConnector::getListeningPort(){
 	bool done = false;
 	while(!done && *running ){//try to connect to port until server shutsdown or we succeed
 		done = createAndBindListeningFD(result);
-		if(!done && *running )std::this_thread::sleep_for( std::chrono::milliseconds(100) ); //port was busy, take a break before retrying
+		if(!done && *running ){
+			std::this_thread::sleep_for( std::chrono::milliseconds(100) ); //port was busy, take a break before retrying
+		}
 	}
 	if (!done){
-		throwInt("Could not bind port: "<<port);
+		throw std::runtime_error(LOG_EXCEPTION(std::string()+"Could not bind port: "+port));
 	}
 	else{
 		LOG_INFO("Bound port: "<<port<<" on FD "<<listeningFD);
@@ -192,8 +238,11 @@ int SocketServerConnector::getListeningPort(){
 	return listeningFD;
 }
 
+
 void SocketServerConnector::openListeningPort(){
-	if(listeningFD == -1) throwInt(std::strerror(errno)<<" listeningFD equals -1");
+	if(listeningFD == -1){
+		throw std::runtime_error(LOG_EXCEPTION(" listeningFD equals -1"));
+	}
 	fileDescriptors->makeNonblocking(listeningFD);
 	systemWrap->listenSocket(listeningFD, SOMAXCONN);
 	fileDescriptors->startPollingForRead(epollFD, listeningFD);
@@ -219,6 +268,7 @@ void SocketServerConnector::getPortAndIP(int FD, struct sockaddr &in_addr, unsig
 	memcpy(&PortBuff[0], sbuf, sbufLength);
 }
 
+
 void SocketServerConnector::newConnection(){
 	while (*running){
 		struct sockaddr in_addr;
@@ -226,7 +276,9 @@ void SocketServerConnector::newConnection(){
 		bool done;
 
 		int newConnection = fileDescriptors->addFD(systemWrap->acceptSocket(listeningFD, &in_addr, &in_len, done));
-		if (done){ break; } //We have processed all connections.
+		if (done){
+			break; //We have processed all connections.
+		}
 
 		ByteArray IPBuff;
 		ByteArray PortBuff;
@@ -234,13 +286,16 @@ void SocketServerConnector::newConnection(){
 		try{
 			getPortAndIP(newConnection, in_addr, in_len, PortBuff, IPBuff);
 			if(Authenticator->isNotValidConnection(IPBuff,PortBuff)){
-				throwInt(" descriptor " << newConnection <<" (IP="<< std::string(reinterpret_cast<char *>(&IPBuff[0]),IPBuff.size() ) <<", port="<< std::string(reinterpret_cast<char *>(&PortBuff[0]),PortBuff.size() ) <<")"<< " failed validation");
+				throw std::runtime_error(LOG_EXCEPTION(" descriptor "+std::to_string(newConnection)+ \
+					" (IP="+std::string(reinterpret_cast<char *>(&IPBuff[0]),IPBuff.size() ) + \
+					", port="+ std::string(reinterpret_cast<char *>(&PortBuff[0]),PortBuff.size() ) + \
+					")"+ " failed validation"));
 			}
+
 			fileDescriptors->setIP(newConnection, IPBuff);
 			fileDescriptors->setPort(newConnection, PortBuff);
 		}
-		catch(int &ret) {
-			LOG_INFO("threw while trying to get IP and Port info");
+		catch(std::runtime_error &ret) {
 			closeFD(newConnection);
 			throw;
 		}
@@ -251,35 +306,19 @@ void SocketServerConnector::newConnection(){
 }
 
 
-
-
-
-
 void SocketServerConnector::waitForHandshake(int FD){
 	if(FD>0){ //a negative number is an error message passed through this function.
-		try{ fileDescriptors->startPollingForRead(epollFD, FD); }
-		catch (int &ret){
+		try{
+			fileDescriptors->startPollingForRead(epollFD, FD);
+		}
+		catch (std::runtime_error &ret){
 			closeFD(FD);
-			throwInt("SocketServerConnector::waitForHandshake("<<FD<<") threw when calling fileDescriptors->startPollingForRead("<<epollFD<<", "<<FD<<")");
+			throw;
 		}
 	}
-	else throwInt("bad FD "<<FD);
-}
-
-
-
-
-void SocketServerConnector::closeFD(int FD){
-	Authenticator->closeFD(FD);
-	int ret= fileDescriptors->removeFD(FD);
-	if(ret == -1)LOG_ERROR("File descriptor "<<FD<<" failed to close properly. ");
-}
-
-
-
-
-int SocketServerConnector::addFD(int FD){
-	return fileDescriptors->addFD(FD);
+	else {
+		throw std::runtime_error(LOG_EXCEPTION(std::string()+std::to_string(FD)+" is an invalid file descriptor"));
+	}
 }
 
 
@@ -291,17 +330,14 @@ void SocketServerConnector::readHandshake(int FD){
 		bool done;
 		size_t count = systemWrap->readFD(FD, &buf[0], buffSize-1, done);
 		if(done){
-			try{ processHandshake(buffer, FD); }
-			catch(int &ret) {
-				throwInt(std::strerror(errno)<<" in processSockMessage");
-			}
+			processHandshake(buffer, FD);
 			break;
 		}
 		else if (count == 0){	//End of file. Remote closed connection.
-			throwInt( "end of file on "<< FD );
+			throw std::runtime_error(LOG_EXCEPTION("end of file on "+std::to_string(FD)));
 		}
 		else if(( buffer.size()+ count )>maxMessageSize){
-			throwInt( "handshake too large.  Size: "<<buffer.size() );
+			throw std::runtime_error(LOG_EXCEPTION("handshake too large.  Size: "+std::to_string(buffer.size())));
 		}
 		size_t end = buffer.size();
 		buffer.resize(end+count);

@@ -13,8 +13,13 @@ size_t SystemWrapper::epollWait(int epollFD,  struct epoll_event *events, int MA
 	int n = 0;
 	n = epoll_wait(epollFD,  events, MAXEVENTS, timeout);
 	if(n<0){
-		if(errno == EINTR) return 0;	//signal was interupted, we can continue but no data was collected
-		else throwInt(std::strerror(errno)<<" in epoll_wait");
+		if(errno == EINTR){
+			return 0;	//signal was interupted, we can continue but no data was collected
+		}
+		else {
+			int error = errno;
+			throw std::runtime_error(LOG_EXCEPTION(std::string()+std::strerror(error)+" in epoll_wait"));
+		}
 	}
 	size_t count = static_cast<size_t>(n);
 	return count;
@@ -24,9 +29,12 @@ bool SystemWrapper::epollControlAdd(int epoll, int FD, struct epoll_event *event
 	int ret =  epoll_ctl(epoll, EPOLL_CTL_ADD, FD, event);
 	if (ret == -1){
 		if(errno != EEXIST){
-			throwInt(std::strerror(errno)<<" in epoll_ctl");
+			int error = errno;
+			throw std::runtime_error(LOG_EXCEPTION(std::string()+std::strerror(error)+" in epoll_ctl"));
 		}
-		else return true;
+		else {
+			return true;
+		}
 	}
 	return false;
 }
@@ -38,23 +46,35 @@ void SystemWrapper::epollControlDelete(int epoll, int FD, struct epoll_event *ev
 void SystemWrapper::epollControlMod(int epoll, int FD, struct epoll_event *event) const{
 	int ret = epoll_ctl(epoll, EPOLL_CTL_MOD, FD, event);
 	if (ret == -1){
-		if(event->events == (EPOLLOUT|EPOLLET))					throwInt("could not change FD "<<FD<<" to EPOLLOUT for epoll "<<epoll);
-		else if(event->events == (EPOLLIN|EPOLLET))				throwInt("could not change FD "<<FD<<" to EPOLLIN for epoll "<<epoll);
-		else if(event->events == (EPOLLIN|EPOLLOUT|EPOLLET))	throwInt("could not change FD "<<FD<<" to EPOLLIN|EPOLLOUT for epoll "<<epoll);
+		if(event->events == (EPOLLOUT|EPOLLET)){
+			throw std::runtime_error(LOG_EXCEPTION(std::string()+"could not change FD "+std::to_string(FD)+" to EPOLLOUT for epoll "+std::to_string(epoll)));
+		}
+
+		else if(event->events == (EPOLLIN|EPOLLET)){
+			throw std::runtime_error(LOG_EXCEPTION(std::string()+"could not change FD "+std::to_string(FD)+" to EPOLLIN for epoll "+std::to_string(epoll)));
+		}
+
+		else if(event->events == (EPOLLIN|EPOLLOUT|EPOLLET)){
+			throw std::runtime_error(LOG_EXCEPTION(std::string()+"could not change FD "+std::to_string(FD)+" to EPOLLIN|EPOLLOUT for epoll "+std::to_string(epoll)));
+		}
 	}
 }
 
 
 int SystemWrapper::epollCreate(int flags) const{
 	int epollFD = epoll_create1(flags);
-	if(epollFD == -1) throwInt(std::strerror(errno)<<" in epoll_create1");
+	if(epollFD == -1){
+		int error = errno;
+		throw std::runtime_error(LOG_EXCEPTION(std::string()+std::strerror(error)+" in epoll_create1"));
+	}
 	return epollFD;
 }
 
 int SystemWrapper::getFlags(int FD) const{
 	int flags = fcntl (FD,F_GETFL, 0);
 	if (flags == -1){
-		throwInt(std::strerror(errno)<<" in fcntl");
+		int error = errno;
+		throw std::runtime_error(LOG_EXCEPTION(std::string()+std::strerror(error)+" in fcntl"));
 	}
 	return flags;
 }
@@ -62,7 +82,8 @@ int SystemWrapper::getFlags(int FD) const{
 void SystemWrapper::setFlags(int FD, int flags) const{
 	int ret = fcntl (FD, F_SETFL, flags);
 	if (ret == -1){
-		throwInt(std::strerror(errno)<<" in fcntl");
+		int error = errno;
+		throw std::runtime_error(LOG_EXCEPTION(std::string()+std::strerror(error)+" in fcntl"));
 	}
 }
 
@@ -70,54 +91,68 @@ void SystemWrapper::closeFD(int FD) const{
 	int ret = close(FD);
 	int error = errno;
 	if(ret == -1){
-		LOG_ERROR(" File descriptor "<<FD<<" failed to close properly. "<< std::strerror(error) );
+		LOG_ERROR(std::string()+" File descriptor "+std::to_string(FD)+" failed to close properly. "+std::strerror(error) );
 	}
 }
 
 size_t SystemWrapper::writeFD(int FD, const void *buf, size_t count) const{
 	if(buf == nullptr || FD<0){
-		throwInt("bad input. buf: "<<(reinterpret_cast<uint64_t>(buf))<<" FD: "<<FD);	//error
+		throw std::runtime_error(LOG_EXCEPTION("bad input. buf: "+std::to_string(reinterpret_cast<uint64_t>(buf))+" FD: "+std::to_string(FD)));
 	}
-	if(count == 0)return 0;
+	if(count == 0){
+		return 0;
+	}
 	ssize_t ret = write(FD, buf, count);
-	int errnoret = errno;
+	int error = errno;
 	if(ret<0){
-		if(errnoret != EAGAIN && errnoret != EWOULDBLOCK){
-			throwInt(std::strerror(errnoret)<<" write error");	//error
+		if(error != EAGAIN && error != EWOULDBLOCK){
+			throw std::runtime_error(LOG_EXCEPTION(std::string()+std::strerror(error)+" write error"));	//error
 		}
 		return 0;
 	}
-	else return static_cast<size_t>(ret);
+	else {
+		return static_cast<size_t>(ret);
+	}
 }
 
 size_t SystemWrapper::readFD(int FD, void *buf, size_t count, bool &done) const{
 	done = false;
 	if(buf == nullptr || FD<0){
-		throwInt("bad input. buf: "<<(reinterpret_cast<uint64_t>(buf))<<" FD: "<<FD);	//error
+		throw std::runtime_error(LOG_EXCEPTION("bad input. buf: "+std::to_string(reinterpret_cast<uint64_t>(buf))+" FD: "+std::to_string(FD)));	//error
 	}
-	if(count == 0)return 0;
-	ssize_t ret = read(FD, buf, count);
-	int errnoret = errno;
-	if(ret<0){
-		if(errnoret != EAGAIN && errnoret != EWOULDBLOCK){
-			throwInt(std::strerror(errnoret)<<" read error");	//error
-		}
-		if(errnoret == EAGAIN) done = true;//if error == EAGAIN we read all data. signal read is complete
+	if(count == 0){
 		return 0;
 	}
-	else return static_cast<size_t>(ret);
+	ssize_t ret = read(FD, buf, count);
+	int error = errno;
+	if(ret<0){
+		if(error != EAGAIN && error != EWOULDBLOCK){
+			throw std::runtime_error(LOG_EXCEPTION(std::string()+std::strerror(error)+" read error"));	//error
+		}
+		if(error == EAGAIN){
+			done = true;//if error == EAGAIN we read all data. signal read is complete
+		}
+		return 0;
+	}
+	else {
+		return static_cast<size_t>(ret);
+	}
 }
 
 void SystemWrapper::getNameInfo(const struct sockaddr *sa, unsigned int salen, char *host , unsigned int hostlen,  char *serv, unsigned int servlen, int flags) const{
-	if(sa == nullptr || host == nullptr || serv == nullptr) throwInt("Input pointer was null. ");
+	if(sa == nullptr || host == nullptr || serv == nullptr){
+		throw std::runtime_error(LOG_EXCEPTION("Input pointer was null. "));
+	}
 	int ret = getnameinfo(sa, salen, host , hostlen,  serv, servlen, flags);
-	if(ret != 0) throwInt(" failed to get name Info for file descriptor. ");
+	if(ret != 0){
+		throw std::runtime_error(LOG_EXCEPTION(" failed to get name Info for file descriptor. "));
+	}
 }
 
 void SystemWrapper::getAddrInfo(const char *node, const char *service, const struct addrinfo *hints, struct addrinfo **res) const{
 	int ret = getaddrinfo(node, service, hints, res);
 	if (ret != 0){
-		throwInt("getaddrinfoWrap: "<<gaiStrError (ret));
+		throw std::runtime_error(LOG_EXCEPTION("getaddrinfoWrap: "+gaiStrError (ret)));
 	}
 }
 
@@ -139,19 +174,24 @@ char* SystemWrapper::strError(int errnum) const{
 
 int SystemWrapper::createSocket(int domain, int type, int protocol) const{
 	int ret = socket(domain, type, protocol);
-	if(ret < 0) throw -1;
+	if(ret < 0){
+		throw std::runtime_error(LOG_EXCEPTION("failed to create socket"));
+	}
 	return ret;
 }
 
 void SystemWrapper::bindSocket(int sockfd, const struct sockaddr *addr, unsigned int addrlen) const{
 	int ret =bind(sockfd, addr, addrlen);
-	if(ret != 0) throw -1;
+	if(ret != 0){
+		throw std::runtime_error(LOG_EXCEPTION("failed to bind socket"));
+	}
 }
 
 void SystemWrapper::listenSocket(int sockfd, int backlog) const{
 	int ret = listen(sockfd, backlog);
 	if(ret == -1){
-		throwInt(std::strerror(errno)<<" in listen");
+		int error = errno;
+		throw std::runtime_error(LOG_EXCEPTION(std::strerror(error)+" in listen"));
 	}
 }
 
@@ -159,11 +199,12 @@ int SystemWrapper::acceptSocket(int sockfd, struct sockaddr *addr, unsigned int 
 	done = false;
 	int ret = accept(sockfd, addr, addrlen );
 	if(ret == -1){
-		if ((errno == EAGAIN) || (errno == EWOULDBLOCK)){	//We have processed all connections.
+		int error = errno;
+		if ((error == EAGAIN) || (error == EWOULDBLOCK)){	//We have processed all connections.
 
 		}
 		else{
-			LOG_ERROR( std::strerror(errno));
+			LOG_ERROR( std::strerror(error));
 		}
 		done = true;
 	}

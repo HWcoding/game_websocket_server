@@ -245,9 +245,9 @@ def compileGoogleTest():
 	make_process2 =	subprocess.Popen(command2, stderr=subprocess.STDOUT)
 
 	if make_process1.wait() != 0:
-			raise SystemExit
+			raise Exception
 	if make_process2.wait() != 0:
-			raise SystemExit
+			raise Exception
 
 	subprocess.call(command3,stderr=subprocess.STDOUT)
 
@@ -405,7 +405,7 @@ def codeAnalysis():
 			"--quiet", "-I./", "--enable=warning,performance,information",
 			"-j8", "--cppcheck-build-dir=./analysis", "./source"], stderr=subprocess.STDOUT)
 		if make_process.wait() != 0:
-			raise SystemExit
+			raise Exception
 
 		if getIsArgument( "tidy" ):
 			if isNotInstalled( "clang-tidy" ):
@@ -421,7 +421,7 @@ def codeAnalysis():
 								"-checks=modernize-*,clang-analyzer-*,clang-analyzer-alpha.deadcode.UnreachableCode,-clang-analyzer-alpha.core.CastToStruct"],
 								stderr=subprocess.STDOUT)
 							if make_process.wait() != 0:
-								raise SystemExit
+								raise Exception
 				os.chdir( "../" )
 	else:
 		if os.path.isfile("./analysis/files.txt"):
@@ -514,7 +514,7 @@ def compileTestLibs():
 	# feed the list to make and build program
 	make_process = subprocess.Popen(["make", "-s", "-j8", BuildOptions, FileList], stderr=subprocess.STDOUT)
 	if make_process.wait() != 0:
-		raise SystemExit
+		raise Exception
 	os.chdir( "../../" )
 
 
@@ -582,24 +582,31 @@ def compileTest(file):
 	# build and run the test
 	make_process = subprocess.Popen(["make", "-s", "-j2", BuildOptions, FileName, ObjectList], stderr=subprocess.STDOUT)
 	if make_process.wait() != 0:
-		raise SystemExit
+		raise Exception
 
 
 #compiles all the .cpp files in the ./tests directory
 def compileTestFiles():
+
 	# move into the test directory
 	os.chdir( "./tests" )
 	# get list of tests and compile/run them in separate processes.
 	pool = multiprocessing.Pool()
+	results = []
 	for root, dirs, files in os.walk("./source/"):
 		for file in files:
 			if file.endswith('.cpp'):
 				fullpath = os.path.join(root, file)
-				pool.apply_async(compileTest, args=(fullpath,))
+				results.append(pool.apply_async(compileTest, args=(fullpath,)))
 	#wait
 	pool.close()
 	pool.join()
 	os.chdir( "../" )
+
+	#check results and exit on an error
+	for result in results:
+		if not result.successful():
+			raise SystemExit
 
 
 def buildDocs():
@@ -625,7 +632,7 @@ def buildDocs():
 		os.chdir( "../" )
 
 
-def run():
+def main():
 
 	#check for and build missing dependencies
 	printMinorHeader("Checking Externals")
@@ -665,4 +672,4 @@ def run():
 
 
 if __name__ == "__main__":
-	run()
+	main()

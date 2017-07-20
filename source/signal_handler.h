@@ -24,7 +24,6 @@ private:
 	SignalHandler& operator=(const SignalHandler& s) = delete;
 	SignalHandler(const SignalHandler&) = delete;
 
-	static std::atomic<bool> init;
 	static SignalHandler handler;
 };
 

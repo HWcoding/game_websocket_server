@@ -4,6 +4,7 @@
 
 #include "source/logging/logger.h"
 #include <typeinfo>
+#include <exception>
 
 #ifdef DEBUG
 
@@ -16,14 +17,10 @@ extern "C" {
 }
 
 
-#define BACKTRACE_PRINT()	LOG_ERROR("Caught Exception on line: "<<__LINE__<<" in file: " __FILE__<<" in function: "<<__PRETTY_FUNCTION__), DEBUG_BACKTRACE::debugBackTrace()
+#define BACKTRACE_PRINT()	LOG_ERROR("Caught Exception on line: "+std::to_string(__LINE__)+" in file: "+__FILE__+" in function: "+__PRETTY_FUNCTION__), DEBUG_BACKTRACE::debugBackTrace()
 
 #else
 #define BACKTRACE_PRINT() IM_AN_EMPTY_STATEMENT
 #endif
-
-
-#define throwRuntime(type, text)	LOG_ERROR("errno: "<<std::strerror(errno)<<" in file: " __FILE__<<" in function: "<<__PRETTY_FUNCTION__<<" line: "<<__LINE__), throw type(text)
-#define throwInt(text)	LOG_EXCEPTION(text), throw -1
 
 #endif /* SOURCE_LOGGING_EXCEPTION_HANDLER_H */
