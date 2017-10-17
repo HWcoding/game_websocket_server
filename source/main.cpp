@@ -1,4 +1,4 @@
-#include "source/server/socket/socket_node.h"
+#include "source/server/socket/socket.h"
 #include "source/message_handlers/message_dispatcher.h"
 #include "source/data_types/socket_message.h"
 #include "source/logging/exception_handler.h"

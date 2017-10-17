@@ -45,7 +45,8 @@ int main(){
                                     source/data_types/byte_array.cpp, \
                                     source/server/socket/websocket/websocket_authenticator.cpp, \
                                     source/server/socket/websocket/websocket_handshake.cpp, \
-                                    source/server/socket/set_of_file_descriptors.cpp"
+                                    source/server/socket/set_of_file_descriptors.cpp, \
+                                    source/server/socket/socket_node.cpp"
 
 
 

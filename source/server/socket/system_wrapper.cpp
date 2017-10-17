@@ -9,6 +9,9 @@
 
 SystemInterface::~SystemInterface() = default;
 
+/**
+ * @throws std::runtime_error
+ */
 size_t SystemWrapper::epollWait(int epollFD,  struct epoll_event *events, int MAXEVENTS, int timeout) const{
 	int n = 0;
 	n = epoll_wait(epollFD,  events, MAXEVENTS, timeout);
@@ -25,6 +28,9 @@ size_t SystemWrapper::epollWait(int epollFD,  struct epoll_event *events, int MA
 	return count;
 }
 
+/**
+ * @throws std::runtime_error
+ */
 bool SystemWrapper::epollControlAdd(int epoll, int FD, struct epoll_event *event) const{
 	int ret =  epoll_ctl(epoll, EPOLL_CTL_ADD, FD, event);
 	if (ret == -1){
@@ -43,6 +49,9 @@ void SystemWrapper::epollControlDelete(int epoll, int FD, struct epoll_event *ev
 	epoll_ctl(epoll, EPOLL_CTL_DEL, FD, event);
 }
 
+/**
+ * @throws std::runtime_error
+ */
 void SystemWrapper::epollControlMod(int epoll, int FD, struct epoll_event *event) const{
 	int ret = epoll_ctl(epoll, EPOLL_CTL_MOD, FD, event);
 	if (ret == -1){
@@ -60,7 +69,9 @@ void SystemWrapper::epollControlMod(int epoll, int FD, struct epoll_event *event
 	}
 }
 
-
+/**
+ * @throws std::runtime_error
+ */
 int SystemWrapper::epollCreate(int flags) const{
 	int epollFD = epoll_create1(flags);
 	if(epollFD == -1){
@@ -70,6 +81,9 @@ int SystemWrapper::epollCreate(int flags) const{
 	return epollFD;
 }
 
+/**
+ * @throws std::runtime_error
+ */
 int SystemWrapper::getFlags(int FD) const{
 	int flags = fcntl (FD,F_GETFL, 0);
 	if (flags == -1){
@@ -79,6 +93,9 @@ int SystemWrapper::getFlags(int FD) const{
 	return flags;
 }
 
+/**
+ * @throws std::runtime_error
+ */
 void SystemWrapper::setFlags(int FD, int flags) const{
 	int ret = fcntl (FD, F_SETFL, flags);
 	if (ret == -1){
@@ -89,12 +106,15 @@ void SystemWrapper::setFlags(int FD, int flags) const{
 
 void SystemWrapper::closeFD(int FD) const{
 	int ret = close(FD);
-	int error = errno;
 	if(ret == -1){
+		int error = errno;
 		LOG_ERROR(std::string()+" File descriptor "+std::to_string(FD)+" failed to close properly. "+std::strerror(error) );
 	}
 }
 
+/**
+ * @throws std::runtime_error
+ */
 size_t SystemWrapper::writeFD(int FD, const void *buf, size_t count) const{
 	if(buf == nullptr || FD<0){
 		throw std::runtime_error(LOG_EXCEPTION("bad input. buf: "+std::to_string(reinterpret_cast<uint64_t>(buf))+" FD: "+std::to_string(FD)));
@@ -102,9 +122,10 @@ size_t SystemWrapper::writeFD(int FD, const void *buf, size_t count) const{
 	if(count == 0){
 		return 0;
 	}
+
 	ssize_t ret = write(FD, buf, count);
-	int error = errno;
 	if(ret<0){
+		int error = errno;
 		if(error != EAGAIN && error != EWOULDBLOCK){
 			throw std::runtime_error(LOG_EXCEPTION(std::string()+std::strerror(error)+" write error"));	//error
 		}
@@ -115,6 +136,9 @@ size_t SystemWrapper::writeFD(int FD, const void *buf, size_t count) const{
 	}
 }
 
+/**
+ * @throws std::runtime_error
+ */
 size_t SystemWrapper::readFD(int FD, void *buf, size_t count, bool &done) const{
 	done = false;
 	if(buf == nullptr || FD<0){
@@ -123,9 +147,10 @@ size_t SystemWrapper::readFD(int FD, void *buf, size_t count, bool &done) const{
 	if(count == 0){
 		return 0;
 	}
+
 	ssize_t ret = read(FD, buf, count);
-	int error = errno;
 	if(ret<0){
+		int error = errno;
 		if(error != EAGAIN && error != EWOULDBLOCK){
 			throw std::runtime_error(LOG_EXCEPTION(std::string()+std::strerror(error)+" read error"));	//error
 		}
@@ -139,6 +164,9 @@ size_t SystemWrapper::readFD(int FD, void *buf, size_t count, bool &done) const{
 	}
 }
 
+/**
+ * @throws std::runtime_error
+ */
 void SystemWrapper::getNameInfo(const struct sockaddr *sa, unsigned int salen, char *host , unsigned int hostlen,  char *serv, unsigned int servlen, int flags) const{
 	if(sa == nullptr || host == nullptr || serv == nullptr){
 		throw std::runtime_error(LOG_EXCEPTION("Input pointer was null. "));
@@ -149,6 +177,9 @@ void SystemWrapper::getNameInfo(const struct sockaddr *sa, unsigned int salen, c
 	}
 }
 
+/**
+ * @throws std::runtime_error
+ */
 void SystemWrapper::getAddrInfo(const char *node, const char *service, const struct addrinfo *hints, struct addrinfo **res) const{
 	int ret = getaddrinfo(node, service, hints, res);
 	if (ret != 0){
@@ -172,6 +203,9 @@ char* SystemWrapper::strError(int errnum) const{
 	return std::strerror(errnum);
 }
 
+/**
+ * @throws std::runtime_error
+ */
 int SystemWrapper::createSocket(int domain, int type, int protocol) const{
 	int ret = socket(domain, type, protocol);
 	if(ret < 0){
@@ -180,6 +214,9 @@ int SystemWrapper::createSocket(int domain, int type, int protocol) const{
 	return ret;
 }
 
+/**
+ * @throws std::runtime_error
+ */
 void SystemWrapper::bindSocket(int sockfd, const struct sockaddr *addr, unsigned int addrlen) const{
 	int ret =bind(sockfd, addr, addrlen);
 	if(ret != 0){
@@ -187,6 +224,9 @@ void SystemWrapper::bindSocket(int sockfd, const struct sockaddr *addr, unsigned
 	}
 }
 
+/**
+ * @throws std::runtime_error
+ */
 void SystemWrapper::listenSocket(int sockfd, int backlog) const{
 	int ret = listen(sockfd, backlog);
 	if(ret == -1){
@@ -194,6 +234,7 @@ void SystemWrapper::listenSocket(int sockfd, int backlog) const{
 		throw std::runtime_error(LOG_EXCEPTION(std::strerror(error)+" in listen"));
 	}
 }
+
 
 int SystemWrapper::acceptSocket(int sockfd, struct sockaddr *addr, unsigned int *addrlen, bool &done) const{
 	done = false;

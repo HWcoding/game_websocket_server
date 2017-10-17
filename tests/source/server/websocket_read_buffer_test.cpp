@@ -52,12 +52,12 @@ TEST(WebsocketReadBufferTest, addMessage)
 			testBuffer.addMessage(1, input);
 			//TEST_PRINT(redTestText("addMessage did not throw with too large of a size"));
 		);
-		/*try{
-			testBuffer.addMessage(1, input);
-			TEST_PRINT(redTestText("addMessage did not throw with too large of a size"));
-			throw; //kill program
-		}
-		catch(...){}//proper behavior*/
+		//try{
+		//	testBuffer.addMessage(1, input);
+		//	TEST_PRINT(redTestText("addMessage did not throw with too large of a size"));
+		//	throw; //kill program
+		//}
+		//catch(...){}//proper behavior
 	}
 
 	WebsocketReadBuffersWrap testBuffer(&FDs,202);
@@ -68,10 +68,10 @@ TEST(WebsocketReadBufferTest, addMessage)
 	std::string result = testBuffer.getMessageBufferMessage(1,0);
 
 	EXPECT_STREQ( result.c_str(), testString.c_str());
-	/*if(result.compare(testString) != 0){
-		TEST_PRINT(redTestText("Buffer does not match test string"));
-		throw 1;
-	}*/
+	//if(result.compare(testString) != 0){
+	//	TEST_PRINT(redTestText("Buffer does not match test string"));
+	//	throw 1;
+	//}
 
 	input = ByteArray();
 	input.appendWithNoSize(testString);
@@ -80,10 +80,10 @@ TEST(WebsocketReadBufferTest, addMessage)
 	result = testBuffer.getMessageBufferMessage(1,1);
 
 	EXPECT_STREQ( result.c_str(), testString.c_str());
-	/*if(result.compare(testString) != 0){
-		TEST_PRINT(redTestText("Buffer does not match test string"));
-		throw 1;
-	}*/
+	//if(result.compare(testString) != 0){
+	//	TEST_PRINT(redTestText("Buffer does not match test string"));
+	//	throw 1;
+	//}
 }
 
 
@@ -103,11 +103,11 @@ TEST(WebsocketReadBufferTest, extractMessage)
 	ByteArray result;
 
 	EXPECT_EQ( testBuffer.extractMessage(result, 0, 1), true);
-	/*if( !testBuffer.extractMessage(result, 0, 1) ){
-		TEST_PRINT( redTestText("extractMessage did not return a complete message when size was unknown") );
-		TEST_PRINT( redTestText("message size = "<<testBuffer.messageBuffer[1].totalSize<<"\nExpected size = "<<testBuffer.messageBuffer[1].expectedSize) );
-		throw 1;
-	}*/
+	//if( !testBuffer.extractMessage(result, 0, 1) ){
+	//	TEST_PRINT( redTestText("extractMessage did not return a complete message when size was unknown") );
+	//	TEST_PRINT( redTestText("message size = "<<testBuffer.messageBuffer[1].totalSize<<"\nExpected size = "<<testBuffer.messageBuffer[1].expectedSize) );
+	//	throw 1;
+	//}
 
 	input =ByteArray();
 	input.appendWithNoSize(testString);
@@ -116,11 +116,11 @@ TEST(WebsocketReadBufferTest, extractMessage)
 	result =ByteArray();
 
 	EXPECT_EQ( testBuffer.extractMessage(result, 0, 1), false);
-	/*if( testBuffer.extractMessage(result, 0, 1) ){
-		TEST_PRINT( redTestText("extractMessage returned a complete message when a partial message was given") );
-		TEST_PRINT( redTestText("message size = "<<testBuffer.messageBuffer[1].totalSize<<"\nExpected size = "<<testBuffer.messageBuffer[1].expectedSize) );
-		throw 1;
-	}*/
+	//if( testBuffer.extractMessage(result, 0, 1) ){
+	//	TEST_PRINT( redTestText("extractMessage returned a complete message when a partial message was given") );
+	//	TEST_PRINT( redTestText("message size = "<<testBuffer.messageBuffer[1].totalSize<<"\nExpected size = "<<testBuffer.messageBuffer[1].expectedSize) );
+	//	throw 1;
+	//}
 
 	input = ByteArray();
 	input.appendWithNoSize(testString);
@@ -128,20 +128,20 @@ TEST(WebsocketReadBufferTest, extractMessage)
 	result =ByteArray();
 
 	EXPECT_EQ( testBuffer.extractMessage(result, 0, 1), true);
-	/*if( !testBuffer.extractMessage(result, 0, 1) ){
-		TEST_PRINT( redTestText("extractMessage did not return a complete message when a complete message was given") );
-		TEST_PRINT( redTestText("message size = "<<testBuffer.messageBuffer[1].totalSize<<"\nExpected size = "<<testBuffer.messageBuffer[1].expectedSize) );
-		throw 1;
-	}*/
+	//if( !testBuffer.extractMessage(result, 0, 1) ){
+	//	TEST_PRINT( redTestText("extractMessage did not return a complete message when a complete message was given") );
+	//	TEST_PRINT( redTestText("message size = "<<testBuffer.messageBuffer[1].totalSize<<"\nExpected size = "<<testBuffer.messageBuffer[1].expectedSize) );
+	//	throw 1;
+	//}
 
 	std::string stringResult = result.toString();
 	testString.append(testString);
 
 	EXPECT_EQ( testBuffer.extractMessage(result, 0, 1), 0);
-	/*if( stringResult.compare(testString) != 0 ){
-		TEST_PRINT( redTestText("result does not equal input") );
-		throw 1;
-	}*/
+	//if( stringResult.compare(testString) != 0 ){
+	//	TEST_PRINT( redTestText("result does not equal input") );
+	//	throw 1;
+	//}
 }
 
 

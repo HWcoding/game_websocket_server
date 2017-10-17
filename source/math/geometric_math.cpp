@@ -26,7 +26,7 @@ double fastInvSqrt(double input)
 // fastSqrt(100) = 10.25
 double fastSqrt(double f)
 {
-	int64_t i;
+	uint64_t i;
 	memcpy(&i , &f, sizeof(uint64_t));
 	i -= 0x3FF0000000000000;
 	i = i>>1;

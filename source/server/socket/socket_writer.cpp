@@ -13,63 +13,48 @@
 #include "source/logging/exception_handler.h"
 
 
-SocketWriterInterface::~SocketWriterInterface() = default;
+SocketWriter::SocketWriter(SystemInterface *_systemWrap,
+                           SetOfFileDescriptors *FDs,
+                           std::atomic<bool>* run) : SocketNode(_systemWrap, FDs, run),
+                                                     sender(new WebsocketMessageSender(_systemWrap)),
+                                                     writePollingMut()
+                                                     {
 
-SocketWriter::SocketWriter(SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, std::atomic<bool>* run) : 	systemWrap(_systemWrap), sender( new WebsocketMessageSender(_systemWrap) ), writePollingMut(),
-																					fileDescriptors(FDs), running(run), MAXEVENTS(9999), epollFD(-1) {
-
-	fileDescriptors->addNewConnectionCallback(std::bind(&SocketWriter::newConnectionHandler,this, std::placeholders::_1));
-	fileDescriptors->addCloseFDCallback(std::bind(&SocketWriter::closeFDHandler,this, std::placeholders::_1));
+	fileDescriptors->addNewConnectionCallback(std::bind(&SocketWriter::newConnectionHandler, this, std::placeholders::_1));
+	fileDescriptors->addCloseFDCallback(std::bind(&SocketWriter::closeFDHandler, this, std::placeholders::_1));
 	signal(SIGPIPE, SIG_IGN); //ignore error when writing to closed sockets to prevent crash on client disconnect
 }
 
 
-void SocketWriter::startPoll(){
-	setupEpoll();
-	std::vector<epoll_event> events;
-	events.resize( static_cast<size_t>(MAXEVENTS) );
+// unused
+void SocketWriter::handleEpollRead(epoll_event &event){
+	(void)event;
+}
 
-	while(running->load()){	//The event loop
-		size_t num = systemWrap->epollWait(epollFD, &events[0], MAXEVENTS, 2000);
-		for (size_t i = 0; i < num; ++i){
-			if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP)){// An error occured
-				LOG_ERROR("epoll error");
-				int error = 0;
-				socklen_t errlen = sizeof(error);
-				if (systemWrap->getSockOpt(events[i].data.fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void *>(&error), &errlen) == 0){
-					LOG_ERROR("error: "<<systemWrap->strError(error) );
-				}
-				closeFD(events[i].data.fd);
-				continue; //go to next FD
-			}
-			if((events[i].events & EPOLLOUT)){			//the socket is ready for writing
-				try{ writeData(events[i].data.fd); }	//write data to client
-				catch( std::runtime_error &ret){
-					BACKTRACE_PRINT();
-					closeFD(events[i].data.fd);			//drop connection on failure
-				}
-			}
-		}
+
+void SocketWriter::handleEpollWrite(epoll_event &event) {
+	try {
+		//write data to client
+		writeData(event.data.fd);
+	}
+	catch(std::runtime_error &ret) {
+		BACKTRACE_PRINT();
+		closeFD(event.data.fd);			//drop connection on failure
 	}
 }
 
 SocketWriter::~SocketWriter() = default;
 
-void SocketWriter::setupEpoll(){
-	epollFD = systemWrap->epollCreate(0);
-	LOG_INFO("Writer epollFD is "<<epollFD);
+void SocketWriter::setupEpoll() {
+	SocketNode::setupEpoll();
+	LOG_INFO("Writer epollFD is " << epollFD);
 }
 
-
-void SocketWriter::closeFD(int FD){
-	if(fileDescriptors->removeFD(FD) == -1){
-		LOG_ERROR("FD "<<FD<<" failed to close correctly");
+void SocketWriter::closeFDHandler(int FD) {
+	LOG_INFO("closed connection on FD " << FD);
+	try {
+		fileDescriptors->stopPollingFD(epollFD, FD);
 	}
-}
-
-void SocketWriter::closeFDHandler(int FD){
-	LOG_INFO("closed connection on FD "<<FD);
-	try{ fileDescriptors->stopPollingFD(epollFD, FD); }
 	catch(std::runtime_error &ret) {
 		BACKTRACE_PRINT();
 		writeError("epoll_ctl");
@@ -77,21 +62,21 @@ void SocketWriter::closeFDHandler(int FD){
 	sender->closeFDHandler(FD);
 }
 
-void SocketWriter::newConnectionHandler(int FD){
+void SocketWriter::newConnectionHandler(int FD) {
 	(void) FD; //stops warnings for unused variable when logging is turned off
 	LOG_INFO("New connection on FD "<<FD);
 	return;
 }
 
-void SocketWriter::writeData(int FD){
+void SocketWriter::writeData(int FD) {
 	std::lock_guard<std::mutex> lck(writePollingMut);
 	bool done = sender->writeData(FD);
-	if(done){
+	if(done) {
 		fileDescriptors->stopPollingFD(epollFD, FD); //done writing
 	}
 }
 
-void SocketWriter::sendMessage(SocketMessage &message){
+void SocketWriter::sendMessage(SocketMessage &message) {
 	int FD = message.getFD();
 	sender->addMessage(message);
 	fileDescriptors->startPollingForWrite(epollFD, FD);

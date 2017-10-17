@@ -24,7 +24,6 @@ public:
 	void startPollingForWrite(int epoll);
 	void startPollingForRead(int epoll);
 	void makeNonblocking();
-	std::unique_lock<std::recursive_mutex> lock();
 	int getFD();
 	ByteArray getIP();
 	ByteArray getPort();
@@ -43,7 +42,7 @@ private:
 	void setFDReadWrite(epoll_event event, int epoll);
 
 	SystemInterface *systemWrap {nullptr};
-	mutable std::recursive_mutex mut {};
+	mutable std::mutex mut {};
 	ByteArray IP {};
 	ByteArray port {};
 	ByteArray CSRFkey {};
