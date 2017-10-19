@@ -16,7 +16,7 @@ public:
 	void addCloseFDCallback(std::function<void(int)> callback);
 	void addNewConnectionCallback(std::function<void(int)> callback);
 	int  addFD(int FD);
-	int  tellServerAboutNewConnection(int FD);
+	bool  tellServerAboutNewConnection(int FD);
 	bool callCloseCallbacks(int FD);
 	int  removeFD(int FD);
 	bool isFDOpen(int FD);
@@ -35,15 +35,16 @@ public:
 	void setCSRFkey(int FD, ByteArray s);
 
 private:
+	bool unlockedIsFDOpen(int FD);
 	SetOfFileDescriptors& operator=(const SetOfFileDescriptors&) = delete;
 	SetOfFileDescriptors(const SetOfFileDescriptors&) = delete;
 
-	std::unique_lock<std::recursive_mutex> getAndLockFD(FileDescriptor* &FDpointer, int FD);
+	//std::unique_lock<std::recursive_mutex> getAndLockFD(FileDescriptor* &FDpointer, int FD);
 
 	SystemInterface *systemWrap;
 
 	std::unordered_map<int, FileDescriptor> openFDs;	//holds list of File Descriptors for all socket connections
-	std::recursive_mutex FDmut; //OpenFD mutex
+	std::mutex FDmut; //OpenFD mutex
 
 	std::vector<std::function<void(int)>> closeCallbacks; //array of functions to call when an FD is closed.  Each thread should add a callback so it can properly clean up when a connection is closed.
 

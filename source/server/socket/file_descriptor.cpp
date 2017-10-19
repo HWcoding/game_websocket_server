@@ -9,44 +9,59 @@ FileDescriptor::FileDescriptor(SystemInterface *_systemWrap) : systemWrap(_syste
 
 FileDescriptor::FileDescriptor(SystemInterface *_systemWrap, int _FD): systemWrap(_systemWrap), mut(), IP(), port(), CSRFkey(), FD(_FD) {}
 
+/**
+ * @throws std::system_error if lock fails followed by abort since it's declared noexcept
+ */
 FileDescriptor::FileDescriptor(FileDescriptor&& f) noexcept: systemWrap(), mut(), IP(), port(), CSRFkey(), FD(-1) {	//move constructor
-	std::lock_guard<std::recursive_mutex> lck(f.mut);
+	std::lock_guard<std::mutex> lck(f.mut);
 	FD = std::move(f.FD);
 	IP = std::move(f.IP);
 	port = std::move(f.port);
 	CSRFkey = std::move(f.CSRFkey);
 	systemWrap = f.systemWrap;
+	f.systemWrap = nullptr;
 	f.FD = -1;
 }
 
+/**
+ * @throws std::system_error if lock fails followed by abort since it's declared noexcept
+ */
 FileDescriptor::FileDescriptor(const FileDescriptor& f) noexcept : systemWrap(), mut(), IP(), port(), CSRFkey(), FD(-1) { //copy constructor
-	std::lock_guard<std::recursive_mutex> lck(f.mut);
+	std::lock_guard<std::mutex> lck(f.mut);
 	FD = f.FD;
 	IP = f.IP;
 	port = f.port;
 	CSRFkey = f.CSRFkey;
 	systemWrap = f.systemWrap;
+
 }
 
+/**
+ * @throws std::system_error if lock fails
+ */
 FileDescriptor& FileDescriptor::operator=(FileDescriptor&& f){ //move assignment
 	if (this != &f){
-		std::unique_lock<std::recursive_mutex> lhs_lk(mut, std::defer_lock);
-		std::unique_lock<std::recursive_mutex> rhs_lk(f.mut, std::defer_lock);
+		std::unique_lock<std::mutex> lhs_lk(mut, std::defer_lock);
+		std::unique_lock<std::mutex> rhs_lk(f.mut, std::defer_lock);
 		std::lock(lhs_lk, rhs_lk);
 		FD = std::move(f.FD);
 		IP = std::move(f.IP);
 		port = std::move(f.port);
 		CSRFkey = std::move(f.CSRFkey);
 		systemWrap = f.systemWrap;
+		f.systemWrap = nullptr;
 		f.FD =-1;
 	}
 	return *this;
 }
 
+/**
+ * @throws std::system_error if lock fails
+ */
 FileDescriptor& FileDescriptor::operator=(const FileDescriptor& f){ //copy assignment
 	if (this != &f){
-		std::unique_lock<std::recursive_mutex> lhs_lk(mut, std::defer_lock);
-		std::unique_lock<std::recursive_mutex> rhs_lk(f.mut, std::defer_lock);
+		std::unique_lock<std::mutex> lhs_lk(mut, std::defer_lock);
+		std::unique_lock<std::mutex> rhs_lk(f.mut, std::defer_lock);
 		std::lock(lhs_lk, rhs_lk);
 		FD = f.FD;
 		IP = f.IP;
@@ -58,62 +73,98 @@ FileDescriptor& FileDescriptor::operator=(const FileDescriptor& f){ //copy assig
 }
 
 FileDescriptor::~FileDescriptor(){
-	std::lock_guard<std::recursive_mutex> lck(mut);
+	try{
+		std::lock_guard<std::mutex> lck(mut);
+	}
+	catch(...){}
 }
 
+/**
+ * @throws std::system_error if lock fails
+ */
 int FileDescriptor::getFD(){
-	std::lock_guard<std::recursive_mutex> lck(mut);
+	std::lock_guard<std::mutex> lck(mut);
 	return FD;
 }
 
+/**
+ * @throws std::system_error if lock fails
+ */
 ByteArray FileDescriptor::getIP(){
-	std::lock_guard<std::recursive_mutex> lck(mut);
+	std::lock_guard<std::mutex> lck(mut);
 	return IP;
 }
 
+/**
+ * @throws std::system_error if lock fails
+ */
 ByteArray FileDescriptor::getPort(){
-	std::lock_guard<std::recursive_mutex> lck(mut);
+	std::lock_guard<std::mutex> lck(mut);
 	return port;
 }
 
+/**
+ * @throws std::system_error if lock fails
+ */
 ByteArray FileDescriptor::getCSRFkey(){
-	std::lock_guard<std::recursive_mutex> lck(mut);
+	std::lock_guard<std::mutex> lck(mut);
 	return CSRFkey;
 }
 
+/**
+ * @throws std::system_error if lock fails
+ */
 void FileDescriptor::setIP(ByteArray s){
-	std::lock_guard<std::recursive_mutex> lck(mut);
+	std::lock_guard<std::mutex> lck(mut);
 	IP = s;
 }
 
+/**
+ * @throws std::system_error if lock fails
+ */
 void FileDescriptor::setPort(ByteArray s){
-	std::lock_guard<std::recursive_mutex> lck(mut);
+	std::lock_guard<std::mutex> lck(mut);
 	port = s;
 }
 
+/**
+ * @throws std::system_error if lock fails
+ */
 void FileDescriptor::setCSRFkey(ByteArray s){
-	std::lock_guard<std::recursive_mutex> lck(mut);
+	std::lock_guard<std::mutex> lck(mut);
 	CSRFkey = s;
 }
 
+/**
+ * @throws std::system_error if lock fails
+ */
 void FileDescriptor::setIP(std::string s){
-	std::lock_guard<std::recursive_mutex> lck(mut);
+	std::lock_guard<std::mutex> lck(mut);
 	IP.resize(s.size());
 	memcpy(&IP[0], &s[0], s.size());
 }
 
+/**
+ * @throws std::system_error if lock fails
+ */
 void FileDescriptor::setPort(std::string s){
-	std::lock_guard<std::recursive_mutex> lck(mut);
+	std::lock_guard<std::mutex> lck(mut);
 	port.resize(s.size());
 	memcpy(&port[0], &s[0], s.size());
 }
 
+/**
+ * @throws std::system_error if lock fails
+ */
 void FileDescriptor::setCSRFkey(std::string s){
-	std::lock_guard<std::recursive_mutex> lck(mut);
+	std::lock_guard<std::mutex> lck(mut);
 	CSRFkey.resize(s.size());
 	memcpy(&CSRFkey[0], &s[0], s.size());
 }
 
+/**
+ * @throws std::runtime_error
+ */
 void FileDescriptor::pollForWrite(int epoll){
 	struct epoll_event event ={};
 	event.data.fd = FD;
@@ -121,6 +172,9 @@ void FileDescriptor::pollForWrite(int epoll){
 	setFDReadWrite(event, epoll);
 }
 
+/**
+ * @throws std::runtime_error
+ */
 void FileDescriptor::pollForRead(int epoll){
 	struct epoll_event event ={};
 	event.data.fd = FD;
@@ -128,16 +182,26 @@ void FileDescriptor::pollForRead(int epoll){
 	setFDReadWrite(event, epoll);
 }
 
+/**
+ * @throws std::runtime_error
+ * @throws std::system_error if lock fails
+ */
 void FileDescriptor::setFDReadWrite(epoll_event event, int epoll){
-	std::lock_guard<std::recursive_mutex> lck(mut);
+	std::lock_guard<std::mutex> lck(mut);
 	systemWrap->epollControlMod(epoll, FD, &event);
 }
 
+/**
+ * @throws std::system_error if lock fails
+ */
 void FileDescriptor::stopPollingFD(int epoll){
-	std::lock_guard<std::recursive_mutex> lck(mut);
+	std::lock_guard<std::mutex> lck(mut);
 	systemWrap->epollControlDelete(epoll, FD, nullptr);
 }
 
+/**
+ * @throws std::runtime_error
+ */
 void FileDescriptor::startPollingForWrite(int epoll){
 	struct epoll_event event ={};
 	event.data.fd = FD;
@@ -147,6 +211,9 @@ void FileDescriptor::startPollingForWrite(int epoll){
 	return;
 }
 
+/**
+ * @throws std::runtime_error
+ */
 void FileDescriptor::startPollingForRead(int epoll){
 	struct epoll_event event ={};
 	event.data.fd = FD;
@@ -156,19 +223,22 @@ void FileDescriptor::startPollingForRead(int epoll){
 	return;
 }
 
+/**
+ * @throws std::runtime_error if epollControlAdd returns an error
+ * @throws std::system_error if lock fails
+ */
 bool FileDescriptor::startPollingFD(epoll_event event, int epoll){
-	std::lock_guard<std::recursive_mutex> lck(mut);
+	std::lock_guard<std::mutex> lck(mut);
 	return systemWrap->epollControlAdd(epoll, FD, &event);
 }
 
+/**
+ * @throws std::runtime_error
+ * @throws std::system_error if lock fails
+ */
 void FileDescriptor::makeNonblocking (){
-	std::lock_guard<std::recursive_mutex> lck(mut);
+	std::lock_guard<std::mutex> lck(mut);
 	int flags = systemWrap->getFlags(FD);
 	flags |= O_NONBLOCK;
 	systemWrap->setFlags(FD, flags);
-}
-
-std::unique_lock<std::recursive_mutex> FileDescriptor::lock(){
-	std::unique_lock<std::recursive_mutex> lck(mut);
-	return lck;
 }

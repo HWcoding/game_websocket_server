@@ -572,10 +572,10 @@ TEST(WebsocketMessageProcessorTest, test_GetNet64bit)
 	uint64_t result =processor.getNet64bit(temp);
 
 	EXPECT_EQ(result, 2415273250371052886);
-	/*if(result != 2415273250371052886){
-		TEST_PRINT(redTestText("result is wrong: "<<result<<" Result should be 2415273250371052886"));
-		throw 1;
-	}*/
+	//if(result != 2415273250371052886){
+	//	TEST_PRINT(redTestText("result is wrong: "<<result<<" Result should be 2415273250371052886"));
+	//	throw 1;
+	//}
 }
 
 
@@ -597,10 +597,10 @@ TEST(WebsocketMessageProcessorTest, testGetNet16bit)
 	uint16_t result =processor.getNet16bit(temp);
 
 	EXPECT_EQ(result, 33825);
-	/*if(result != 33825){
-		TEST_PRINT(redTestText("result is wrong: "<<result<<" Result should be 33825"));
-		throw 1;
-	}*/
+	//if(result != 33825){
+	//	TEST_PRINT(redTestText("result is wrong: "<<result<<" Result should be 33825"));
+	//	throw 1;
+	//}
 }
 
 
@@ -632,40 +632,40 @@ TEST(WebsocketMessageProcessorTest, testCloseFDHandler)
 	processor.closeFDHandler(1);
 
 	EXPECT_FALSE( testReaderQueue->isEmpty() );
-	/*if( testReaderQueue->isEmpty() ){
-		TEST_PRINT(redTestText("Message queue was empty"));
-		throw 1;
-	}*/
+	//if( testReaderQueue->isEmpty() ){
+	//	TEST_PRINT(redTestText("Message queue was empty"));
+	//	throw 1;
+	//}
 
 	SocketMessage temp = testReaderQueue->getNextMessage();
 
 	EXPECT_EQ(temp.getType(), MessageType::logout);
-	/*if(temp.getType()!=2){
-		TEST_PRINT(redTestText("Message is wrong type: "<<temp.getType()<<" Type should be 2"));
-		throw 1;
-	}*/
+	//if(temp.getType()!=2){
+	//	TEST_PRINT(redTestText("Message is wrong type: "<<temp.getType()<<" Type should be 2"));
+	//	throw 1;
+	//}
 
 	std::string testIP = temp.getIP().toString();
 	std::string testPort = temp.getPort().toString();
 	std::string testCSRFkey = temp.getCSRFkey().toString();
 
 	EXPECT_STREQ( testIP.c_str(), "IP" );
-	/*if(testIP.compare(std::string("IP")) != 0){
-		TEST_PRINT(redTestText("Message has wrong IP: \""<<testIP<<"\" IP should be \"IP\""));
-		throw 1;
-	}*/
+	//if(testIP.compare(std::string("IP")) != 0){
+	//	TEST_PRINT(redTestText("Message has wrong IP: \""<<testIP<<"\" IP should be \"IP\""));
+	//	throw 1;
+	//}
 
 	EXPECT_STREQ( testPort.c_str(), "PORT" );
-	/*if(testPort.compare(std::string("PORT")) != 0){
-		TEST_PRINT(redTestText("Message has wrong Port: \""<<testPort<<"\" Port should be \"PORT\""));
-		throw 1;
-	}*/
+	//if(testPort.compare(std::string("PORT")) != 0){
+	//	TEST_PRINT(redTestText("Message has wrong Port: \""<<testPort<<"\" Port should be \"PORT\""));
+	//	throw 1;
+	//}
 
 	EXPECT_STREQ( testCSRFkey.c_str(), "KEY" );
-	/*if(testCSRFkey.compare(std::string("KEY")) != 0){
-		TEST_PRINT(redTestText("Message has wrong CSRFkey: \""<<testCSRFkey<<"\" CSRFkey should be \"KEY\""));
-		throw 1;
-	}*/
+	//if(testCSRFkey.compare(std::string("KEY")) != 0){
+	//	TEST_PRINT(redTestText("Message has wrong CSRFkey: \""<<testCSRFkey<<"\" CSRFkey should be \"KEY\""));
+	//	throw 1;
+	//}
 }
 
 
@@ -799,39 +799,39 @@ TEST(WebsocketMessageProcessorTest, testProcessSockMessageWorks)
 
 	//test to see if the number of messages output are the same as the number of messages input
 	EXPECT_EQ( decoded.size(), messageCount );
-	/*if(decoded.size() != messageCount){
-		TEST_PRINT(redTestText("The number of processed messages, "<<decoded.size()<<" is not equal to the number of encoded messages, "<<messageCount));
-		throw 1;
-	}*/
+	//if(decoded.size() != messageCount){
+	//	TEST_PRINT(redTestText("The number of processed messages, "<<decoded.size()<<" is not equal to the number of encoded messages, "<<messageCount));
+	//	throw 1;
+	//}
 
 	//test to see if the output messages match the input messages
 	for(size_t i = 0; i< decoded.size(); ++i){
 		EXPECT_STREQ( messages[i].c_str(), decoded[i].toString().c_str() );
 	}
-	/*for(size_t i = 0; i< decoded.size(); ++i){
-		if(messages[i].compare( decoded[i].toString() )!=0){
-			TEST_PRINT(redTestText("decoded message "<<i<<" does not match encoded message "<<i));
-			TEST_PRINT(redTestText("decoded message \n"<<messages[i]<<"\nencoded message \n"<<decoded[i].toString() ));
-			throw 1;
-		}
-	}*/
+	//for(size_t i = 0; i< decoded.size(); ++i){
+	//	if(messages[i].compare( decoded[i].toString() )!=0){
+	//		TEST_PRINT(redTestText("decoded message "<<i<<" does not match encoded message "<<i));
+	//		TEST_PRINT(redTestText("decoded message \n"<<messages[i]<<"\nencoded message \n"<<decoded[i].toString() ));
+	//		throw 1;
+	//	}
+	//}
 
 	//test control message handling
 	EXPECT_TRUE(FDs.isFDOpen(1));
-	/*if(!FDs.isFDOpen(1)){
-		TEST_PRINT(redTestText("client is disconnected but should not be"));
-		throw 1;
-	}*/
+	//if(!FDs.isFDOpen(1)){
+	//	TEST_PRINT(redTestText("client is disconnected but should not be"));
+	//	throw 1;
+	//}
 
 
 	ByteArray closeMessage;
 	closeMessage.appendWithNoSize( createCloseControlMessage() );
 	processor.processSockMessage(closeMessage, 1);
 	EXPECT_FALSE(FDs.isFDOpen(1));
-	/*if(FDs.isFDOpen(1)){
-		TEST_PRINT(redTestText("Close control message did not disconnect client"));
-		throw 1;
-	}*/
+	//if(FDs.isFDOpen(1)){
+	//	TEST_PRINT(redTestText("Close control message did not disconnect client"));
+	//	throw 1;
+	//}
 }
 
 
@@ -913,10 +913,6 @@ TEST(WebsocketMessageProcessorTest, testExtractMessageWorksWithWholeReads)
 		EXPECT_STREQ( messages[i].c_str(), decoded[i].toString().c_str() );
 	}
 }
-
-
-
-
 
 
 

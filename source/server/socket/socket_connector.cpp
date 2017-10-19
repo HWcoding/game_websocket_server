@@ -14,32 +14,6 @@
 #include "source/logging/exception_handler.h"
 
 
-class getaddrinfoWrap{
-public:
-	getaddrinfoWrap(SystemInterface* _systemWrap, std::string address, std::string port, addrinfo * hints, addrinfo * &res) : systemWrap(_systemWrap), result(res), success(false){
-		if(address.empty()){
-			systemWrap->getAddrInfo(nullptr, port.c_str(), hints, &result);
-		}
-		else {
-			systemWrap->getAddrInfo(address.c_str(), port.c_str(), hints, &result);
-		}
-		success = true;
-		res = result;
-	}
-	~getaddrinfoWrap(){
-		if(success){
-			systemWrap->freeAddrInfo (result);
-		}
-	}
-private:
-	SystemInterface *systemWrap;
-	addrinfo *result;
-	bool success;
-	getaddrinfoWrap& operator=(const getaddrinfoWrap&)=delete;
-	getaddrinfoWrap(const getaddrinfoWrap&)=delete;
-};
-
-
 
 SocketServerConnector::SocketServerConnector(const std::string &_port,
                                              SystemInterface *_systemWrap,
@@ -74,7 +48,7 @@ void SocketServerConnector::closeFD(int FD){
 	Authenticator->closeFD(FD);
 	int ret= fileDescriptors->removeFD(FD);
 	if(ret == -1){
-		LOG_ERROR("File descriptor "<<FD<<" failed to close properly. ");
+		LOG_ERROR("File descriptor " << FD << " failed to close properly. ");
 	}
 }
 
@@ -90,13 +64,13 @@ bool SocketServerConnector::handleEpollErrors(epoll_event &event){
 		int error = 0;
 		socklen_t errlen = sizeof(error);
 		if (systemWrap->getSockOpt(event.data.fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void *>(&error), &errlen) == 0){
-			LOG_ERROR("error: "<<systemWrap->strError(error) );
+			LOG_ERROR("error: " << systemWrap->strError(error) );
 		}
 		closeFD(event.data.fd);
 
 		if(event.data.fd == listeningFD){ //error is on listening FD
 			listeningFD = -1;
-			throw std::runtime_error(LOG_EXCEPTION(std::string()+std::strerror(errno)+" in epoll")); //server can't continue
+			throw std::runtime_error(LOG_EXCEPTION(std::string() + std::strerror(errno) + " in epoll")); //server can't continue
 		}
 		return true; //there was an error
 	}
@@ -120,7 +94,7 @@ void SocketServerConnector::handleEpollRead(epoll_event &event){
 			}
 			catch(std::runtime_error &ret) {
 				BACKTRACE_PRINT();
-				LOG_INFO("threw while calling readHandshake("<<event.data.fd<<")");
+				LOG_INFO("threw while calling readHandshake(" << event.data.fd << ")");
 				closeFD(event.data.fd);
 			}
 		}
@@ -135,7 +109,7 @@ void SocketServerConnector::handleEpollWrite(epoll_event &event){
 		}
 		catch(std::runtime_error &ret){
 			BACKTRACE_PRINT();
-			LOG_INFO("threw while calling sendHandshake("<<event.data.fd<<")");
+			LOG_INFO("threw while calling sendHandshake(" << event.data.fd << ")");
 			closeFD(event.data.fd);
 		}
 	}
@@ -219,8 +193,36 @@ int SocketServerConnector::getListeningPort(){
 	result = nullptr;
 	createAddressInfoHints(hints);
 
-	getaddrinfoWrap getinfo(systemWrap, std::string(),port, &hints, result);
-	LOG_INFO("Trying to bind to port "<<port);
+	// for RAII
+	/*class getaddrinfoWrap{
+	public:
+		getaddrinfoWrap(SystemInterface* systemWrap, std::string port,
+		                    addrinfo * hints, addrinfo * &res) :
+		                        _systemWrap(systemWrap),
+		                        result(res),
+		                        success(false)
+		{
+			_systemWrap->getAddrInfo(nullptr, port.c_str(), hints, &result);
+			success = true;
+			res = result;
+		}
+		~getaddrinfoWrap(){
+			if(success){
+				_systemWrap->freeAddrInfo (result);
+			}
+		}
+	private:
+		SystemInterface* _systemWrap;
+		addrinfo *result;
+		bool success;
+		getaddrinfoWrap& operator=(const getaddrinfoWrap&) = delete;
+		getaddrinfoWrap(const getaddrinfoWrap&) = delete;
+	};*/
+
+	//getaddrinfoWrap getinfo(systemWrap, port, &hints, result);
+
+	systemWrap->getAddrInfo(nullptr, port.c_str(), &hints, &result);
+	LOG_INFO("Trying to bind to port " << port);
 
 	bool done = false;
 	while(!done && *running ){//try to connect to port until server shutsdown or we succeed
@@ -229,11 +231,13 @@ int SocketServerConnector::getListeningPort(){
 			std::this_thread::sleep_for( std::chrono::milliseconds(100) ); //port was busy, take a break before retrying
 		}
 	}
+	systemWrap->freeAddrInfo (result);
+
 	if (!done){
-		throw std::runtime_error(LOG_EXCEPTION(std::string()+"Could not bind port: "+port));
+		throw std::runtime_error(LOG_EXCEPTION(std::string() + "Could not bind port: " + port));
 	}
 	else{
-		LOG_INFO("Bound port: "<<port<<" on FD "<<listeningFD);
+		LOG_INFO("Bound port: " << port << " on FD " << listeningFD);
 	}
 	return listeningFD;
 }
@@ -256,7 +260,7 @@ void SocketServerConnector::getPortAndIP(int FD, struct sockaddr &in_addr, unsig
 	memset(&sbuf[0], 0, NI_MAXSERV);
 
 	systemWrap->getNameInfo(&in_addr, in_len, hbuf, sizeof hbuf, sbuf, sizeof sbuf, NI_NUMERICHOST | NI_NUMERICSERV);
-	LOG_INFO("Accepted connection on descriptor " << FD <<" (host="<< hbuf <<", port="<< sbuf <<")" );
+	LOG_INFO("Accepted connection on descriptor " << FD << " (host=" << hbuf << ", port=" << sbuf << ")");
 
 	size_t hbufLength = strnlen(hbuf,NI_MAXHOST);
 	size_t sbufLength = strnlen(sbuf,NI_MAXSERV);
@@ -286,7 +290,7 @@ void SocketServerConnector::newConnection(){
 		try{
 			getPortAndIP(newConnection, in_addr, in_len, PortBuff, IPBuff);
 			if(Authenticator->isNotValidConnection(IPBuff,PortBuff)){
-				throw std::runtime_error(LOG_EXCEPTION(" descriptor "+std::to_string(newConnection)+ \
+				throw std::runtime_error(LOG_EXCEPTION(" descriptor " + std::to_string(newConnection) + \
 					" (IP="+std::string(reinterpret_cast<char *>(&IPBuff[0]),IPBuff.size() ) + \
 					", port="+ std::string(reinterpret_cast<char *>(&PortBuff[0]),PortBuff.size() ) + \
 					")"+ " failed validation"));
@@ -305,8 +309,10 @@ void SocketServerConnector::newConnection(){
 	}
 }
 
-
-void SocketServerConnector::waitForHandshake(int FD){
+/**
+ * @throws std::runtime_error
+ */
+void SocketServerConnector::waitForHandshake(int FD) {
 	if(FD>0){ //a negative number is an error message passed through this function.
 		try{
 			fileDescriptors->startPollingForRead(epollFD, FD);
@@ -317,7 +323,7 @@ void SocketServerConnector::waitForHandshake(int FD){
 		}
 	}
 	else {
-		throw std::runtime_error(LOG_EXCEPTION(std::string()+std::to_string(FD)+" is an invalid file descriptor"));
+		throw std::runtime_error(LOG_EXCEPTION(std::string() + std::to_string(FD) + " is an invalid file descriptor"));
 	}
 }
 
@@ -336,11 +342,11 @@ void SocketServerConnector::readHandshake(int FD){
 		else if (count == 0){	//End of file. Remote closed connection.
 			throw std::runtime_error(LOG_EXCEPTION("end of file on "+std::to_string(FD)));
 		}
-		else if(( buffer.size()+ count )>maxMessageSize){
-			throw std::runtime_error(LOG_EXCEPTION("handshake too large.  Size: "+std::to_string(buffer.size())));
+		else if(( buffer.size() + count ) > maxMessageSize){
+			throw std::runtime_error(LOG_EXCEPTION("handshake too large.  Size: " + std::to_string(buffer.size())));
 		}
 		size_t end = buffer.size();
-		buffer.resize(end+count);
+		buffer.resize(end + count);
 		memcpy(&buffer[end],&buf[0],count);
 	}
 }

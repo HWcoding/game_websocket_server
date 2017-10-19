@@ -131,20 +131,20 @@ TEST(WebsocketMessageSenderTest, createFrameHeader)
 	EXPECT_STREQ( largeTestStringResult.c_str(), testCreateFrameHeader(largeTestString,2).c_str() );
 
 
-	/*if(testStringResult.compare(testCreateFrameHeader(testString,2)) !=0){
-		TEST_PRINT(redTestText("small string output is wrong"));
-		throw 1;
-	}
+	//if(testStringResult.compare(testCreateFrameHeader(testString,2)) !=0){
+	//	TEST_PRINT(redTestText("small string output is wrong"));
+	//	throw 1;
+	//}
 
-	if(mediumTestStringResult.compare(testCreateFrameHeader(mediumTestString,2)) !=0){
-		TEST_PRINT(redTestText("medium string output is wrong"));
-		throw 1;
-	}
+	//if(mediumTestStringResult.compare(testCreateFrameHeader(mediumTestString,2)) !=0){
+	//	TEST_PRINT(redTestText("medium string output is wrong"));
+	//	throw 1;
+	//}
 
-	if(largeTestStringResult.compare(testCreateFrameHeader(largeTestString,2)) !=0){
-		TEST_PRINT(redTestText("large string output is wrong"));
-		throw 1;
-	}*/
+	//if(largeTestStringResult.compare(testCreateFrameHeader(largeTestString,2)) !=0){
+	//	TEST_PRINT(redTestText("large string output is wrong"));
+	//	throw 1;
+	//}
 }
 
 
@@ -174,12 +174,12 @@ TEST(WebsocketMessageSenderTest, addMessage)
 
 	std::string result = sender.getMessageFromBuffer(1).toString();
 	EXPECT_STREQ( result.c_str(), expectedOutput.toString().c_str() );
-	/*if(sender.writeBuffers.writeBuffer[1].message.compare(expectedOutput)!= 0){
-		TEST_PRINT(redTestText("write buffer does not match input message"));
-		TEST_PRINT(redTestText("Expected:\n"<<expectedOutput<<"\nHas size: "<<expectedOutput.size() ));
-		TEST_PRINT(redTestText("In buffer:\n"<<sender.writeBuffers.writeBuffer[1].message<<"\nHas size: "<<sender.writeBuffers.writeBuffer[1].message.size() ));
-		throw 1;
-	}*/
+	//if(sender.writeBuffers.writeBuffer[1].message.compare(expectedOutput)!= 0){
+	//	TEST_PRINT(redTestText("write buffer does not match input message"));
+	//	TEST_PRINT(redTestText("Expected:\n"<<expectedOutput<<"\nHas size: "<<expectedOutput.size() ));
+	//	TEST_PRINT(redTestText("In buffer:\n"<<sender.writeBuffers.writeBuffer[1].message<<"\nHas size: "<<sender.writeBuffers.writeBuffer[1].message.size() ));
+	//	throw 1;
+	//}
 }
 
 
