@@ -13,68 +13,40 @@
 #include "source/logging/exception_handler.h"
 
 
-SocketWriterInterface::~SocketWriterInterface() = default;
-
 SocketWriter::SocketWriter(SystemInterface *_systemWrap,
                            SetOfFileDescriptors *FDs,
-                           std::atomic<bool>* run) : systemWrap(_systemWrap),
+                           std::atomic<bool>* run) : SocketNode(_systemWrap, FDs, run),
                                                      sender(new WebsocketMessageSender(_systemWrap)),
-                                                     writePollingMut(),
-                                                     fileDescriptors(FDs),
-                                                     running(run),
-                                                     MAXEVENTS(9999),
-                                                     epollFD(-1) {
+                                                     writePollingMut()
+                                                     {
 
 	fileDescriptors->addNewConnectionCallback(std::bind(&SocketWriter::newConnectionHandler, this, std::placeholders::_1));
 	fileDescriptors->addCloseFDCallback(std::bind(&SocketWriter::closeFDHandler, this, std::placeholders::_1));
 	signal(SIGPIPE, SIG_IGN); //ignore error when writing to closed sockets to prevent crash on client disconnect
 }
 
+// unused
+void SocketWriter::handleEpollRead(epoll_event &event){
+	(void)event;
+}
 
-void SocketWriter::startPoll() {
-	setupEpoll();
-	std::vector<epoll_event> events;
-	events.resize(static_cast<size_t>(MAXEVENTS));
 
-	while(running->load()) {	//The event loop
-		size_t num = systemWrap->epollWait(epollFD, &events[0], MAXEVENTS, 2000);
-		for (size_t i = 0; i < num; ++i) {
-			if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP)) {// An error occured
-				LOG_ERROR("epoll error");
-				int error = 0;
-				socklen_t errlen = sizeof(error);
-				if (systemWrap->getSockOpt(events[i].data.fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void *>(&error), &errlen) == 0) {
-					LOG_ERROR("error: " << systemWrap->strError(error) );
-				}
-				closeFD(events[i].data.fd);
-				continue; //go to next FD
-			}
-			if((events[i].events & EPOLLOUT)) {			//the socket is ready for writing
-				try {
-					//write data to client
-					writeData(events[i].data.fd);
-				}
-				catch(std::runtime_error &ret) {
-					BACKTRACE_PRINT();
-					closeFD(events[i].data.fd);			//drop connection on failure
-				}
-			}
-		}
+void SocketWriter::handleEpollWrite(epoll_event &event) {
+	try {
+		//write data to client
+		writeData(event.data.fd);
+	}
+	catch(std::runtime_error &ret) {
+		BACKTRACE_PRINT();
+		closeFD(event.data.fd);			//drop connection on failure
 	}
 }
 
 SocketWriter::~SocketWriter() = default;
 
 void SocketWriter::setupEpoll() {
-	epollFD = systemWrap->epollCreate(0);
+	SocketNode::setupEpoll();
 	LOG_INFO("Writer epollFD is " << epollFD);
-}
-
-
-void SocketWriter::closeFD(int FD) {
-	if(fileDescriptors->removeFD(FD) == -1) {
-		LOG_ERROR("FD " << FD << " failed to close correctly");
-	}
 }
 
 void SocketWriter::closeFDHandler(int FD) {

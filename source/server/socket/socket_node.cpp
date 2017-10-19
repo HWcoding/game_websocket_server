@@ -1,153 +1,87 @@
 #include "source/server/socket/socket_node.h"
-#include <signal.h>
+
 
 #include "source/server/socket/set_of_file_descriptors.h"
-#include "source/server/socket/socket_reader.h"
-#include "source/server/socket/socket_writer.h"
-#include "source/server/socket/socket_connector.h"
 #include "source/server/socket/system_wrapper.h"
-#include "source/data_types/socket_message.h"
+#include <sys/epoll.h>
+#include <sys/socket.h>
+#include <signal.h>
+#include <netdb.h>
+#include <atomic>
+
 #include "source/logging/exception_handler.h"
 
 
-SocketInterface::~SocketInterface() = default;
-
-Socket::Socket(const ServerConfig &config, std::atomic<bool> * _shouldContinueRunning) : shouldContinueRunning(_shouldContinueRunning),
-									systemWrap( new SystemWrapper()),
-									FDs( new SetOfFileDescriptors( systemWrap.get() ) ),
-									reader(  new SocketReader(systemWrap.get(), FDs.get(), shouldContinueRunning) ),
-									writer( new SocketWriter(systemWrap.get(), FDs.get(), shouldContinueRunning) ),
-									connector( new SocketServerConnector(config.port, systemWrap.get(), FDs.get(), shouldContinueRunning) ),
-									readerThread(),
-									writerThread(),
-									connectorThread() {
-
-	signal(SIGPIPE, SIG_IGN); //ignore sinal when writing to closed sockets to prevent crash on client disconnect
-	LOG_INFO("starting Socket");
-	readerThread = std::thread(&Socket::startReader, this);
-	writerThread = std::thread(&Socket::startWriter, this);
-	connectorThread = std::thread(&Socket::startConnector, this);
-}
-
-void Socket::disconnectClient(int FD){
-	FDs->removeFD(FD);
-}
-
-void Socket::shutdown()
+SocketNode::SocketNode(SystemInterface *_systemWrap,
+                       SetOfFileDescriptors *FDs,
+                       std::atomic<bool>* run) : systemWrap(_systemWrap),
+                                                 running(run),
+                                                 fileDescriptors(FDs),
+                                                 MAXEVENTS(9999),
+                                                 epollFD(-1)
 {
-	shouldContinueRunning->store(false); //tell loop in socket thread to exit and return
-	reader->shutdown();
-
-	if(connectorThread.joinable()){
-		LOG_INFO("connectorThread Exiting");
-		connectorThread.join();//wait for thread to finish returning
-	}
-
-	if(readerThread.joinable()){
-		LOG_INFO("readerThread Exiting");
-		readerThread.join();//wait for thread to finish returning
-	}
-
-	if(writerThread.joinable()){
-		LOG_INFO("writerThread Exiting");
-		writerThread.join();//wait for thread to finish returning
-	}
-
-	LOG_INFO("Exited");
+	signal(SIGPIPE, SIG_IGN); //ignore error when writing to closed sockets to prevent crash on client disconnect
 }
 
-Socket::~Socket()
-{
-	shutdown();
+SocketNode::~SocketNode(){
+	if(epollFD != -1){
+		systemWrap->closeFD(epollFD);
+		epollFD = -1;
+	}
 }
 
-
-SocketMessage Socket::getNextMessage(){
-	return reader->getNextMessage();
+void SocketNode::closeFD(int FD){
+	int ret= fileDescriptors->removeFD(FD);
+	if(ret == -1){
+		LOG_ERROR("File descriptor " << FD << " failed to close properly. ");
+	}
 }
 
-void Socket::setClientValidator(ClientValidatorInterface * validator){
-	connector->setClientValidator(validator);
+int SocketNode::getWaitTime() {
+	return 2000;
 }
 
-void Socket::sendMessage(SocketMessage &message){
-	writer->sendMessage(message);
+bool SocketNode::handleEpollErrors(epoll_event &event){
+	if ( (event.events & EPOLLERR) || (event.events & EPOLLHUP) ){// An error occured
+		LOG_ERROR("epoll error");
+		int error = 0;
+		socklen_t errlen = sizeof(error);
+		if (systemWrap->getSockOpt(event.data.fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void *>(&error), &errlen) == 0){
+			LOG_ERROR("error: " << systemWrap->strError(error) );
+		}
+		else {
+			LOG_ERROR("epoll error");
+		}
+		closeFD(event.data.fd);
+		return true; //there was an error
+	}
+	return false;
 }
 
-bool Socket::isRunning() {
-	return shouldContinueRunning->load();
+void SocketNode::processEvents(std::vector<epoll_event> &events){
+	size_t numberOfEvents = systemWrap->epollWait(epollFD, &events[0], MAXEVENTS, getWaitTime());
+	for (size_t i = 0; i < numberOfEvents; ++i){
+		if(handleEpollErrors(events[i])){
+			continue; //an error occured; move to next event
+		}
+		handleEpollRead(events[i]);
+		handleEpollWrite(events[i]);
+	}
 }
 
+void SocketNode::startPoll(){
+	LOG_INFO("poll started");
+	setupEpoll();
 
+	std::vector<epoll_event> events;
+	events.resize( static_cast<size_t>(MAXEVENTS) );
 
-
-void Socket::startReader(){ //blocking! should only be called in a new thread
-	LOG_INFO("starting");
-	try{
-		reader->startPoll(); //loops until *shouldContinueRunning == false or error
+	while(running->load()){	//The event loop
+		processEvents(events);
 	}
-	catch(std::runtime_error &e) {
-		BACKTRACE_PRINT();
-		LOG_ERROR("runtime exception thrown: " << e.what() );
-	}
-	catch(std::exception const &e) {
-		BACKTRACE_PRINT();
-		LOG_ERROR("exception thrown: " << e.what() );
-	}
-	catch(...){
-		BACKTRACE_PRINT();
-		LOG_ERROR("unknown exception thrown. Shutting down.");
-	}
-	LOG_INFO("ending");
-	shouldContinueRunning->store(false); //update the status of the server
-	return;
 }
 
-
-
-
-void Socket::startWriter(){ //blocking! should only be called in a new thread
-	LOG_INFO("starting");
-	try{
-		writer->startPoll(); //loops until *shouldContinueRunning == false
-	}
-	catch(std::runtime_error &e) {
-		BACKTRACE_PRINT();
-		LOG_ERROR("runtime exception thrown: " << e.what());
-	}
-	catch(std::exception const &e) {
-		BACKTRACE_PRINT();
-		LOG_ERROR("exception thrown: " << e.what() );
-	}
-	catch(...){
-		BACKTRACE_PRINT();
-		LOG_ERROR("unknown exception thrown. Shutting down.");
-	}
-	LOG_INFO("ending");
-	shouldContinueRunning->store(false); //update the status of the server
-	return;
+void SocketNode::setupEpoll(){
+	epollFD = systemWrap->epollCreate(0);
 }
 
-
-
-void Socket::startConnector(){ //blocking! should only be called in a new thread
-	LOG_INFO("starting");
-	try{
-		connector->startPoll(); //loops until *shouldContinueRunning == false
-	}
-	catch(std::runtime_error &e) {
-		BACKTRACE_PRINT();
-		LOG_ERROR("runtime exception thrown: " << e.what());
-	}
-	catch(std::exception const &e) {
-		BACKTRACE_PRINT();
-		LOG_ERROR("exception thrown: " << e.what() );
-	}
-	catch(...){
-		BACKTRACE_PRINT();
-		LOG_ERROR("unknown exception thrown. Shutting down.");
-	}
-	LOG_INFO("ending");
-	shouldContinueRunning->store(false); //update the status of the server
-	return;
-}

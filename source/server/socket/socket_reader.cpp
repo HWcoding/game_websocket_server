@@ -12,11 +12,11 @@
 #include "source/logging/exception_handler.h"
 
 
-SocketReader::SocketReader(SystemInterface *_systemWrap, SetOfFileDescriptors *_FDs, std::atomic<bool>* run) : systemWrap(_systemWrap),
+SocketReader::SocketReader(SystemInterface *_systemWrap, SetOfFileDescriptors *_FDs, std::atomic<bool>* run) : SocketNode(_systemWrap, _FDs, run),
 																										processor( new WebsocketMessageProcessor(_FDs) ),
-																										running(run), fileDescriptors(_FDs), readerQueue(nullptr),
+																										readerQueue(nullptr),
 																										waitingFDs(), waitingMut(),
-																										epollFD(-1), MAXEVENTS(9999), maxBufferSize(32760)
+																										maxBufferSize(32760)
 																										{
 	readerQueue = new MessageQueue(running);
 	processor->setReaderQueue(readerQueue);
@@ -46,53 +46,31 @@ void SocketReader::processSockMessage(ByteArray &in,  int FD){
 	processor->processSockMessage(in, FD);
 }
 
-
-void SocketReader::startPoll(){
-	setupEpoll();
-	std::vector<epoll_event> events;
-	events.resize(static_cast<size_t>(MAXEVENTS) );
-
-	while(running->load()){ // The event loop
-		int waitTime = 0;
-		{ // lock
-		std::lock_guard<std::recursive_mutex> lck(waitingMut);
-		if(waitingFDs.empty())waitTime = 1000;	// sleep for awhile during epollWait if no other work is to be done
-		} // unlock
-		size_t num = systemWrap->epollWait(epollFD, &events[0], MAXEVENTS, waitTime);
-		for (size_t i = 0; i < num; ++i){
-			if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP)){ // An error occured
-				int error = 0;
-				socklen_t errlen = sizeof(error);
-				if (systemWrap->getSockOpt(events[i].data.fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void *>(&error), &errlen) == 0){
-					LOG_ERROR("epoll error on FD "<<events[i].data.fd<<". Error: "<<strerror(error));
-				}
-				else {
-					LOG_ERROR("epoll error");
-				}
-				closeFD(events[i].data.fd);
-			}
-			else if((events[i].events & EPOLLIN)){	// the socket is ready for reading
-				addToWaitingFDs(events[i].data.fd);
-			}
-			else {
-				LOG_ERROR("FD "<<events[i].data.fd<< " was not EPOLLIN "<< events[i].events);
-			}
-		}
-		readChunk();
-	}
+int SocketReader::getWaitTime() {
+	int waitTime = 0;
+	{ // lock
+	std::lock_guard<std::recursive_mutex> lck(waitingMut);
+	if(waitingFDs.empty())waitTime = SocketNode::getWaitTime();	// sleep for awhile during epollWait if no other work is to be done
+	} // unlock
+	return waitTime;
 }
+
+void SocketReader::handleEpollRead(epoll_event &event){
+	if((event.events & EPOLLIN)) {			//the socket is ready for reading
+		addToWaitingFDs(event.data.fd);
+	}
+	readChunk();
+}
+
+// unused
+void SocketReader::handleEpollWrite(epoll_event &event) {
+	(void)event;
+}
+
 
 void SocketReader::setupEpoll(){
-	epollFD = systemWrap->epollCreate(0);
+	SocketNode::setupEpoll();
 	LOG_INFO("Reader epollFD is "<<epollFD);
-}
-
-
-void SocketReader::closeFD(int FD){
-	int ret = fileDescriptors->removeFD(FD);
-	if(ret == -1){
-		LOG_ERROR(" File descriptor "<<FD<<"failed to close properly. ");
-	}
 }
 
 void SocketReader::closeFDHandler(int FD){

@@ -2,6 +2,7 @@
 #define SERVER_SOCKET_SOCKET_CONNECTOR_H_
 //#include "server/socket/socket_connector.h"
 
+#include "source/server/socket/socket_node.h"
 #include <string>
 #include <vector>
 #include <memory>
@@ -14,16 +15,14 @@ class ClientValidatorInterface;
 struct epoll_event;
 
 
-class SocketServerConnector{
+class SocketServerConnector : public SocketNode {
 public:
-	void startPoll();
 	SocketServerConnector(const std::string &_port, SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, std::atomic<bool>* run);
 	void setClientValidator(ClientValidatorInterface * validator);
 	~SocketServerConnector();
 
 private:
 	void setupEpoll();
-	void processEvents(std::vector<epoll_event> &events);
 	bool handleEpollErrors(epoll_event &event);
 	void handleEpollRead(epoll_event &event);
 	void handleEpollWrite(epoll_event &event);
@@ -43,15 +42,9 @@ private:
 
 	SocketServerConnector& operator=(const SocketServerConnector&) = delete;
 	SocketServerConnector(const SocketServerConnector&) = delete;
-
-	SystemInterface *systemWrap;
 	std::unique_ptr<AuthenticatorInterface> Authenticator;
-	std::atomic<bool> *running;
 	size_t maxMessageSize;
-	SetOfFileDescriptors *fileDescriptors;
 	std::string port;
-	int MAXEVENTS;
-	int epollFD;
 	int listeningFD;
 };
 

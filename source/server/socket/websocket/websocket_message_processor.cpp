@@ -218,7 +218,6 @@ void WebsocketMessageProcessor::handleFragment (ByteArray &in, uint8_t opcode, i
 
 void WebsocketMessageProcessor::unmask (ByteArray &in, ByteArray &out, uint64_t messageStart, uint64_t length)
 {
-	//this function is nasty because it represented 97% of execution time. Its now optimised, and ugly, and illegal (strict-aliasing rules are broken)
 	if(messageStart < 4){
 		throw std::runtime_error(LOG_EXCEPTION("Message start position too low to allow for mask"));
 	}
@@ -232,10 +231,6 @@ void WebsocketMessageProcessor::unmask (ByteArray &in, ByteArray &out, uint64_t 
 
 	memcpy(&out[begin], &in[messageStart], length); //append a masked &in to the end of &out
 
-	//volatile qualifiers are needed to prevent the compiler from making wrong assumptions because we are breaking strict-aliasing rules.
-	//const volatile	uint8_t	* input  = reinterpret_cast<const volatile uint8_t*>(in.c_str());
-	volatile uint8_t * output = reinterpret_cast<volatile uint8_t*>( &out[0]);
-
 	uint8_t mask[4];
 	mask[0] = in[messageStart-4];//mask is the 4 bytes before messageStart
 	mask[1] = in[messageStart-3];
@@ -244,8 +239,8 @@ void WebsocketMessageProcessor::unmask (ByteArray &in, ByteArray &out, uint64_t 
 
 	uint64_t i;
 	//unmask output until output[] is 8byte aligned
-	for (i = 0; i < length && reinterpret_cast<size_t>(&output[i+begin])%8 != 0; ++i) {
-		output[i+begin] ^= mask[i % 4];	//unmask data by 'XOR'ing 4byte blocks with the mask one byte at a time
+	for (i = 0; i < length && reinterpret_cast<size_t>(&out[i+begin])%8 != 0; ++i) {
+		out[i+begin] ^= mask[i % 4];	//unmask data by 'XOR'ing 4byte blocks with the mask one byte at a time
 	}
 
 	//process the rest 64bits at a time
@@ -254,11 +249,11 @@ void WebsocketMessageProcessor::unmask (ByteArray &in, ByteArray &out, uint64_t 
 		uint64_t length64 = length-endBytes;
 		length64 /= 8; //convert length64 from number of bytes to number of 64bit ints
 
-		volatile uint64_t *output64 = reinterpret_cast<volatile uint64_t*>(&output[i+begin]);
+		uint64_t *output64 = reinterpret_cast<uint64_t*>(&out[i+begin]);
 		uint64_t offset= i;
 
 		uint64_t mask64 = 0;
-		volatile uint8_t *tempMask = reinterpret_cast<volatile uint8_t*>(&mask64);
+		uint8_t *tempMask = reinterpret_cast<uint8_t*>(&mask64);
 		for(int j = 0; j<8; ++j, ++i) {
 			tempMask[j] = mask[i % 4]; //build new 64bit mask starting were the previous loop left off (at i)
 		}
@@ -273,7 +268,7 @@ void WebsocketMessageProcessor::unmask (ByteArray &in, ByteArray &out, uint64_t 
 		offset += i*8; //unmask the last remaining bits
 		endBytes += offset;
 		for(i = offset; i<endBytes; i++) {
-			output[i+begin] ^= mask[i % 4];
+			out[i+begin] ^= mask[i % 4];
 		}
 	}
 }

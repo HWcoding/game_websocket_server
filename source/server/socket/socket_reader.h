@@ -2,6 +2,8 @@
 #define SERVER_SOCKET_SOCKET_READER_H_
 //#include "source/server/socket/socket_reader.h"
 
+
+#include "source/server/socket/socket_node.h"
 #include <mutex>
 #include <condition_variable>
 #include <set>
@@ -14,10 +16,10 @@ class MessageQueue;
 class SetOfFileDescriptors;
 class WebsocketMessageProcessor;
 class ByteArray;
+struct epoll_event;
 
-class SocketReader{
+class SocketReader: public SocketNode {
 public:
-	void startPoll();
 	void closeFDHandler(int FD);
 	void newConnectionHandler(int FD);
 	SocketMessage getNextMessage(); //blocks thread while queue is empty
@@ -27,8 +29,10 @@ public:
 	~SocketReader();
 
 private:
-	void setupEpoll();
-	void closeFD(int FD);
+	int getWaitTime() override;
+	void setupEpoll() override;
+	void handleEpollRead(epoll_event &event) override;
+	void handleEpollWrite(epoll_event &event) override;
 	void readChunk();
 	bool readChunkFromFD(int FD);
 	void addToWaitingFDs(int FD);
@@ -38,15 +42,10 @@ private:
 	SocketReader& operator=(const SocketReader&) = delete;
 	SocketReader(const SocketReader&) = delete;
 
-	SystemInterface *systemWrap;
 	std::unique_ptr<WebsocketMessageProcessor> processor;
-	std::atomic<bool> *running;
-	SetOfFileDescriptors *fileDescriptors;
 	MessageQueue *readerQueue;
 	std::set<int> waitingFDs;
 	std::recursive_mutex waitingMut;
-	int epollFD;
-	int MAXEVENTS;
 	size_t maxBufferSize;
 };
 

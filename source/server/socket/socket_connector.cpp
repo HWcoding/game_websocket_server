@@ -18,14 +18,10 @@
 SocketServerConnector::SocketServerConnector(const std::string &_port,
                                              SystemInterface *_systemWrap,
                                              SetOfFileDescriptors *FDs,
-                                             std::atomic<bool>* run) : systemWrap(_systemWrap),
+                                             std::atomic<bool>* run) : SocketNode(_systemWrap, FDs, run),
                                                                        Authenticator(new WebsocketAuthenticator(_systemWrap, FDs)),
-                                                                       running(run),
                                                                        maxMessageSize(99999),
-                                                                       fileDescriptors(FDs),
                                                                        port(_port),
-                                                                       MAXEVENTS(9999),
-                                                                       epollFD(-1),
                                                                        listeningFD(-1)
 {
 	signal(SIGPIPE, SIG_IGN); //ignore error when writing to closed sockets to prevent crash on client disconnect
@@ -33,10 +29,6 @@ SocketServerConnector::SocketServerConnector(const std::string &_port,
 
 
 SocketServerConnector::~SocketServerConnector(){
-	if(epollFD != -1){
-		systemWrap->closeFD(epollFD);
-		epollFD = -1;
-	}
 	if(listeningFD != -1){
 		fileDescriptors->removeFD(listeningFD);
 		listeningFD = -1;
@@ -46,17 +38,13 @@ SocketServerConnector::~SocketServerConnector(){
 
 void SocketServerConnector::closeFD(int FD){
 	Authenticator->closeFD(FD);
-	int ret= fileDescriptors->removeFD(FD);
-	if(ret == -1){
-		LOG_ERROR("File descriptor " << FD << " failed to close properly. ");
-	}
+	SocketNode::closeFD(FD);
 }
 
 
 int SocketServerConnector::addFD(int FD){
 	return fileDescriptors->addFD(FD);
 }
-
 
 bool SocketServerConnector::handleEpollErrors(epoll_event &event){
 	if ( (event.events & EPOLLERR) || (event.events & EPOLLHUP) ){// An error occured
@@ -76,7 +64,6 @@ bool SocketServerConnector::handleEpollErrors(epoll_event &event){
 	}
 	return false;
 }
-
 
 void SocketServerConnector::handleEpollRead(epoll_event &event){
 	if((event.events & EPOLLIN)) {			//the socket is ready for reading
@@ -101,7 +88,6 @@ void SocketServerConnector::handleEpollRead(epoll_event &event){
 	}
 }
 
-
 void SocketServerConnector::handleEpollWrite(epoll_event &event){
 	if(event.events & EPOLLOUT){			//the socket is ready for Writing; client is waiting on handshake
 		try{
@@ -115,44 +101,16 @@ void SocketServerConnector::handleEpollWrite(epoll_event &event){
 	}
 }
 
-
-void SocketServerConnector::processEvents(std::vector<epoll_event> &events){
-	size_t numberOfEvents = systemWrap->epollWait(epollFD, &events[0], MAXEVENTS, 2000);
-	for (size_t i = 0; i < numberOfEvents; ++i){
-		if(handleEpollErrors(events[i])){
-			continue; //an error occured; move to next event
-		}
-		handleEpollRead(events[i]);
-		handleEpollWrite(events[i]);
-	}
-}
-
-
-void SocketServerConnector::startPoll(){
-	LOG_INFO("poll started");
-	setupEpoll();
-
-	std::vector<epoll_event> events;
-	events.resize( static_cast<size_t>(MAXEVENTS) );
-
-	while(running->load()){	//The event loop
-		processEvents(events);
-	}
-}
-
-
 void SocketServerConnector::setClientValidator(ClientValidatorInterface * validator)
 {
 	Authenticator->setClientValidator(validator);
 }
 
-
 void SocketServerConnector::setupEpoll(){
-	epollFD = systemWrap->epollCreate(0);
+	SocketNode::setupEpoll();
 	listeningFD = getListeningPort();
 	openListeningPort();
 }
-
 
 bool SocketServerConnector::createAndBindListeningFD(struct addrinfo *addressInfo){
 	struct addrinfo *rp = nullptr;
@@ -178,7 +136,6 @@ bool SocketServerConnector::createAndBindListeningFD(struct addrinfo *addressInf
 	return false;
 }
 
-
 void SocketServerConnector::createAddressInfoHints(struct addrinfo &hints){
 	memset (&hints, 0, sizeof (struct addrinfo));
 	hints.ai_family = AF_UNSPEC;	 // Return IPv4 and IPv6
@@ -186,41 +143,11 @@ void SocketServerConnector::createAddressInfoHints(struct addrinfo &hints){
 	hints.ai_flags = AI_PASSIVE;	 // All interfaces
 }
 
-
 int SocketServerConnector::getListeningPort(){
 	struct addrinfo hints;
 	struct addrinfo *result;
 	result = nullptr;
 	createAddressInfoHints(hints);
-
-	// for RAII
-	/*class getaddrinfoWrap{
-	public:
-		getaddrinfoWrap(SystemInterface* systemWrap, std::string port,
-		                    addrinfo * hints, addrinfo * &res) :
-		                        _systemWrap(systemWrap),
-		                        result(res),
-		                        success(false)
-		{
-			_systemWrap->getAddrInfo(nullptr, port.c_str(), hints, &result);
-			success = true;
-			res = result;
-		}
-		~getaddrinfoWrap(){
-			if(success){
-				_systemWrap->freeAddrInfo (result);
-			}
-		}
-	private:
-		SystemInterface* _systemWrap;
-		addrinfo *result;
-		bool success;
-		getaddrinfoWrap& operator=(const getaddrinfoWrap&) = delete;
-		getaddrinfoWrap(const getaddrinfoWrap&) = delete;
-	};*/
-
-	//getaddrinfoWrap getinfo(systemWrap, port, &hints, result);
-
 	systemWrap->getAddrInfo(nullptr, port.c_str(), &hints, &result);
 	LOG_INFO("Trying to bind to port " << port);
 
