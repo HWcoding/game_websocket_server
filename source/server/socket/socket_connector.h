@@ -14,7 +14,6 @@ class ByteArray;
 class ClientValidatorInterface;
 struct epoll_event;
 
-
 class SocketServerConnector : public SocketNode {
 public:
 	SocketServerConnector(const std::string &_port, SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, std::atomic<bool>* run);

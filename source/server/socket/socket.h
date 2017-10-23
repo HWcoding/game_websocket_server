@@ -28,7 +28,6 @@ protected:
 	SocketInterface() = default;
 };
 
-
 struct ServerConfig {
 	std::string port = std::string();
 	int64_t loopSpeed = 100;
@@ -39,7 +38,6 @@ struct ServerConfig {
 	size_t maxHandshakeSize = 2048;
 	ServerConfig() {}
 };
-
 
 class Socket : public SocketInterface{ ///class starts new threads to handle socket io and cleans up on destruction
 
@@ -73,6 +71,5 @@ private:
 	std::thread writerThread;
 	std::thread connectorThread;
 };
-
 
 #endif /* SERVER_SOCKET_SOCKET */

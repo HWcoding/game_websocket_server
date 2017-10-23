@@ -267,7 +267,7 @@ void SocketServerConnector::readHandshake(int FD){
 			break;
 		}
 		else if (count == 0){	//End of file. Remote closed connection.
-			throw std::runtime_error(LOG_EXCEPTION("end of file on "+std::to_string(FD)));
+			throw std::runtime_error(LOG_EXCEPTION("end of file on " + std::to_string(FD)));
 		}
 		else if(( buffer.size() + count ) > maxMessageSize){
 			throw std::runtime_error(LOG_EXCEPTION("handshake too large.  Size: " + std::to_string(buffer.size())));
