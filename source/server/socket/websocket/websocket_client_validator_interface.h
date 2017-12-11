@@ -1,8 +1,8 @@
 #ifndef SERVER_SOCKET_WEBSOCKET_WEBSOCKET_CLIENT_VALIDATOR_INTERFACE_H
 #define SERVER_SOCKET_WEBSOCKET_WEBSOCKET_CLIENT_VALIDATOR_INTERFACE_H
-#include <string>
 //#include "source/server/socket/websocket/websocket_client_validator_interface.h"
 
+#include <string>
 
 struct ConnectionHeaders
 {
@@ -11,7 +11,6 @@ struct ConnectionHeaders
 	std::string SecWebSocketProtocol {};
 	std::string Cookie {};
 };
-
 
 class ClientValidatorInterface
 {
@@ -22,6 +21,5 @@ public:
 protected:
 	ClientValidatorInterface() = default;
 };
-
 
 #endif /* SERVER_SOCKET_WEBSOCKET_WEBSOCKET_CLIENT_VALIDATOR_INTERFACE_H */

@@ -4,9 +4,6 @@
 
 #include "source/server/socket/websocket/websocket_client_validator_interface.h"
 
-
-
-
 class DefaultClientValidator : public ClientValidatorInterface
 {
 public:

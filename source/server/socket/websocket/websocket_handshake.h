@@ -8,7 +8,6 @@
 #include <stdint.h>
 #include "source/data_types/byte_array.h"
 
-
 class HandshakeHeaders : public HandshakeHeadersInterface {
 public:
 	ByteArray getConnection() const override;
@@ -35,7 +34,5 @@ protected:
 private:
 	bool filled {false};
 };
-
-
 
 #endif /* SERVER_SOCKET_WEBSOCKET_WEBSOCKET_HANDSHAKE_H_ */

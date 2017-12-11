@@ -14,7 +14,6 @@ class SetOfFileDescriptors;
 class HandshakeHeaders;
 class HandshakeHeadersInterface;
 
-
 class WebsocketAuthenticator : public AuthenticatorInterface
 {
 public:
@@ -37,8 +36,6 @@ private:
 	static ByteArray createHandshake(const HandshakeHeadersInterface &headers);
 	static ByteArray createSecWebSocketAccept(const ByteArray &SecWebSocketKey);
 	static bool isHandshakeInvalid(const ByteArray &handShake);
-	static void toBase64(const ByteArray &in, ByteArray &out);
-	static uint8_t convertTo64(uint8_t in);
 
 	WebsocketAuthenticator& operator=(const WebsocketAuthenticator&) = delete;
 	WebsocketAuthenticator(const WebsocketAuthenticator&) = delete;

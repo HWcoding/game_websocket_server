@@ -10,7 +10,6 @@ class SystemInterface;
 class SetOfFileDescriptors;
 struct epoll_event;
 
-
 class SocketNode {
 public:
 	void startPoll();
@@ -36,6 +35,5 @@ private:
 	SocketNode& operator=(const SocketNode&) = delete;
 	SocketNode(const SocketNode&) = delete;
 };
-
 
 #endif /* SERVER_SOCKET_SOCKET_NODE */

@@ -9,12 +9,81 @@
 #include "source/logging/exception_handler.h"
 
 
+uint8_t convertTo64(uint8_t in);
+void toBase64(const ByteArray &input, ByteArray &out);
+
+//converts an 8bit int less than 64 into a base64 char
+uint8_t convertTo64(uint8_t in)
+{
+	if(in < 26)  		return static_cast<uint8_t>(in+65);
+	else if(in < 52)  	return static_cast<uint8_t>(in+71);
+	else if(in < 62)  	return static_cast<uint8_t>(in-4);
+	else if(in == 62)	return 43;
+	else if(in == 63)	return 47;
+
+	throw std::runtime_error(LOG_EXCEPTION("input out of range: "+std::to_string(static_cast<int>(in))+" should be less than 64"));
+}
+
+
+//converts an array of data into a base64 string for calculating the Sec-WebSocket-Accept header field (won't work for general conversion)
+void toBase64(const ByteArray &input, ByteArray &out)
+{
+	out = ByteArray();
+	if(input.size() != 20) { //the incoming SHA-1 hash should be exactly 20 long.  This simplified function breaks for other lengths
+		throw std::runtime_error(LOG_EXCEPTION("wrong input length: "+std::to_string(input.size())+" should be 20" ));
+	}
+	out.resize(28);
+	uint8_t temp;
+
+	//splits bytes on 6bit bounderies in network byte order (assuming little endian on machine), converts the 6 bits to base64, then stores each in a char
+	for(size_t i = 0, j = 0; i< 18; i+=3, j+=4) {	//process first 18bytes of 'in' 3 bytes at a time.
+
+		//out[0] will be the top 6 bits of in[0]
+		temp = static_cast <uint8_t>(input[i]>>2);	//take top 6 bits of first byte
+		out[j] = convertTo64(temp);				//convert to base64 and store them in first char
+
+		//out[1] will be the bottom 2 bits of in[0] followed by the top 4 bits of in[1]
+		temp = input[i] & 0x03;								//zero top 6 bits of first byte by & with 0000 0011
+		temp = static_cast <uint8_t>(temp<<4);				//move the bottom 2 bits of the first byte to the 5th and 6th bits of temp
+		temp = static_cast <uint8_t>((input[i+1]>>4)+temp);	//add the top 4 bits of the second byte to the bottom 4 bits of temp
+		out[j+1] = convertTo64(temp);						//convert to base64 and store temp in the second char
+
+		//out[2] will be the bottom 4 bits of in[1] followed by the top 2 bits of in[2]
+		temp = input[i+1] & 0x0F;							//zero top 4 bits of second byte by & with 0000 1111
+		temp = static_cast <uint8_t>(temp <<2);				//move the the bottom 4 bits of second byte into the 6th-3rd bits of temp
+		temp = static_cast <uint8_t>((input[i+2]>>6)+temp);	//add top 2 bits of third byte into bottom 2 bits of temp
+		out[j+2] = convertTo64(temp);						//convert to base64 and store temp in third char
+
+		//out[3] will be the bottom 6 bits of in[2]
+		temp = input[i+2] & 0x3F;				//zero top 2 bits of third byte by & with 0011 1111
+		out[j+3] = convertTo64(temp);			//convert bottom 6 bits of third byte to base64 and store in 4th char
+	}											//repeat for next 3 bytes
+
+	//the last 2 bytes need handled seperately because 20 is not a multiple of 3 and the = at the end breaks the pattern
+	//out[24] will be the top 6 bits of in[18]
+	temp = static_cast <uint8_t>(input[18]>>2);	//take top 6 bits of 19th byte
+	out[24] = convertTo64(temp);				//convert to base64 and store them in 25th char
+
+	//out[25] will be the bottom 2 bits of in[18] followed be the top 4 bits of in[19]
+	temp = input[18] & 0x03;							//zero top 6 bits of 19th byte by & with 0000 0011
+	temp = static_cast <uint8_t>(temp<<4);				//move the bottom 2 bits of the 19th byte to the 5th and 6th bits of temp
+	temp = static_cast <uint8_t>((input[19]>>4)+temp);	//add the top 4 bits of the 20th byte to the bottom 4 bits of temp
+	out[25] = convertTo64(temp);						//convert to base64 and store temp in the 26th char
+
+	//out[26] will be the bottom 4 bits of in[19] followed by zeros (last byte is unused)
+	temp = input[19] & 0x0F;					//zero top 4 bits of 20th byte by & with 0000 1111
+	temp = static_cast <uint8_t>(temp <<2);		//move the the bottom 4 bits of second byte into the 6th-3rd bits of temp
+	out[26] = convertTo64(temp);				//convert to base64 and store temp in 27th char
+	out[27] = '=';								//cap with '=' in 28th char to signify the last group only has 2 bytes instead of 3
+}
 
 
 
 AuthenticatorInterface::~AuthenticatorInterface() = default;
 
 ClientValidatorInterface::~ClientValidatorInterface() = default;
+
+
 
 
 WebsocketAuthenticator::WebsocketAuthenticator(SystemInterface *_systemWrap, SetOfFileDescriptors*FDs) :
@@ -25,17 +94,9 @@ WebsocketAuthenticator::WebsocketAuthenticator(SystemInterface *_systemWrap, Set
 
 bool WebsocketAuthenticator::isNotValidConnection(const ByteArray &IP, const ByteArray &port) const
 {
-	//place holder to silence unused warnings //TODO: check IP and port info
-	//(void)newConnection;
-	//(void)hbuf;
-	//(void)sbuf;
-	/////////////////////////////////////
-
 	std::string address = IP.toString();
 	std::string portNum = port.toString();
 	return ! ClientValidator->isClientIPValid(address, portNum);
-	//ClientValidator->isValidClientHeaders(ConnectionHeaders &headers);
-	//return true;
 }
 
 
@@ -160,70 +221,7 @@ bool WebsocketAuthenticator::isHandshakeInvalid(const ByteArray &handShake)
 }
 
 
-//converts an 8bit int less than 64 into a base64 char
-uint8_t WebsocketAuthenticator::convertTo64(uint8_t in)
-{
-	if(in < 26)  		return static_cast<uint8_t>(in+65);
-	else if(in < 52)  	return static_cast<uint8_t>(in+71);
-	else if(in < 62)  	return static_cast<uint8_t>(in-4);
-	else if(in == 62)	return 43;
-	else if(in == 63)	return 47;
 
-	throw std::runtime_error(LOG_EXCEPTION("input out of range: "+std::to_string(static_cast<int>(in))+" should be less than 64"));
-}
-
-
-//converts an array of data into a base64 string for calculating the Sec-WebSocket-Accept header field (won't work for general conversion)
-void WebsocketAuthenticator::toBase64(const ByteArray &input, ByteArray &out)
-{
-	out = ByteArray();
-	if(input.size() != 20) { //the incoming SHA-1 hash should be exactly 20 long.  This simplified function breaks for other lengths
-		throw std::runtime_error(LOG_EXCEPTION("wrong input length: "+std::to_string(input.size())+" should be 20" ));
-	}
-	out.resize(28);
-	uint8_t temp;
-
-	//splits bytes on 6bit bounderies in network byte order (assuming little endian on machine), converts the 6 bits to base64, then stores each in a char
-	for(size_t i = 0, j = 0; i< 18; i+=3, j+=4) {	//process first 18bytes of 'in' 3 bytes at a time.
-
-		//out[0] will be the top 6 bits of in[0]
-		temp = static_cast <uint8_t>(input[i]>>2);	//take top 6 bits of first byte
-		out[j] = convertTo64(temp);				//convert to base64 and store them in first char
-
-		//out[1] will be the bottom 2 bits of in[0] followed by the top 4 bits of in[1]
-		temp = input[i] & 0x03;								//zero top 6 bits of first byte by & with 0000 0011
-		temp = static_cast <uint8_t>(temp<<4);				//move the bottom 2 bits of the first byte to the 5th and 6th bits of temp
-		temp = static_cast <uint8_t>((input[i+1]>>4)+temp);	//add the top 4 bits of the second byte to the bottom 4 bits of temp
-		out[j+1] = convertTo64(temp);						//convert to base64 and store temp in the second char
-
-		//out[2] will be the bottom 4 bits of in[1] followed by the top 2 bits of in[2]
-		temp = input[i+1] & 0x0F;							//zero top 4 bits of second byte by & with 0000 1111
-		temp = static_cast <uint8_t>(temp <<2);				//move the the bottom 4 bits of second byte into the 6th-3rd bits of temp
-		temp = static_cast <uint8_t>((input[i+2]>>6)+temp);	//add top 2 bits of third byte into bottom 2 bits of temp
-		out[j+2] = convertTo64(temp);						//convert to base64 and store temp in third char
-
-		//out[3] will be the bottom 6 bits of in[2]
-		temp = input[i+2] & 0x3F;				//zero top 2 bits of third byte by & with 0011 1111
-		out[j+3] = convertTo64(temp);			//convert bottom 6 bits of third byte to base64 and store in 4th char
-	}											//repeat for next 3 bytes
-
-	//the last 2 bytes need handled seperately because 20 is not a multiple of 3 and the = at the end breaks the pattern
-	//out[24] will be the top 6 bits of in[18]
-	temp = static_cast <uint8_t>(input[18]>>2);	//take top 6 bits of 19th byte
-	out[24] = convertTo64(temp);				//convert to base64 and store them in 25th char
-
-	//out[25] will be the bottom 2 bits of in[18] followed be the top 4 bits of in[19]
-	temp = input[18] & 0x03;							//zero top 6 bits of 19th byte by & with 0000 0011
-	temp = static_cast <uint8_t>(temp<<4);				//move the bottom 2 bits of the 19th byte to the 5th and 6th bits of temp
-	temp = static_cast <uint8_t>((input[19]>>4)+temp);	//add the top 4 bits of the 20th byte to the bottom 4 bits of temp
-	out[25] = convertTo64(temp);						//convert to base64 and store temp in the 26th char
-
-	//out[26] will be the bottom 4 bits of in[19] followed by zeros (last byte is unused)
-	temp = input[19] & 0x0F;					//zero top 4 bits of 20th byte by & with 0000 1111
-	temp = static_cast <uint8_t>(temp <<2);		//move the the bottom 4 bits of second byte into the 6th-3rd bits of temp
-	out[26] = convertTo64(temp);				//convert to base64 and store temp in 27th char
-	out[27] = '=';								//cap with '=' in 28th char to signify the last group only has 2 bytes instead of 3
-}
 
 
 bool WebsocketAuthenticator::sendHandshake(int FD)

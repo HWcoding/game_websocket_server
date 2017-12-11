@@ -25,7 +25,6 @@ SocketWriter::SocketWriter(SystemInterface *_systemWrap,
 	signal(SIGPIPE, SIG_IGN); //ignore error when writing to closed sockets to prevent crash on client disconnect
 }
 
-
 // unused
 void SocketWriter::handleEpollRead(epoll_event &event){
 	(void)event;

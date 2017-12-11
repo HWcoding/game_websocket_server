@@ -39,18 +39,11 @@ private:
 	SetOfFileDescriptors& operator=(const SetOfFileDescriptors&) = delete;
 	SetOfFileDescriptors(const SetOfFileDescriptors&) = delete;
 
-	//std::unique_lock<std::recursive_mutex> getAndLockFD(FileDescriptor* &FDpointer, int FD);
-
 	SystemInterface *systemWrap;
-
 	std::unordered_map<int, FileDescriptor> openFDs;	//holds list of File Descriptors for all socket connections
 	std::mutex FDmut; //OpenFD mutex
-
 	std::vector<std::function<void(int)>> closeCallbacks; //array of functions to call when an FD is closed.  Each thread should add a callback so it can properly clean up when a connection is closed.
-
 	std::vector<std::function<void(int)>> newConnectionCallbacks; //array of functions to call when a new connection is made.
 };
-
-
 
 #endif /* SERVER_SOCKET_SET_OF_FILE_DESCRIPTORS_H_ */

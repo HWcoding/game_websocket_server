@@ -13,7 +13,7 @@ void debugBackTrace();
 }
 
 extern "C" {
-	void __cxa_throw(void *ex, void* info, void (*dest)(void *)) __attribute__ ((noreturn));
+	void __cxa_throw(void* ex, void* info, void (*dest)(void *)) __attribute__ ((noreturn));
 }
 
 

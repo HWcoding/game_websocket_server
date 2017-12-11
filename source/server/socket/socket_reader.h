@@ -2,7 +2,6 @@
 #define SERVER_SOCKET_SOCKET_READER_H_
 //#include "source/server/socket/socket_reader.h"
 
-
 #include "source/server/socket/socket_node.h"
 #include <mutex>
 #include <condition_variable>
