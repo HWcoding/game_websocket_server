@@ -30,7 +30,6 @@ struct PathSearchNode
 
 struct PathSearchNodeGraph : public std::vector<PathSearchNode>
 {
-	//void addNode(void * proxy, Point3D pos);
 	void addNode(size_t proxy, const Point3D &pos);
 
 	void addEdge(size_t vertA, size_t vertB, double additionalCost = 0);

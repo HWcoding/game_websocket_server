@@ -86,8 +86,9 @@ std::vector<size_t> Astar(size_t start, size_t goal, PathSearchNodeGraph &nodeGr
 
 		current = *std::begin(openSet);
 		for(auto element : openSet){
-			if(data[element].costToGoal < data[current].costToGoal)
+			if(data[element].costToGoal < data[current].costToGoal) {
 				current = element;
+			}
 		}
 
 		if( current == goal ) {
