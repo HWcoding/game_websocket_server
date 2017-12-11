@@ -9,4 +9,5 @@ program_Release
 tests/bin/*
 tests/deps/*
 tests/objs/*
+tests/gcov/*
 external/*

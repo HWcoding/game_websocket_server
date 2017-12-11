@@ -9,15 +9,8 @@ COMP = g++
 CFLAGS = -DDEBUG -Og -g3 -fno-omit-frame-pointer -fno-inline
 
 
-
-
-
-
-
-
 CPP_FILE_NAME = $(abspath $(FILENAME))
 TEST_OBJECTS_NAME = $(subst  /,+., $(basename $(CPP_FILE_NAME)))
-
 
 
 #release
@@ -63,12 +56,13 @@ MOV_DEPS = mv -f $(DEP_TEMP)$*.Td $(DEP_DIR)$*.d
 CXX = $(COMP) -I $(HEAD_PATH) -isystem $(TEST_FRAMEWORK_HEADER) $(CFLAGS) -Winvalid-pch $(DEPFLAGS) -std=c++14
 
 DEPFILES := $(patsubst %,$(DEP_DIR)%.d,$(basename $(notdir $(TEST_OBJECTS))))
+PROFILES := $(addprefix $(PROJECT_DIRECTORY)objs/debug/, $(subst  tests+.source,source,$(subst  /,+.,$(addsuffix .cpp, $(CPP_FILE_NAME:_test.cpp=)))))
 
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(TEST_OBJECTS) $(OBJECT_FILE_NAMES) $(TEST_FRAMEWORK_LIBRARY) $(TEST_OBJ_DIR)test_lib.a
 	$(CXX) -o $@ $^ $(LIBRARIES)
-	{ $(EXECUTABLE) 2> /dev/null ; [ $$? -eq 0 ] || touch $(CPP_FILE_NAME); }
+	{ $(EXECUTABLE) 2> /dev/null ; [ $$? -eq 0 ] || touch $(CPP_FILE_NAME); gcov $(PROFILES) > /dev/null;}
 
 .SECONDEXPANSION:
 $(TEST_OBJ_DIR)%.o: $$(subst  +.,/, %.cpp) $(DEP_DIR)%.d

@@ -34,7 +34,7 @@ WeakWarnings = " -Wall -Wextra -pedantic -ansi -Weffc++ -Wno-odr"
 TestWarnings = " -Wall -Wno-odr"
 
 ReleaseOptimizations = " -Ofast -falign-functions=16 -falign-loops=16 -march=native"
-DebugBuild = "CFLAGS=-DDEBUG -g3 -fno-omit-frame-pointer -fno-inline"
+DebugBuild = "CFLAGS=-DDEBUG -g3 -fno-omit-frame-pointer -fno-inline -fprofile-arcs -ftest-coverage"
 ReleaseBuild = "CFLAGS=-DNDEBUG -flto " + ReleaseOptimizations
 
 
@@ -345,6 +345,8 @@ def buildDirectories():
 	makeDir("./release")
 	os.chdir( "../" )
 
+	makeDir("./gcov")
+
 	makeDir("./deps")
 	os.chdir( "./deps" )
 	makeDir("./debug")
@@ -601,6 +603,15 @@ def compileTestFiles():
 	#wait
 	pool.close()
 	pool.join()
+
+	#move gcov files
+	sourcepath="./"
+	source = os.listdir(sourcepath)
+	destinationpath = "./gcov"
+	for files in source:
+		if files.endswith(".gcov"):
+			shutil.move(os.path.join(sourcepath,files), os.path.join(destinationpath,files))
+
 	os.chdir( "../" )
 
 	#check results and exit on an error
@@ -631,6 +642,23 @@ def buildDocs():
 					print("Error creating docs")
 		os.chdir( "../" )
 
+def CleanTemps():
+	if getCleanFlag():
+		#clean temp files
+		os.chdir( "./objs" )
+		if os.path.isdir("./debug" ):
+			shutil.rmtree("./debug")
+			os.makedirs( "./debug" )
+		os.chdir( "../" )
+		os.chdir( "./tests" )
+		if os.path.isdir("./gcov" ):
+			shutil.rmtree("./gcov")
+			os.makedirs( "./gcov" )
+		os.chdir( "./objs" )
+		if os.path.isdir("./debug" ):
+			shutil.rmtree("./debug")
+			os.makedirs( "./debug" )
+		os.chdir( "../../" )
 
 def main():
 
@@ -666,6 +694,10 @@ def main():
 		printMinorHeader( "Building Documentation" )
 		buildDocs()
 		printHighlight( "Finished" )
+
+	# remove temporary files if the clean flag is set
+	CleanTemps()
+
 	print("")
 	printHighlight( "****Build Complete****" )
 	print("")
