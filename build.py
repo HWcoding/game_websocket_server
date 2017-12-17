@@ -11,6 +11,8 @@
 #		uses weaker warnings while building
 #	docs
 #		builds documentation
+#	cov
+#		builds coverage data
 #	tidy
 #		runs clang-tidy static analyzer
 
@@ -50,7 +52,6 @@ def getIsArgument( argument ):
 # returns true if temparary files should be deleted. Set by passing clean as a command argument
 def getCleanFlag():
 	return getIsArgument( "clean" )
-
 
 
 # echos input inside a blue gradiant bar
@@ -576,25 +577,69 @@ def getTestDependencies( file ):
 # takes a test .cpp filename as argument and compiles it
 def compileTest(file):
 	ObjectList = "OBJECT_LIST=" + getTestDependencies( file )
+	Cov = "COVERAGE=0"
+	if getIsArgument( "cov" ):
+		Cov = "COVERAGE=1"
 	FileName = "FILENAME=" + file
 	BuildOptions = getTestBuildFlag()
 	if getCleanFlag():
 		BuildOptions = "clean"
 
 	# build and run the test
-	make_process = subprocess.Popen(["make", "-s", "-j2", BuildOptions, FileName, ObjectList], stderr=subprocess.STDOUT)
+	make_process = subprocess.Popen(["make", "-s", "-j2", BuildOptions, FileName, ObjectList, Cov], stderr=subprocess.STDOUT)
 	if make_process.wait() != 0:
 		raise Exception
+
+# removes temporary objects for tests and coverage
+def cleanTestFiles():
+
+	#delete gcov files
+	sourcepath="./tests/gcov/"
+	source = os.listdir(sourcepath)
+	for files in source:
+		if files.endswith(".gcov"):
+			os.remove(os.path.join(sourcepath,files))
+
+	#delete object files
+	sourcepath="./tests/objs/debug/"
+	source = os.listdir(sourcepath)
+	for files in source:
+		if files.endswith(".o"):
+			os.remove(os.path.join(sourcepath,files))
+
+	#delete gcno files
+	sourcepath="./tests/objs/debug/"
+	source = os.listdir(sourcepath)
+	for files in source:
+		if files.endswith(".gcno"):
+			os.remove(os.path.join(sourcepath,files))
+
+	#delete gcno files
+	sourcepath="./tests/deps/debug/"
+	source = os.listdir(sourcepath)
+	for files in source:
+		if files.endswith(".d"):
+			os.remove(os.path.join(sourcepath,files))
+	#delete executable files
+	sourcepath="./tests/bin/debug/"
+	source = os.listdir(sourcepath)
+	for files in source:
+		if files.endswith(".test"):
+			os.remove(os.path.join(sourcepath,files))
 
 
 #compiles all the .cpp files in the ./tests directory
 def compileTestFiles():
-
+	if getIsArgument( "cov" ):
+		cleanTestFiles()
 	# move into the test directory
 	os.chdir( "./tests" )
-	# get list of tests and compile/run them in separate processes.
-	pool = multiprocessing.Pool()
+	if getIsArgument( "cov" ):
+		pool = multiprocessing.Pool(1)
+	else:
+		pool = multiprocessing.Pool()
 	results = []
+	# get list of tests and compile/run them in separate processes.
 	for root, dirs, files in os.walk("./source/"):
 		for file in files:
 			if file.endswith('.cpp'):
@@ -607,7 +652,6 @@ def compileTestFiles():
 	#delete gcov files
 	sourcepath="./"
 	source = os.listdir(sourcepath)
-	destinationpath = "./gcov"
 	for files in source:
 		if files.endswith(".gcov"):
 			os.remove(os.path.join(sourcepath,files))

@@ -66,11 +66,17 @@ all: $(EXECUTABLE)
 $(EXECUTABLE): export GCOV_PREFIX = $(COVERAGE_DIR)
 $(EXECUTABLE): export GCOV_PREFIX_STRIP = 7
 $(EXECUTABLE): $(TEST_OBJECTS) $(OBJECT_FILE_NAMES) $(TEST_FRAMEWORK_LIBRARY) $(TEST_OBJ_DIR)test_lib.a
+ifeq ($(COVERAGE),1)
 	$(CXX) -o $@ $^ $(LIBRARIES)
 	{ $(EXECUTABLE) 2> /dev/null ; [ $$? -eq 0 ] || touch $(CPP_FILE_NAME); \
 	gcov $(addprefix $(COVERAGE_DIR), $(notdir $(PROFILES))) > /dev/null; \
 	mv -f $(GCOV_FILENAME).cpp.gcov /home/pc001/Projects/server/tests/gcov/  2>/dev/null || true; \
-	mv -f $(GCOV_FILENAME).h.gcov /home/pc001/Projects/server/tests/gcov/  2>/dev/null || true;}
+	mv -f $(GCOV_FILENAME).h.gcov /home/pc001/Projects/server/tests/gcov/  2>/dev/null || true; \
+	find . -maxdepth 1 -name "*.gcov" -type f -delete;}
+else
+	$(CXX) -o $@ $^ $(LIBRARIES)
+	{ $(EXECUTABLE) 2> /dev/null ; [ $$? -eq 0 ] || touch $(CPP_FILE_NAME);}
+endif
 
 $(TEST_OBJ_DIR)%.o: export GCOV_PREFIX = $(addprefix $(DEBUG_COVERAGE),$(basename $(notdir $(%.cpp)))/)
 $(TEST_OBJ_DIR)%.o: export GCOV_PREFIX_STRIP = 6
