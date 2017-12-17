@@ -524,7 +524,7 @@ class WebsocketMessageProcessorWrap : public WebsocketMessageProcessor
 {
 public:
 	WebsocketMessageProcessorWrap(SetOfFileDescriptors *_FDs) : WebsocketMessageProcessor(_FDs) {}
-	using WebsocketMessageProcessor::extractMessage;
+	using WebsocketMessageProcessor::extractMessages;
 	using WebsocketMessageProcessor::getMessageSize;
 	using WebsocketMessageProcessor::completeFracture;
 	using WebsocketMessageProcessor::handleFragment;
@@ -867,7 +867,7 @@ TEST(WebsocketMessageProcessorTest, testExtractMessageWorksWithPartialReads)
 		ByteArray partial;
 		partial.appendWithNoSize( maskedTestString.substr(position, readSize) );
 
-		size_t decodedCount = processor.extractMessage (partial, decodedTemp, types, 1);
+		size_t decodedCount = processor.extractMessages (partial, decodedTemp, types, 1);
 		for(size_t i = 0; i< decodedCount; ++i){
 			decoded.push_back(decodedTemp[i]);
 		}
@@ -905,7 +905,7 @@ TEST(WebsocketMessageProcessorTest, testExtractMessageWorksWithWholeReads)
 	ByteArray input;
 	input.appendWithNoSize(maskedTestString);
 
-	size_t decodedCount = processor.extractMessage (input, decoded, types, 1);
+	size_t decodedCount = processor.extractMessages (input, decoded, types, 1);
 
 	EXPECT_EQ( decodedCount, messageCount );
 

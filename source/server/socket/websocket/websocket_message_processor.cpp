@@ -52,7 +52,7 @@ void WebsocketMessageProcessor::processSockMessage (ByteArray &in,  int FD)
 {
 	std::vector< ByteArray > messages;
 	std::vector<int> messageTypes;
-	size_t r = extractMessage(in, messages, messageTypes, FD);
+	size_t r = extractMessages(in, messages, messageTypes, FD);
 	if(r != 0){//we got a complete message
 		for(size_t i=0; i<r;++i){
 			if(messageTypes[i] == 2 || messageTypes[i] == 1){
@@ -75,81 +75,52 @@ void WebsocketMessageProcessor::processSockMessage (ByteArray &in,  int FD)
 }
 
 
-size_t WebsocketMessageProcessor::extractMessage (ByteArray &in, std::vector< ByteArray > &out, std::vector<int> &types, int FD)
-{
-	types.reserve(10);
-	types.push_back(-1);
-	out.reserve(10);			//we could calculate how many messages are in 'in' here and reserve the correct number but it would be slow. 10 should cover most cases.
-	out.push_back( ByteArray() ); //create first element.
-
-	size_t currentM =0;
-	uint64_t start =0;
-	uint64_t size =0;
-	uint64_t messageStart =0;
-
-	while(size<(in.size()-(messageStart))){
-		size_t outStart = out[currentM].size();
-
-		if(!ReadBuffers->messageIsEmpty(FD)){
-			bool wholeMessage = ReadBuffers->extractMessage(in, start, FD); //if we aready have part of the message in buffer, prepend it to in
-			if(!wholeMessage){
-				ByteArray message;
-				size_t messageSize = in.size()-start;
-				message.resize(messageSize);
-				memcpy(&message[0], &in[start], messageSize);
-				ReadBuffers->addMessage(FD, message);
-				return currentM;
-			}
-		}
-
-		if(in.size()-start<6){ //string too small to read any data (header+mask takes a min size of 6. Control frame message may be of length 0)
-			ByteArray message;
-			size_t messageSize = in.size()-start;
-			message.resize(messageSize);
-			memcpy(&message[0], &in[start], messageSize);
-			ReadBuffers->addMessage(FD, message); //add to buffer for processing
-			return currentM;
-		}
-
-		size = getMessageSize(in, messageStart, start, FD);
-		if(size == 0)return currentM;
-
-		if(size>(in.size()-(messageStart))){ //only received partial message;
-			ByteArray message;
-			size_t messageSize = in.size()-start;
-			message.resize(messageSize);
-			memcpy(&message[0], &in[start], messageSize);
-			ReadBuffers->addMessage(FD, message);
-			ReadBuffers->setMessageSize(FD, size);
-			return currentM;
-		}
-
-		uint8_t opcode = static_cast<uint8_t>(in[start] & 0x0F); //take low 4 bits of first byte
-		types[currentM] = opcode;
-
-		unmask(in, out[currentM], messageStart, size);
-		if(in[start]<128){ //Fragmented message
-			handleFragment(out[currentM], opcode, FD);
-		}
-
-		else{ //complete
-			if(opcode == 0){
-				completeFracture(out[currentM], types[currentM], outStart, FD);
-			}
-			types.push_back(-1);
-			out.push_back(ByteArray() );
-			currentM++;
-			if(types[currentM-1] == 8){ //close control frame
-				return currentM; //don't process further messages
-			}
-		}
-		start = messageStart+size;
-	}
-	return currentM;
+void WebsocketMessageProcessor::storePartialMessage(ByteArray &in, uint64_t start, int FD) {
+	ByteArray message;
+	size_t messageSize = in.size()-start;
+	message.resize(messageSize);
+	memcpy(&message[0], &in[start], messageSize);
+	ReadBuffers->addMessage(FD, message);
 }
 
 
-uint64_t WebsocketMessageProcessor::getMessageSize (ByteArray &in, uint64_t &messageStart, const uint64_t &start, int FD)
+//converts a 64bit array in network byte order into a little endian unsigned 64bit int
+uint64_t WebsocketMessageProcessor::getNet64bit (uint8_t *in)
+{
+	uint8_t out[8];
+	uint64_t rval;
+
+	out[0]= in[7];
+	out[1]= in[6];
+	out[2]= in[5];
+	out[3]= in[4];
+	out[4]= in[3];
+	out[5]= in[2];
+	out[6]= in[1];
+	out[7]= in[0];
+
+	uint64_t *temp = reinterpret_cast<uint64_t *>(out);
+	rval = *temp;
+	return rval;
+}
+
+
+//converts a 16bit array in network byte order into a little endian unsigned 16bit int
+uint16_t WebsocketMessageProcessor::getNet16bit (uint8_t *in)
+{
+	uint8_t out[2];
+	uint16_t rval;
+
+	out[0]= in[1];
+	out[1]= in[0];
+
+	uint16_t *temp = reinterpret_cast<uint16_t *>(out);
+	rval = *temp;
+	return rval;
+}
+
+
+int64_t WebsocketMessageProcessor::getMessageSize (ByteArray &in, uint64_t &messageStart, const uint64_t &start, int FD)
 {
 	uint64_t size = in[start+1]^128;
 	if(size >= 128){
@@ -158,25 +129,15 @@ uint64_t WebsocketMessageProcessor::getMessageSize (ByteArray &in, uint64_t &mes
 	}
 	messageStart = start+6; //start of mask start
 	if(size == 126){
-		if(in.size()-start<134){//string too small to read any data (header+mask takes a min of 8. Message length is at least 126)
-			ByteArray message;
-			size_t messageSize = in.size()-start;
-			message.resize(messageSize);
-			memcpy(&message[0], &in[start], messageSize);
-			ReadBuffers->addMessage(FD,message); //add to buffer for processing
-			return 0;
+		if(in.size()-start<134){//ByteArray too small to read any data (header+mask takes a min of 8. Message length is at least 126)
+			return -1;
 		}
 		messageStart = start+8;
 		size = getNet16bit(&in[start+2]);
 	}
 	else if (size == 127){
-		if(in.size()-start<65550){//string too small to read any data (header+mask takes a min of 14. Message length is at least 65536)
-			ByteArray message;
-			size_t messageSize = in.size()-start;
-			message.resize(messageSize);
-			memcpy(&message[0], &in[start], messageSize);
-			ReadBuffers->addMessage(FD,message); //add to buffer for processing
-			return 0;
+		if(in.size()-start<65550){//ByteArray too small to read any data (header+mask takes a min of 14. Message length is at least 65536)
+			return -1;
 		}
 		messageStart = start+14;
 		size = getNet64bit(&in[start+2]);
@@ -184,7 +145,7 @@ uint64_t WebsocketMessageProcessor::getMessageSize (ByteArray &in, uint64_t &mes
 	if(size>MaxReadBufferSize){
 		throw std::runtime_error(LOG_EXCEPTION("Message too large on on descriptor "+std::to_string(FD)+".  Size: "+std::to_string(size) ));
 	}
-	return size;
+	return static_cast<int64_t>(size);
 }
 
 
@@ -221,12 +182,12 @@ void WebsocketMessageProcessor::unmask (ByteArray &in, ByteArray &out, uint64_t 
 	if(messageStart < 4){
 		throw std::runtime_error(LOG_EXCEPTION("Message start position too low to allow for mask"));
 	}
-	if(in.size() < messageStart+length) {
+	if(in.size() < messageStart + length) {
 		throw std::runtime_error(LOG_EXCEPTION("Message size is smaller than reported length"));
 	}
 
-	uint64_t begin  = out.size(); //save end position of string to begin writing to
-	size_t capacity = begin+length; //new size needed to hold the concatenated strings
+	uint64_t begin = out.size(); //save end position of string to begin writing to
+	size_t capacity = begin + length; //new size needed to hold the concatenated strings
 	out.resize(capacity);
 
 	memcpy(&out[begin], &in[messageStart], length); //append a masked &in to the end of &out
@@ -274,37 +235,67 @@ void WebsocketMessageProcessor::unmask (ByteArray &in, ByteArray &out, uint64_t 
 }
 
 
-//converts a 64bit array in network byte order into a little endian unsigned 64bit int
-uint64_t WebsocketMessageProcessor::getNet64bit (uint8_t *in)
+size_t WebsocketMessageProcessor::extractMessages (ByteArray &in, std::vector< ByteArray > &out, std::vector<int> &types, int FD)
 {
-	uint8_t out[8];
-	uint64_t rval;
+	types.reserve(10);
+	types.push_back(-1);
+	out.reserve(10);			//we could calculate how many messages are in 'in' here and reserve the correct number but it would be slow. 10 should cover most cases.
+	out.push_back( ByteArray() ); //create first element.
 
-	out[0]= in[7];
-	out[1]= in[6];
-	out[2]= in[5];
-	out[3]= in[4];
-	out[4]= in[3];
-	out[5]= in[2];
-	out[6]= in[1];
-	out[7]= in[0];
+	size_t currentM =0;
+	uint64_t start =0;
+	uint64_t size =0;
+	uint64_t messageStart =0;
 
-	uint64_t *temp = reinterpret_cast<uint64_t *>(out);
-	rval = *temp;
-	return rval;
-}
+	while(size<(in.size()-(messageStart))){
+		size_t outStart = out[currentM].size();
 
+		if(!ReadBuffers->messageIsEmpty(FD)){
+			bool wholeMessage = ReadBuffers->extractMessage(in, start, FD); //if we aready have part of the message in buffer, prepend it to in
+			if(!wholeMessage){
+				storePartialMessage(in, start, FD);
+				return currentM;
+			}
+		}
 
-//converts a 16bit array in network byte order into a little endian unsigned 16bit int
-uint16_t WebsocketMessageProcessor::getNet16bit (uint8_t *in)
-{
-	uint8_t out[2];
-	uint16_t rval;
+		if(in.size()-start<6){ //ByteArray too small to read any data (header+mask takes a min size of 6. Control frame message may be of length 0)
+			storePartialMessage(in, start, FD);//add to buffer for processing
+			return currentM;
+		}
 
-	out[0]= in[1];
-	out[1]= in[0];
+		int64_t messageSize = getMessageSize(in, messageStart, start, FD);
+		if(messageSize == -1) { //there was not enough information to get the size
+			storePartialMessage(in, start, FD);
+			return currentM;
+		}
+		size = static_cast<uint64_t> (messageSize);
 
-	uint16_t *temp = reinterpret_cast<uint16_t *>(out);
-	rval = *temp;
-	return rval;
+		if(size>(in.size()-(messageStart))){ //only received partial message;
+			storePartialMessage(in, start, FD);
+			ReadBuffers->setMessageSize(FD, size);
+			return currentM;
+		}
+
+		uint8_t opcode = static_cast<uint8_t>(in[start] & 0x0F); //take low 4 bits of first byte
+		types[currentM] = opcode;
+
+		unmask(in, out[currentM], messageStart, size);
+		if(in[start]<128){ //Fragmented message
+			handleFragment(out[currentM], opcode, FD);
+		}
+
+		else{ //complete
+			if(opcode == 0){
+				completeFracture(out[currentM], types[currentM], outStart, FD);
+			}
+			types.push_back(-1);
+			out.push_back(ByteArray() );
+			currentM++;
+			if(types[currentM-1] == 8){ //close control frame
+				return currentM; //don't process further messages
+			}
+		}
+		start = messageStart+size;
+	}
+	return currentM;
 }
