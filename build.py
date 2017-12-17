@@ -604,13 +604,13 @@ def compileTestFiles():
 	pool.close()
 	pool.join()
 
-	#move gcov files
+	#delete gcov files
 	sourcepath="./"
 	source = os.listdir(sourcepath)
 	destinationpath = "./gcov"
 	for files in source:
 		if files.endswith(".gcov"):
-			shutil.move(os.path.join(sourcepath,files), os.path.join(destinationpath,files))
+			os.remove(os.path.join(sourcepath,files))
 
 	os.chdir( "../" )
 

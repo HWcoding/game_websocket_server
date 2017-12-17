@@ -26,6 +26,7 @@ DEBUG_DEP_DIR = $(PROJECT_DIRECTORY)tests/deps/debug/
 DEBUG_EXECUTABLE = $(PROJECT_DIRECTORY)tests/bin/debug/$(EXECUTABLE_NAME).test
 DEBUG_TEST_OBJECTS = $(addsuffix .o, $(addprefix $(DEBUG_OBJ_DIR), $(TEST_OBJECTS_NAME)))
 DEBUG_DEPFILES := $(patsubst %,$(DEBUG_DEP_DIR)%.d,$(basename $(notdir $(DEBUG_TEST_OBJECTS))))
+DEBUG_COVERAGE = $(PROJECT_DIRECTORY)objs/debug/coverage/
 
 OBJECTS = $(addsuffix .o, $(basename $(OBJECT_LIST)))
 
@@ -57,13 +58,22 @@ CXX = $(COMP) -I $(HEAD_PATH) -isystem $(TEST_FRAMEWORK_HEADER) $(CFLAGS) -Winva
 
 DEPFILES := $(patsubst %,$(DEP_DIR)%.d,$(basename $(notdir $(TEST_OBJECTS))))
 PROFILES := $(addprefix $(PROJECT_DIRECTORY)objs/debug/, $(subst  tests+.source,source,$(subst  /,+.,$(addsuffix .cpp, $(CPP_FILE_NAME:_test.cpp=)))))
+COVERAGE_DIR = $(addprefix $(DEBUG_COVERAGE), $(EXECUTABLE_NAME)/)
+GCOV_FILENAME = $(addprefix $(PROJECT_DIRECTORY)tests/, $(notdir $(CPP_FILE_NAME:_test.cpp=)))
 
 all: $(EXECUTABLE)
 
+$(EXECUTABLE): export GCOV_PREFIX = $(COVERAGE_DIR)
+$(EXECUTABLE): export GCOV_PREFIX_STRIP = 7
 $(EXECUTABLE): $(TEST_OBJECTS) $(OBJECT_FILE_NAMES) $(TEST_FRAMEWORK_LIBRARY) $(TEST_OBJ_DIR)test_lib.a
 	$(CXX) -o $@ $^ $(LIBRARIES)
-	{ $(EXECUTABLE) 2> /dev/null ; [ $$? -eq 0 ] || touch $(CPP_FILE_NAME); gcov $(PROFILES) > /dev/null;}
+	{ $(EXECUTABLE) 2> /dev/null ; [ $$? -eq 0 ] || touch $(CPP_FILE_NAME); \
+	gcov $(addprefix $(COVERAGE_DIR), $(notdir $(PROFILES))) > /dev/null; \
+	mv -f $(GCOV_FILENAME).cpp.gcov /home/pc001/Projects/server/tests/gcov/  2>/dev/null || true; \
+	mv -f $(GCOV_FILENAME).h.gcov /home/pc001/Projects/server/tests/gcov/  2>/dev/null || true;}
 
+$(TEST_OBJ_DIR)%.o: export GCOV_PREFIX = $(addprefix $(DEBUG_COVERAGE),$(basename $(notdir $(%.cpp)))/)
+$(TEST_OBJ_DIR)%.o: export GCOV_PREFIX_STRIP = 6
 .SECONDEXPANSION:
 $(TEST_OBJ_DIR)%.o: $$(subst  +.,/, %.cpp) $(DEP_DIR)%.d
 	$(CXX) -c -o $@ $<

@@ -31,6 +31,7 @@ DEBUG_DEP_DIR = $(PROJECT_DIRECTORY)deps/debug/
 DEBUG_OBJECTS = $(addprefix $(DEBUG_OBJ_DIR), $(patsubst %,%.o,$(OBJECT_NAMES)))
 DEBUG_DEPFILES = $(patsubst %,$(DEBUG_DEP_DIR)%.d,$(basename $(notdir $(DEBUG_OBJECTS))))
 DEBUG_EXECUTABLE = $(PROJECT_DIRECTORY)$(EXECUTABLE_NAME)_Debug
+DEBUG_COVERAGE = $(DEBUG_OBJ_DIR)coverage/
 
 
 # check to see if this is a debug build
@@ -63,6 +64,7 @@ DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP_TEMP)$*.Td
 
 # command to move dependencies from the temp folder into the deps folder
 MOV_DEPS = mv -f $(DEP_TEMP)$*.Td $(DEP_DIR)$*.d
+MOV_COV = mv -f $(OBJ_DIR)$*.gcno $(OBJ_DIR)coverage/$*_test/$*.gcno
 
 CXX = $(COMP) -I $(HEAD_PATH) $(CFLAGS) $(DEPFLAGS) $(CPP_VERSION)
 
@@ -75,10 +77,15 @@ $(EXECUTABLE): $(OBJECTS)
 # string +. or any of the special symbols make uses such as @ or $
 # In order to get the .cpp filename we replace all the +. with /
 # This will give us the full path of the file.
+
+$(OBJ_DIR)%.o: export GCOV_PREFIX = $(addprefix $(DEBUG_COVERAGE), $(basename $(notdir $(%.cpp)))/)
+$(OBJ_DIR)%.o: export GCOV_PREFIX_STRIP = 6
 .SECONDEXPANSION:
 $(OBJ_DIR)%.o: $$(subst  +.,/, %.cpp) $(DEP_DIR)%.d
 	$(CXX) -c -o $@ $<
 	$(MOV_DEPS)
+	mkdir -p $(OBJ_DIR)coverage/$(basename $(notdir $<))_test
+	cp -f $(OBJ_DIR)$*.gcno $(OBJ_DIR)coverage/$(basename $(notdir $<))_test/$*.gcno
 
 .PRECIOUS: $(DEP_DIR)%.d $(CPP_DIR)%.h.gch
 
