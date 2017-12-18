@@ -7,6 +7,9 @@
 
 #include <assert.h>
 
+
+
+
 namespace {
 
 double costEstimate(const Point3D &p1, const Point3D &p2)
@@ -34,6 +37,9 @@ struct PathData
 };
 
 } // namespace
+
+
+
 
 
 void PathSearchNode::addNeighbor(size_t node, double cost)

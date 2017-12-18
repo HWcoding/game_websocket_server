@@ -12,8 +12,6 @@
 
 TEST(pathFinding, Astar)
 {
-	int array[] = {0,1,2,3,4,5,6,7};
-
 	PathSearchNodeGraph graph;
 
 	/*
@@ -44,9 +42,9 @@ TEST(pathFinding, Astar)
 
 	EXPECT_EQ(ints.size(), 3);
 
-	EXPECT_EQ(array[ints[0]], 1);
-	EXPECT_EQ(array[ints[1]], 2);
-	EXPECT_EQ(array[ints[2]], 3);
+	EXPECT_EQ(ints[0], 1);
+	EXPECT_EQ(ints[1], 2);
+	EXPECT_EQ(ints[2], 3);
 
 
 	PathSearchNodeGraph graph2;
