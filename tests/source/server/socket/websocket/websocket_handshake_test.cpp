@@ -37,12 +37,7 @@ public:
 	{
 		return Cookie;
 	}
-	/*ByteArray Upgrade {};
-	ByteArray SecWebSocketKey {};
-	ByteArray SecWebSocketProtocol {};
-	ByteArray Cookie {};*/
 };
-
 
 
 
@@ -54,113 +49,73 @@ TEST(WebsocketHandshakeTest, fillHeaders)
 	testHeader.fillHeaders(testInput);
 
 	std::string testOutputString = testHeader.getUpgrade().toString();
-	EXPECT_STREQ( testOutputString.c_str(), testHeader.getUpgrade().toString().c_str() );
-	//if(testOutputString.compare("websocket")!=0){
-	//	TEST_PRINT(redTestText("Upgrade failed"));
-	//	throw 1;
-	//}
+	EXPECT_STREQ( testOutputString.c_str(), "websocket");
 
 	testOutputString = testHeader.getConnection().toString();
-	bool doesConnectionContainUpgrade = testHeader.getConnection().toString().find("Upgrade") != std::string::npos;
-	EXPECT_EQ( doesConnectionContainUpgrade, true);
-	//if(testOutputString.compare("Upgrade")!=0){
-	//	TEST_PRINT(redTestText("Connection failed"));
-	//	throw 1;
-	//}
+	EXPECT_STREQ( testOutputString.c_str(), "keep-alive, Upgrade");
 
 	testOutputString = testHeader.getSecWebSocketKey().toString();
 	EXPECT_STREQ( testOutputString.c_str(), "+40NMxLMogWjfV/0HyjlxA==" );
-	//if(testOutputString.compare("+40NMxLMogWjfV/0HyjlxA==")!=0){
-	//	TEST_PRINT(redTestText("SecWebSocketKey failed"));
-	//	throw 1;
-	//}
 
 	testOutputString = testHeader.getSecWebSocketProtocol().toString();
 	EXPECT_STREQ( testOutputString.c_str(), "05fcc56b7cb916d5e5a82081223b3357" );
-	//if(testOutputString.compare("05fcc56b7cb916d5e5a82081223b3357")!=0){
-	//	TEST_PRINT(redTestText("SecWebSocketProtocol failed"));
-	//	throw 1;
-	//}
 
 	testOutputString = testHeader.getCookie().toString();
-	EXPECT_STREQ( testOutputString.c_str(), "CJP5G89v2O30Dx-StfclobgZ0AuIH8Nh74SEzHxvBJEZWG6yJ3smhW73TZgDMO0HEy8AvYhKgzxVry5Yby75oT-250dW6PTdm74rhmQyACSwbiAbvp67108QZid7KoPJjf-OuP1cf5Z31_eHimsW8JTIf9KINfG0yy31WuDb21XU-nH9EJcVKhdoXrQB_35DPIRymBxV85cENsxScjjMIBnI60mUR1koC5k_XcwSiTgnoT9ApEPwIX6Z9iw0tV2X7" );
-	//if(testOutputString.compare("CJP5G89v2O30Dx-StfclobgZ0AuIH8Nh74SEzHxvBJEZWG6yJ3smhW73TZgDMO0HEy8AvYhKgzxVry5Yby75oT-250dW6PTdm74rhmQyACSwbiAbvp67108QZid7KoPJjf-OuP1cf5Z31_eHimsW8JTIf9KINfG0yy31WuDb21XU-nH9EJcVKhdoXrQB_35DPIRymBxV85cENsxScjjMIBnI60mUR1koC5k_XcwSiTgnoT9ApEPwIX6Z9iw0tV2X7")!=0){
-	//	TEST_PRINT(redTestText("Cookie failed"));
-	//	throw 1;
-	//}
+	EXPECT_STREQ( testOutputString.c_str(),
+		"CJP5G89v2O30Dx-StfclobgZ0AuIH8Nh74SEzHxvBJEZWG6yJ3smhW73TZgDMO0HEy"
+		"8AvYhKgzxVry5Yby75oT-250dW6PTdm74rhmQyACSwbiAbvp67108QZid7KoPJjf-O"
+		"uP1cf5Z31_eHimsW8JTIf9KINfG0yy31WuDb21XU-nH9EJcVKhdoXrQB_35DPIRymB"
+		"xV85cENsxScjjMIBnI60mUR1koC5k_XcwSiTgnoT9ApEPwIX6Z9iw0tV2X7");
 }
-
-
-
-
 
 TEST(WebsocketHandshakeTest, checkHeaders){
 	ByteArray testInput = createTestHandshakeHeader();
 	HandshakeHeadersWrap testHeader;
 	testHeader.fillHeaders(testInput);
 
+	// check returns true with good data
 	EXPECT_EQ(testHeader.checkHeaders(), true);
-	//if(!testHeader.checkHeaders()){
-	//	//TEST_PRINT(redTestText("returned false with good data"));
-	//	throw 1;
-	//}
+
 
 	ByteArray testTemp = testHeader.getUpgradeRef();
 	testHeader.getUpgradeRef() = ByteArray( std::string("testFail") );
 
+	// check returns false with empty Upgrade header
 	EXPECT_EQ(testHeader.checkHeaders(), false);
-	//if(testHeader.checkHeaders()){
-	//	//TEST_PRINT(redTestText("returned true with bad Upgrade header"));
-	//	throw 1;
-	//}
+
+
 	testHeader.getUpgradeRef() = testTemp;
-
-
 	testTemp = testHeader.getConnectionRef();
 	testHeader.getConnectionRef() = ByteArray( std::string("testFail") );
 
+	// check returns false with empty Connection header
 	EXPECT_EQ(testHeader.checkHeaders(), false);
-	//if(testHeader.checkHeaders()){
-	//	//TEST_PRINT(redTestText("returned true with bad Connection header"));
-	//	throw 1;
-	//)
-	testHeader.getConnectionRef() = testTemp;
 
+	testHeader.getConnectionRef() = testTemp;
 	testTemp = testHeader.getSecWebSocketKeyRef();
 	testHeader.getSecWebSocketKeyRef() = ByteArray();
 
+	// check returns false with empty SecWebSocketKey header
 	EXPECT_EQ(testHeader.checkHeaders(), false);
-	//if(testHeader.checkHeaders()){
-	//	//TEST_PRINT(redTestText("returned true with bad SecWebSocketKey header"));
-	//	throw 1;
-	//}
-	testHeader.getSecWebSocketKeyRef() = testTemp;
 
+	testHeader.getSecWebSocketKeyRef() = testTemp;
 	testTemp = testHeader.getSecWebSocketProtocolRef();
 	testHeader.getSecWebSocketProtocolRef() = ByteArray();
 
+	// check returns false with empty SecWebSocketProtocol header
 	EXPECT_EQ(testHeader.checkHeaders(), false);
-	//if(testHeader.checkHeaders()){
-	//	//TEST_PRINT(redTestText("returned true with bad SecWebSocketProtocol header"));
-	//	throw 1;
-	//}
+
 	testHeader.getSecWebSocketProtocolRef() = testTemp;
+	testTemp = testHeader.getCookieRef();
+	testHeader.getCookieRef() = ByteArray(generateTestString(513));
 
-	//testTemp = testHeader.getCookieRef();
-	//testHeader.getCookieRef() = ByteArray();
 
-	//EXPECT_EQ(testHeader.checkHeaders(), false);
-	//if(testHeader.checkHeaders()){
-	//	//TEST_PRINT(redTestText("returned true with bad Cookie header"));
-	//	throw 1;
-	//}
-	//testHeader.getCookieRef() = testTemp;
+	// check returns false with large Cookie header
+	EXPECT_EQ(testHeader.checkHeaders(), false);
+	testHeader.getCookieRef() = testTemp;
 
+	// check still returns true with good data
 	EXPECT_EQ(testHeader.checkHeaders(), true);
-	//if(!testHeader.checkHeaders()){
-	//	//TEST_PRINT(redTestText("returned false with good data"));
-	//	throw 1;
-	//}
 }
 
 
