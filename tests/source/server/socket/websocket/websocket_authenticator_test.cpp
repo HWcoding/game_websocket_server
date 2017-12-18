@@ -1,429 +1,169 @@
-/*#define TESTING //to activate conditional macros for test logging and access
+#define TEST_FILE_LINK_DEPENDENCIES "source/server/socket/websocket/websocket_authenticator.cpp, \
+                                     source/server/socket/websocket/websocket_handshake.cpp, \
+                                     source/data_types/byte_array.cpp, \
+                                     source/server/socket/system_wrapper.cpp, \
+                                     source/server/socket/file_descriptor.cpp, \
+                                     source/logging/exception_handler.cpp, \
+                                     source/server/socket/set_of_file_descriptors.cpp"
+
+#include "source/server/socket/websocket/websocket_authenticator.h"
+#include "source/server/socket/websocket/websocket_client_validator_interface.h"
+#include "source/server/socket/set_of_file_descriptors.h"
+#include "tests/test_lib/mocks_stubs/mock_system_wrapper.h"
+#include "tests/test_lib/mocks_stubs/socket_test_helpers.h"
 #include "tests/test.h"
 
-#include <iostream>
-#include <string>
-
-#include "main/includes.h"
-#include "server/socket/websocket/websocket_authenticator.h"
-#include "server/socket/set_of_file_descriptors.h"
-#include "server/socket/websocket/websocket_authenticator.h"
-#include "server/socket/websocket/websocket_handshake.h"
-#include "engine/byte_array.h"
-
-#include "tests/server/mocks_stubs/mock_system_wrapper.h"
-#include "tests/server/mocks_stubs/socket_test_helpers.h"
-#include "tests/server/websocket_authenticator_test/websocket_authenticator_test.h"
-#include "tests/server/websocket_handshake_test/websocket_handshake_test.h"
-
-
-namespace WebsocketAuthenticator_Test{
-
-void test_IsNotValidConnection(){
+TEST(WebsocketAuthenticatorTest, WebsocketAuthenticator)
+{
 	MockSystemWrapper systemWrap;
 	SetOfFileDescriptors FDs(&systemWrap);
-	FDs.addFD(1);
+	ASSERT_THROW(WebsocketAuthenticator  failed(nullptr, &FDs), std::runtime_error);
+	ASSERT_THROW(WebsocketAuthenticator  failed(&systemWrap, nullptr), std::runtime_error);
+
 	WebsocketAuthenticator authenticator(&systemWrap, &FDs);
-*/
-
-/*	char nullChar = '\0';
-	char *hbuf = &nullChar;
-	char *sbuf = &nullChar;
-
-	if(authenticator.isNotValidConnection(1,hbuf,sbuf)){
-		TEST_PRINT(redTestText("validate returned true with good data"));
-		throw 1;
-	}
-
-	if(!authenticator.isNotValidConnection(0,hbuf,sbuf)){
-		TEST_PRINT(redTestText("validate returned false with bad connection"));
-		throw 1;
-	}
-
-	hbuf =NULL;
-	if(!authenticator.isNotValidConnection(1,hbuf,sbuf)){
-		TEST_PRINT(redTestText("validate returned false with bad hbuf"));
-		throw 1;
-	}
-	hbuf =&nullChar;
-
-	sbuf =NULL;
-	if(!authenticator.isNotValidConnection(1,hbuf,sbuf)){
-		TEST_PRINT(redTestText("validate returned false with bad sbuf"));
-		throw 1;
-	}
-	sbuf =&nullChar;
-
-	if(authenticator.isNotValidConnection(1,hbuf,sbuf)){
-		TEST_PRINT(redTestText("validate returned true with good data"));
-		throw 1;
-	}*//*
 }
 
-void test_IsHandshake(){
+TEST(WebsocketAuthenticatorTest, processHandshake)
+{
 	MockSystemWrapper systemWrap;
 	SetOfFileDescriptors FDs(&systemWrap);
 	FDs.addFD(1);
 	WebsocketAuthenticator authenticator(&systemWrap, &FDs);
 
-	//std::string testString("GET /socket HTTP/1.1");
-	ByteArray testString( std::string("GET /socket HTTP/1.1") );
-	if(!authenticator.isHandshake(testString)){
-		TEST_PRINT(redTestText("returned false on good handshake"));
-		throw 1;
-	}
-
-	//testString = std::string("POST /socket HTTP/1.1");
-	testString = ByteArray( std::string("POST /socket HTTP/1.1") );
-	if(authenticator.isHandshake(testString)){
-		TEST_PRINT(redTestText("returned true on bad handshake"));
-		throw 1;
-	}
-}
-
-void test_IsCompleteHandshake(){
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
-	FDs.addFD(1);
-	WebsocketAuthenticator authenticator(&systemWrap, &FDs);
-
+	// test with too much data
 	ByteArray testString = createTestHandshakeHeader();
+	testString.appendWithNoSize(generateTestString(2049));
+	ASSERT_THROW(authenticator.processHandshake(testString,1), std::runtime_error);
 
-	if(!authenticator.isCompleteHandshake(testString)){
-		TEST_PRINT(redTestText("returned false on good handshake"));
-		throw 1;
-	}
+	// test with wrong request type
+	ByteArray validHeader = createTestHandshakeHeader();
+	testString = ByteArray();
+	testString.appendWithNoSize("POST ");
+	testString.resize(validHeader.size() + 1);
+	memcpy(&testString[5],&validHeader[4], validHeader.size() - 4);
+	ASSERT_THROW(authenticator.processHandshake(testString,1), std::runtime_error);
 
-	testString[testString.size()-1] = '\0';
-	testString[testString.size()-2] = '\0';
-	if(authenticator.isCompleteHandshake(testString)){
-		TEST_PRINT(redTestText("returned true on bad handshake"));
-		throw 1;
-	}
+	// test with garbage data
+	testString = ByteArray();
+	testString.appendWithNoSize("GET ");
+	testString.appendWithNoSize(generateTestString(50));
+	testString.appendWithNoSize("\r\n\r\n");
+	ASSERT_THROW(authenticator.processHandshake(testString,1), std::runtime_error);
+
+	// test with data split in two
+	ByteArray validHeaderPart1(5);
+	memcpy(&validHeaderPart1[0], &validHeader[0], 5);
+	ByteArray validHeaderPart2(validHeader.size()-5);
+	memcpy(&validHeaderPart2[0], &validHeader[5], validHeader.size()-5);
+	EXPECT_NO_THROW(authenticator.processHandshake(validHeaderPart1,1));
+	EXPECT_NO_THROW(authenticator.processHandshake(validHeaderPart2,1));
+
+	// test with correct data
+	EXPECT_NO_THROW(authenticator.processHandshake(validHeader,1));
 }
 
-void test_CloseFD(){
+TEST(WebsocketAuthenticatorTest, sendHandshake)
+{
 	MockSystemWrapper systemWrap;
 	SetOfFileDescriptors FDs(&systemWrap);
-	FDs.addFD(1);
 	WebsocketAuthenticator authenticator(&systemWrap, &FDs);
+	FDs.addFD(1);
 
-	authenticator.handshakeReadBuffer[1]= ByteArray( std::string("test") );
-	authenticator.handshakeWriteBuffer[1]= ByteArray( std::string("test") );
+	ByteArray validHeader = createTestHandshakeHeader();
+	authenticator.processHandshake(validHeader,1);
 
+	// set the system to simulate a full buffer on socket 1 after 10 bytes are written
+	systemWrap.SetBytesTillWriteFail(1, 10);
+	// should return false with partial write
+	EXPECT_EQ(false, authenticator.sendHandshake(1));
+	EXPECT_EQ(false, authenticator.sendHandshake(1));
+
+	// set system to allow all bytes to be written
+	systemWrap.SetBytesTillWriteFail(1, -1);
+	// should return true after writing all bytes
+	EXPECT_EQ(true, authenticator.sendHandshake(1));
+
+	// get the written data from the system
+	std::string data = systemWrap.GetWriteBuffer(1);
+
+	// check the data to make sure it is correct
+	std::string expected = createTestResponseHandshakeHeader().toString();
+	EXPECT_STREQ( data.c_str(), expected.c_str());
+}
+
+TEST(WebsocketAuthenticatorTest, closeFD)
+{
+	MockSystemWrapper systemWrap;
+	SetOfFileDescriptors FDs(&systemWrap);
+	WebsocketAuthenticator authenticator(&systemWrap, &FDs);
+	FDs.addFD(1);
+
+	ByteArray validHeader = createTestHandshakeHeader();
+
+	// split validHeader into two parts
+	ByteArray validHeaderPart1(5);
+	memcpy(&validHeaderPart1[0], &validHeader[0], 5);
+	ByteArray validHeaderPart2(validHeader.size()-5);
+	memcpy(&validHeaderPart2[0], &validHeader[5], validHeader.size()-5);
+
+	// fill write buffer
+	authenticator.processHandshake(validHeader,1);
+	// partial fill the read buffer
+	authenticator.processHandshake(validHeaderPart1,1);
+
+	// should erase the write and read buffers of FD 1
 	authenticator.closeFD(1);
 
-	if(authenticator.handshakeReadBuffer.count(1) != 0){
-		TEST_PRINT(redTestText("handshakeReadBuffer not cleared"));
-		throw 1;
-	}
+	// should throw because we erased the first half when the read buffer was erased
+	ASSERT_THROW(authenticator.processHandshake(validHeaderPart2,1);, std::runtime_error);
 
-	if(authenticator.handshakeWriteBuffer.count(1) != 0){
-		TEST_PRINT(redTestText("handshakeWriteBuffer not cleared"));
-		throw 1;
-	}
+	// should throw when called without a write buffer
+	ASSERT_THROW(authenticator.sendHandshake(1), std::runtime_error);
 }
 
-void test_GetHandshakeHeaders(){
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
 
-	ByteArray IP( std::string("IP") );
-	ByteArray PORT( std::string("PORT") );
-	ByteArray KEY( std::string("KEY") );
-
-	FDs.addFD(1);
-	FDs.setIP(1,IP);
-	FDs.setPort(1,PORT);
-	FDs.setCSRFkey(1,KEY );
-	WebsocketAuthenticator authenticator(&systemWrap, &FDs);
-
-	ByteArray testString = createTestHandshakeHeader();
-	HandshakeHeaders testHeader = authenticator.getHandshakeHeaders(testString);
-
-	std::string testUpgrade = testHeader.Upgrade.toString();
-
-	if(testUpgrade.compare("websocket")!=0){
-		TEST_PRINT(redTestText("failed"));
-		throw 1;
-	}
-}
-
-void test_CreateHandshake(){
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
-
-	ByteArray IP( std::string("IP") );
-	ByteArray PORT( std::string("PORT") );
-	ByteArray KEY( std::string("KEY") );
-
-	FDs.addFD(1);
-	FDs.setIP(1,IP);
-	FDs.setPort(1,PORT);
-	FDs.setCSRFkey(1,KEY );
-	WebsocketAuthenticator authenticator(&systemWrap, &FDs);
-
-	ByteArray testString = createTestHandshakeHeader();
-	HandshakeHeaders testHeader = authenticator.getHandshakeHeaders(testString);
-
-	std::string result = authenticator.createHandshake(testHeader).toString();
-
-	std::string expectedOutput("HTTP/1.1 101 Switching Protocols\r\n");
-	expectedOutput.append("Upgrade: websocket\r\n");
-	expectedOutput.append("Connection: Upgrade\r\n");
-	expectedOutput.append("Sec-WebSocket-Accept: XvS4xrxcXUWz3C5CU/McPLRYBFY=\r\n");
-	expectedOutput.append("Sec-WebSocket-Protocol: 05fcc56b7cb916d5e5a82081223b3357\r\n\r\n");
-
-	if( expectedOutput.compare(result) != 0){
-		TEST_PRINT(redTestText("failed"));
-		throw 1;
-	}
-}
-
-void test_CreateSecWebSocketAccept(){
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
-	FDs.addFD(1);
-	WebsocketAuthenticator authenticator(&systemWrap, &FDs);
-
-	ByteArray input( std::string("+40NMxLMogWjfV/0HyjlxA==") );
-
-	std::string output = authenticator.createSecWebSocketAccept(input).toString();
-
-	if( output.compare(std::string("XvS4xrxcXUWz3C5CU/McPLRYBFY=")) != 0){
-		TEST_PRINT(redTestText("failed"));
-		throw 1;
-	}
-}
-
-void test_IsHandshakeInvalid(){
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
-
-	ByteArray IP( std::string("IP") );
-	ByteArray PORT( std::string("PORT") );
-	ByteArray KEY( std::string("KEY") );
-
-	FDs.addFD(1);
-	FDs.setIP(1,IP);
-	FDs.setPort(1,PORT);
-	FDs.setCSRFkey(1,KEY );
-
-	WebsocketAuthenticator authenticator(&systemWrap, &FDs);
-
-	ByteArray testString = createTestHandshakeHeader();
-	ByteArray largeString = testString;
-	//ByteArray appendString(generateTestString(2050));
-	//size_t end = largeString.size();
-	//largeString.resize(end+appendString.size());
-	//memcpy(&largeString[end], &appendString[0], appendString.size());
-	largeString.appendNoNull(generateTestString(2050));
-
-	if(!authenticator.isHandshakeInvalid(largeString)){
-		TEST_PRINT(redTestText("authenticated too large of a handshake"));
-		throw 1;
-	}
-
-	if(authenticator.isHandshakeInvalid(testString)){
-		TEST_PRINT(redTestText("did not authenticated a valid handshake"));
-		throw 1;
-	}
-
-	testString = ByteArray( std::string("POST /socket HTTP/1.1") );
-	if(!authenticator.isHandshakeInvalid(testString)){
-		TEST_PRINT(redTestText("authenticated an invalid handshake"));
-		throw 1;
-	}
-
-	testString = ByteArray( std::string("GE") );
-	if(!authenticator.isHandshakeInvalid(testString)){
-		TEST_PRINT(redTestText("authenticated an incomplete handshake"));
-		throw 1;
-	}
-}
-
-void test_ConvertTo64(){
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
-	FDs.addFD(1);
-	WebsocketAuthenticator authenticator(&systemWrap, &FDs);
-
-	if(authenticator.convertTo64(25) != 90){
-		TEST_PRINT(redTestText("failed"));
-		throw 1;
-	}
-
-	if(authenticator.convertTo64(51) != 122){
-		TEST_PRINT(redTestText("failed"));
-		throw 1;
-	}
-
-	if(authenticator.convertTo64(61) != 57){
-		TEST_PRINT(redTestText("failed"));
-		throw 1;
-	}
-
-	if(authenticator.convertTo64(62) != 43){
-		TEST_PRINT(redTestText("failed"));
-		throw 1;
-	}
-
-	if(authenticator.convertTo64(63) != 47){
-		TEST_PRINT(redTestText("failed"));
-		throw 1;
-	}
-
-	if(authenticator.convertTo64(64) != '\\'){
-		TEST_PRINT(redTestText("failed"));
-		throw 1;
-	}
-}
-
-void test_ToBase64(){
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
-	FDs.addFD(1);
-	WebsocketAuthenticator authenticator(&systemWrap, &FDs);
-
-	ByteArray overTwenty( std::string("123456789012345678901") );
-	ByteArray output;
-
-	authenticator.toBase64(overTwenty, output);
-	std::string outputString = output.toString();
-	if(outputString.compare("")!=0){
-		TEST_PRINT(redTestText("processed too large of a string"));
-		throw 1;
-	}
-
-	ByteArray twenty( std::string("12345678901234567890") );
-	output = ByteArray();
-	authenticator.toBase64(twenty, output);
-	outputString = output.toString();
-	if(outputString.compare("MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=")!=0){
-		TEST_PRINT(redTestText("wrong output"));
-		throw 1;
-	}
-}
-
-void test_ProcessHandshake(){
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
-	FDs.addFD(1);
-	WebsocketAuthenticator authenticator(&systemWrap, &FDs);
-
+class TestClientValidator : public ClientValidatorInterface
+{
+public:
+	bool areClientHeadersValid(ConnectionHeaders &headers) override
 	{
-		//std::string largeString = createTestHandshakeHeader();
-		//largeString.append(generateTestString(authenticator.maxHandshakeSize+1));
-
-		ByteArray largeString = createTestHandshakeHeader();
-		//ByteArray appendString(generateTestString(authenticator.maxHandshakeSize+1));
-		//size_t end = largeString.size();
-		//largeString.resize(end+appendString.size());
-		//memcpy(&largeString[end], &appendString[0], appendString.size());
-		largeString.appendNoNull(generateTestString(authenticator.maxHandshakeSize+1));
-
-		try{
-			authenticator.processHandshake(largeString,1);
-			TEST_PRINT(redTestText("processHandshake did not throw with too large a string size"));
-			throw; //kill test
+		(void)headers;
+		//accept all traffic
+		return true;
+	}
+	bool isClientIPValid(std::string &IP, std::string &port) override
+	{
+		if(IP.compare("IPFail") == 0) {
+			return false;
 		}
-		catch(...){}//correct behavior
+		if(port.compare("PortFail") == 0) {
+			return false;
+		}
+		//accept all traffic
+		return true;
 	}
+	~TestClientValidator() override = default;
+};
 
-	ByteArray testString = createTestHandshakeHeader();
-	try{
-		authenticator.processHandshake(testString,1);
-	}
-	catch(...){
-		TEST_PRINT(redTestText("processHandshake threw with valid data"));
-		throw;
-	}
-}
+TEST(WebsocketAuthenticatorTest, isNotValidConnection)
+{
+	TestClientValidator validator;
 
-void test_SendHandshake(){
 	MockSystemWrapper systemWrap;
 	SetOfFileDescriptors FDs(&systemWrap);
-
-	ByteArray IP( std::string("IP") );
-	ByteArray PORT( std::string("PORT") );
-	ByteArray KEY( std::string("KEY") );
-
-	FDs.addFD(1);
-	FDs.setIP(1,IP);
-	FDs.setPort(1,PORT);
-	FDs.setCSRFkey(1,KEY );
-
 	WebsocketAuthenticator authenticator(&systemWrap, &FDs);
+	FDs.addFD(1);
 
-	ByteArray testString = createTestHandshakeHeader();
-	authenticator.processHandshake(testString,1);
+	authenticator.setClientValidator(&validator);
 
-	std::string expectedOutput("HTTP/1.1 101 Switching Protocols\r\n");
-	expectedOutput.append("Upgrade: websocket\r\n");
-	expectedOutput.append("Connection: Upgrade\r\n");
-	expectedOutput.append("Sec-WebSocket-Accept: XvS4xrxcXUWz3C5CU/McPLRYBFY=\r\n");
-	expectedOutput.append("Sec-WebSocket-Protocol: 05fcc56b7cb916d5e5a82081223b3357\r\n\r\n");
-
-	if(!authenticator.sendHandshake(1)){
-		TEST_PRINT(redTestText("reported did not send entire handshake when it did"));
-		throw 1;
-	}
-
-	systemWrap.SetBytesTillWriteFail(1, 9);
-	authenticator.processHandshake(testString,1);
-	if(authenticator.sendHandshake(1)){
-		TEST_PRINT(redTestText("reported it sent entire handshake when it did not"));
-		throw 1;
-	}
-
-	if(authenticator.handshakeWriteBuffer[1].size() != expectedOutput.size()-9){
-		TEST_PRINT(redTestText("buffer not properly saved after write"));
-		throw 1;
-	}
-
-	systemWrap.SetBytesTillWriteFail(1, -1);
-	authenticator.processHandshake(testString,1);
-	if(!authenticator.sendHandshake(1)){
-		TEST_PRINT(redTestText("final part of buffer not sent properly"));
-		throw 1;
-	}
-
-	if(authenticator.handshakeWriteBuffer.count(1) != 0){
-		TEST_PRINT(redTestText("buffer not cleared after empty"));
-		throw 1;
-	}
+	EXPECT_EQ(true,authenticator.isNotValidConnection(ByteArray("IPFail"), ByteArray("port")));
+	EXPECT_EQ(true,authenticator.isNotValidConnection(ByteArray("IP"), ByteArray("PortFail")));
+	EXPECT_EQ(false,authenticator.isNotValidConnection(ByteArray("IP"), ByteArray("port")));
 }
 
-void test(){
-	test_IsNotValidConnection();
-	test_IsHandshake();
-	test_IsCompleteHandshake();
-	test_CloseFD();
-	test_GetHandshakeHeaders();
-	test_CreateSecWebSocketAccept();
-	test_IsHandshakeInvalid();
-	test_ConvertTo64();
-	test_ToBase64();
-	test_CreateHandshake();
-	test_ProcessHandshake();
-	test_SendHandshake();
+int main(int argc, char *argv[])
+{
+	::testing::InitGoogleTest(&argc, argv);
+	StaySilentOnSuccess();
+	return RUN_ALL_TESTS();
 }
-
-}
-
-int main(){
-	WebsocketAuthenticator_Test::test();
-	return 0;
-}*/
-int main(){return 0;}
-
-
-/*
-#include "source/server/socket/set_of_file_descriptors.h"
-#include "source/server/socket/websocket/websocket_handshake.h"
-#include "source/server/socket/system_wrapper.h"
-#include "source/logging/exception_handler.h"
-#include "source/data_types/byte_array.h"
-#include "source/server/socket/websocket/websocket_client_validator.h"
-#include "source/server/socket/authenticator_interface.h"
-*/

@@ -89,7 +89,16 @@ ClientValidatorInterface::~ClientValidatorInterface() = default;
 WebsocketAuthenticator::WebsocketAuthenticator(SystemInterface *_systemWrap, SetOfFileDescriptors*FDs) :
                                                   systemWrap(_systemWrap), handshakeReadBuffer(),
                                                   handshakeWriteBuffer(), maxHandshakeSize(2048),
-                                                  fileDescriptors(FDs){}
+                                                  fileDescriptors(FDs)
+{
+	if(systemWrap == nullptr) {
+		throw std::runtime_error(LOG_EXCEPTION("WebsocketAuthenticator systemWrap was null"));
+	}
+	if(FDs == nullptr) {
+		throw std::runtime_error(LOG_EXCEPTION("WebsocketAuthenticator FDs was null"));
+	}
+
+}
 
 
 bool WebsocketAuthenticator::isNotValidConnection(const ByteArray &IP, const ByteArray &port) const
@@ -126,12 +135,15 @@ void WebsocketAuthenticator::processHandshake(const ByteArray &in, int FD)
 	if(in.size()+handshakeReadBuffer[FD].size() > maxHandshakeSize){
 		throw std::runtime_error(LOG_EXCEPTION("Client sent too much data.  Size: "+std::to_string(in.size()+handshakeReadBuffer[FD].size()) ));
 	}
+
 	handshakeReadBuffer[FD].append(in);
-	if(in.size()>=20){
-		if(!isHandshake(in)){
+	if(handshakeReadBuffer[FD].size()>=20){
+		if(!isHandshake(handshakeReadBuffer[FD])){
+			handshakeReadBuffer.erase(FD);
 			throw std::runtime_error(LOG_EXCEPTION("Message is not a handshake"));
 		}
 	}
+
 	if(!isCompleteHandshake(handshakeReadBuffer[FD])) return;
 	const HandshakeHeadersInterface &headers = getHandshakeHeaders(handshakeReadBuffer[FD]);
 
@@ -226,12 +238,17 @@ bool WebsocketAuthenticator::isHandshakeInvalid(const ByteArray &handShake)
 
 bool WebsocketAuthenticator::sendHandshake(int FD)
 {
-	size_t retSize = systemWrap->writeFD( FD, &handshakeWriteBuffer[FD][0], handshakeWriteBuffer[FD].size() );
-	if(retSize< handshakeWriteBuffer[FD].size()) { //we didn't write all our data
-		handshakeWriteBuffer[FD] = ByteArray( handshakeWriteBuffer[FD].begin()+static_cast<int64_t>(retSize), handshakeWriteBuffer[FD].end() );
-		return false;
+	if(handshakeWriteBuffer.count(FD) != 0) {
+		size_t retSize = systemWrap->writeFD( FD, &handshakeWriteBuffer[FD][0], handshakeWriteBuffer[FD].size() );
+		if(retSize< handshakeWriteBuffer[FD].size()) { //we didn't write all our data
+			handshakeWriteBuffer[FD] = ByteArray( handshakeWriteBuffer[FD].begin()+static_cast<int64_t>(retSize), handshakeWriteBuffer[FD].end() );
+			return false;
+		}
+		//we wrote all our data
+		handshakeWriteBuffer.erase(FD);
 	}
-	//we wrote all our data
-	handshakeWriteBuffer.erase(FD);
+	else {
+		throw std::runtime_error(LOG_EXCEPTION("sendHandshake called on FD without a handshakeWriteBuffer"));
+	}
 	return true;
 }
