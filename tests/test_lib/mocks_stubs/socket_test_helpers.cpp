@@ -211,3 +211,16 @@ ByteArray createTestHandshakeHeader(){
 	output.appendWithNoSize(std::string("Sec-WebSocket-Protocol: 05fcc56b7cb916d5e5a82081223b3357\r\n\r\n") );
 	return output;
 }
+
+
+ByteArray createTestResponseHandshakeHeader(){
+	ByteArray output;
+
+	output.appendWithNoSize(std::string("HTTP/1.1 101 Switching Protocols\r\n") );
+	output.appendWithNoSize(std::string("Upgrade: websocket\r\n") );
+	output.appendWithNoSize(std::string("Connection: Upgrade\r\n") );
+	output.appendWithNoSize(std::string("Sec-WebSocket-Accept: XvS4xrxcXUWz3C5CU/McPLRYBFY=\r\n") );
+	output.appendWithNoSize(std::string("Sec-WebSocket-Protocol: 05fcc56b7cb916d5e5a82081223b3357\r\n\r\n") );
+
+	return output;
+}

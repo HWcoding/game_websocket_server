@@ -15,5 +15,6 @@ std::string maskMessageForTesting(std::string in, uint32_t mask, bool binary, si
 std::string createCloseControlMessage();
 
 ByteArray  createTestHandshakeHeader();
+ByteArray createTestResponseHandshakeHeader();
 
 #endif /* TEST_SERVER_SOCKET_TEST_HELPERS_H_ */
