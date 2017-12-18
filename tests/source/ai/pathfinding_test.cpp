@@ -12,32 +12,56 @@
 
 TEST(pathFinding, Astar)
 {
-	int array[] = {0,1,2,3,4,5};
+	int array[] = {0,1,2,3,4,5,6,7};
 
-	PathSearchNodeGraph nodes;
+	PathSearchNodeGraph graph;
 
-	nodes.addNode(0, Point3D{0,0,0});
-	nodes.addNode(1, Point3D{1,1,1});
-	//2 should be skipped over because it's further than 3
-	nodes.addNode(2, Point3D{3,2.9,3});
-	nodes.addNode(3, Point3D{3,3,3});
-	nodes.addNode(4, Point3D{4,4,4});
-	nodes.addNode(5, Point3D{5,5,5});
+	/*
+	         5
+	       /   \
+	      /     \
+	 0---1---4   3
+	      \  |  /
+	         2
+	*/
 
-	nodes.addEdge(0,1);
-	nodes.addEdge(1,2);
-	nodes.addEdge(1,3);
-	nodes.addEdge(2,4);
-	nodes.addEdge(3,4);
-	nodes.addEdge(4,5);
+	graph.addNode(0, {0,0,0});
+	graph.addNode(1, {1,1,1});
+	graph.addNode(2, {1,2,2});
+	graph.addNode(3, {4,4,4});
+	graph.addNode(4, {2,2,2});
+	graph.addNode(5, {1,6,1});
 
-	std::vector<size_t> ints = Astar(0, 4, nodes);
+	graph.addEdge(0,1);
+	graph.addEdge(1,2);
+	graph.addEdge(1,4);
+	graph.addEdge(1,5);
+	graph.addEdge(4,2);
+	graph.addEdge(5,3);
+	graph.addEdge(2,3);
+
+	std::vector<size_t> ints = Astar(0, 3, graph);
 
 	EXPECT_EQ(ints.size(), 3);
 
 	EXPECT_EQ(array[ints[0]], 1);
-	EXPECT_EQ(array[ints[1]], 3);
-	EXPECT_EQ(array[ints[2]], 4);
+	EXPECT_EQ(array[ints[1]], 2);
+	EXPECT_EQ(array[ints[2]], 3);
+
+
+	PathSearchNodeGraph graph2;
+	graph2.addNode(0, {0,0,0});
+	graph2.addNode(1, {1,1,1});
+	graph2.addNode(2, {2,2,2});
+	graph2.addEdge(0,1);
+	// should not be able to find a path from 0-2 in graph2
+	ASSERT_THROW(ints = Astar(0, 2, graph2), std::runtime_error);
+
+	// start is not on graph2
+	ASSERT_THROW(ints = Astar(3, 2, graph2), std::runtime_error);
+
+	// goal is not on graph2
+	ASSERT_THROW(ints = Astar(0, 3, graph2), std::runtime_error);
 }
 
 

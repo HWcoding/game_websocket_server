@@ -11,118 +11,158 @@ namespace {
 
 double costEstimate(const Point3D &p1, const Point3D &p2)
 {
-	// estimatedDistance is inaccurate so we mult by 0.75 to ensure it is
+	// estimatedDistance is inaccurate so we multiply by 0.9 to ensure it is
 	// less than the actual distance
-	return v_math::estimatedDistance(p1, p2)*0.75;
+	return v_math::estimatedDistance(p1, p2)*0.9;
 }
 
 // we store this info in a separate structure so we can reuse nodegraph
-struct pathData
+struct PathData
 {
-	// For each node, which node it can most efficiently be reached from.
+	// For each node, which node can it most efficiently be reached from.
 	// If a node can be reached from many nodes, cameFrom will eventually contain the
 	// most efficient previous step.
-	size_t cameFrom = 0;
+	size_t cameFrom {0};
 	// The cost of getting from the start node to this node.
-	double costToNode = DBL_MAX;
+	double costToNode {DBL_MAX};
 	// The total cost of getting from the start node to the goal by
 	// passing through this node. That value is partly known, partly heuristic.
-	double costToGoal = DBL_MAX;
+	double costToGoal {DBL_MAX};
+
+	PathData(){}
+	PathData(double _costToNode) : costToNode(_costToNode){}
 };
 
 } // namespace
 
 
-
 void PathSearchNode::addNeighbor(size_t node, double cost)
 {
-	ConnectedNode newNode;
-	newNode.node = node;
-	newNode.cost = cost;
-	connectedNodes.push_back(newNode);
+	connectedNodes.push_back(ConnectedNode(node, cost));
+}
+
+
+bool PathSearchNodeGraph::contains(size_t key) {
+	auto it = this->find(key);
+	if (it != std::map<size_t, PathSearchNode>::end()) {
+		return true;
+	}
+	return false;
 }
 
 void PathSearchNodeGraph::addNode(size_t proxy, const Point3D &pos)
 {
-	PathSearchNode node;
-	node.pos = pos;
-	node.proxy = proxy;
-	std::vector<PathSearchNode>::push_back(node);
+	std::map<size_t, PathSearchNode>::emplace(proxy, PathSearchNode(proxy, pos));
 }
 
 
 void PathSearchNodeGraph::addEdge(size_t vertA, size_t vertB, double additionalCost)
 {
-	assert(additionalCost >= 0.0);
-	Point3D posA = std::vector<PathSearchNode>::operator[](vertA).pos;
-	Point3D posB = std::vector<PathSearchNode>::operator[](vertB).pos;
+	PathSearchNode &A = std::map<size_t, PathSearchNode>::operator[](vertA);
+	PathSearchNode &B = std::map<size_t, PathSearchNode>::operator[](vertA);
 
-	double cost = v_math::distance(posA, posB)+additionalCost;
+	double cost = v_math::distance(A.pos, B.pos)+additionalCost;
 
-	std::vector<PathSearchNode>::operator[](vertA).addNeighbor(vertB, cost);
-	std::vector<PathSearchNode>::operator[](vertB).addNeighbor(vertA, cost);
+	A.addNeighbor(vertB, cost);
+	B.addNeighbor(vertA, cost);
 }
 
 
 std::vector<size_t> Astar(size_t start, size_t goal, PathSearchNodeGraph &nodeGraph)
 {
-	std::vector<pathData> data(nodeGraph.size());
+	// check that the graph contains both the start and goal positions
+	if(!nodeGraph.contains(start)) {
+		throw std::runtime_error("Graph does not contain the start value");
+	}
+	if(!nodeGraph.contains(goal)) {
+		throw std::runtime_error("Graph does not contain the goal value");
+	}
+
+	// PathData map
+	std::map<size_t, PathData> data;
 
 	// The set of nodes already evaluated.
 	std::set<size_t>closedSet;
+
 	// The set of currently discovered nodes still to be evaluated.
 	// Initially, only the start node is known.
 	std::set<size_t>openSet;
 	openSet.emplace(start);
 
 	// The cost of going from start to start is zero.
-	data[start].costToNode = 0.0;
+	data.emplace(start, PathData(0.0));
+
+	// pointer to goal node
+	auto &graphGoal = nodeGraph[goal];
 
 	// Total cost of getting from the start node to the goal is completely heuristic.
-	data[start].costToGoal = costEstimate(nodeGraph[start].pos, nodeGraph[goal].pos);
+	data.at(start).costToGoal = costEstimate(nodeGraph[start].pos, graphGoal.pos);
+
+
 
 	size_t current = start;
 	while( ! openSet.empty()) {
 
+		// set current to first element in openSet
 		current = *std::begin(openSet);
+		// if there is a cheaper node in the openSet, set current to it
+		PathData * cheapestNode = &data.at(current);
 		for(auto element : openSet){
-			if(data[element].costToGoal < data[current].costToGoal) {
+			if(data.at(element).costToGoal < cheapestNode->costToGoal) {
 				current = element;
+				cheapestNode = &data.at(current);
 			}
 		}
 
+		// if we are done
 		if( current == goal ) {
 			std::vector<size_t> output;
 			while (current != start){
 				output.push_back(nodeGraph[current].proxy);
-				current = data[current].cameFrom;
+				current = data.at(current).cameFrom;
 			}
 			std::reverse(output.begin(),output.end());
 			return output;
 		}
 
+		// pointer to data[current]
+		auto &dataCurrent = data.at(current);
+		// pointer to nodeGraph[current]
+		auto &graphCurrent = nodeGraph.at(current);
+
+		// move the current node to the closedSet
 		openSet.erase(current);
 		closedSet.emplace(current);
 
-		for(auto neighbor : nodeGraph[current].connectedNodes) {
+		// loop through each of current's neighbors and add any new ones to the openSet.
+		// If the neighbor is already in the openSet and the path to it though current is
+		// cheaper than the old path to it, update it's values.
+		for(auto neighbor : graphCurrent.connectedNodes) {
+
 			// if neighbor is in closedSet ignore the neighbor
 			if(closedSet.count(neighbor.node) != 0 ) continue;
+
 			// The distance from start to a neighbor
-			double tentativeCostToNode = data[current].costToNode + neighbor.cost;
-			// if neighbor is not in openSet	we discovered a new node
+			double tentativeCostToNode = dataCurrent.costToNode + neighbor.cost;
+
+			// pointer to data[neighbor.node], add node if it doesn't exist
+			auto &neighborData = data[neighbor.node];
+
+			// if neighbor is not in openSet we discovered a new node
 			if(openSet.count(neighbor.node) == 0 ) {
 				openSet.emplace(neighbor.node);
 			}
-			else if(tentativeCostToNode >= data[neighbor.node].costToNode) {
+			else if(tentativeCostToNode >= neighborData.costToNode) {
 				continue; // This is not a better path.
 			}
-			// This path is the best until now. Record it!  estimatedDistance
-			data[neighbor.node].cameFrom = current;
-			data[neighbor.node].costToNode = tentativeCostToNode;
-			data[neighbor.node].costToGoal = data[neighbor.node].costToNode + \
-			           costEstimate(nodeGraph[neighbor.node].pos, nodeGraph[goal].pos);
+
+			// This path is the best until now. Record it.
+			neighborData.cameFrom = current;
+			neighborData.costToNode = tentativeCostToNode;
+			neighborData.costToGoal = neighborData.costToNode + \
+			           costEstimate(nodeGraph[neighbor.node].pos, graphGoal.pos);
 		}
 	}
-	//no path from start to goal
-	throw std::runtime_error("");
+	//no path found from start to goal
+	throw std::runtime_error("Could not find path from " + std::to_string(start) + " to " + std::to_string(goal) + ".");
 }
