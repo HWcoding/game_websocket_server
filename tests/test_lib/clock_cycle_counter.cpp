@@ -1,4 +1,5 @@
 #include "tests/test_lib/clock_cycle_counter.h"
+#include <chrono>
 
 namespace {
 	void emptyFunction();
@@ -14,6 +15,17 @@ int64_t countCpuCycles(void (*func)(void), int64_t iterations)
 	volatile int64_t baseCycleCount = ::getFunctionCycleCount(::emptyFunction, iterations);
 	volatile int64_t cycleCount = ::getFunctionCycleCount(func, iterations);
 	return (cycleCount-baseCycleCount);
+}
+
+
+void PerformanceTimer::start() {
+	using namespace std::chrono;
+	time = static_cast<double>(steady_clock::now().time_since_epoch().count());
+}
+
+double PerformanceTimer::end() {
+	using namespace std::chrono;
+	return static_cast<double>(steady_clock::now().time_since_epoch().count()) - time;
 }
 
 } // profiling

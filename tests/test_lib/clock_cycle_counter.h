@@ -9,6 +9,15 @@ namespace profiling {
 
 int64_t countCpuCycles(void (*func)(void), int64_t iterations);
 
+class PerformanceTimer {
+private:
+	double time;
+public:
+	void start();
+	double end();
+
+};
+
 } // profiling
 
 #endif /* TESTS_TEST_LIB_CLOCK_CYCLE_COUNTER_H */
