@@ -25,7 +25,6 @@ protected:
 class WebsocketMessageSender : public MessageSenderInterface {
 public:
 	WebsocketMessageSender(SystemInterface *_systemWrap);
-	WebsocketMessageSender(WebsocketWriteBuffers *_writeBuffers );
 	void addMessage(SocketMessage &message) override;
 	bool writeData(int FD) override;
 	void closeFDHandler(int FD) override;

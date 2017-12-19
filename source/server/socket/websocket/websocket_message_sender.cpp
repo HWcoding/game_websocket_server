@@ -10,10 +10,9 @@ MessageSenderInterface::~MessageSenderInterface() = default;
 
 WebsocketMessageSender::~WebsocketMessageSender() = default;
 
-WebsocketMessageSender::WebsocketMessageSender(SystemInterface *_systemWrap) : writeBuffers( new WebsocketWriteBuffers(_systemWrap) ), MaxWriteBufferSize(1999999999){}
-
-WebsocketMessageSender::WebsocketMessageSender(WebsocketWriteBuffers *_writeBuffers ) :
-                                       writeBuffers( _writeBuffers ), MaxWriteBufferSize(1999999999){}
+WebsocketMessageSender::WebsocketMessageSender(SystemInterface *_systemWrap) :
+		writeBuffers( new WebsocketWriteBuffers(_systemWrap) ),
+		MaxWriteBufferSize(2097152){}
 
 void WebsocketMessageSender::addMessage(SocketMessage &message)
 {
@@ -42,38 +41,47 @@ void WebsocketMessageSender::closeFDHandler(int FD)
 
 ByteArray WebsocketMessageSender::createFrameHeader(const ByteArray &in, uint8_t opcode)
 {
-	size_t size = 2;
+	size_t size;
+
+	// the first byte has a 1 in the high bit followed by the opcode
+	uint8_t firstByte = static_cast <uint8_t>(128 + opcode);
+
+	// the second byte is the size of the message if it is less than or equal to
+	// 125, or if it larger, a magic number indicating the magnitude of the
+	// size. In the second case, the size is stored in the bytes that follow.
+	uint8_t secondByte;
 
 	if(in.size()>65535){
+		// too big, the header is going to need 10 bytes to store the magic
+		// number, 8-Byte size, and opcode. The magic number is 127
 		size = 10;
+		secondByte = 127;
 	}
 	else if(in.size()>125){
+		// too big, the header is going to need 4 bytes to store the magic
+		// number, 2-Byte size, and opcode. The magic number is 126
 		size = 4;
+		secondByte = 126;
+	}
+	else {
+		// the size and opcode can fit in just 2 bytes. The second byte is
+		// the size.
+		size = 2;
+		secondByte = static_cast <uint8_t>(in.size());
 	}
 
 	ByteArray buffer;
 	buffer.resize(size);
-	buffer[0] = static_cast <uint8_t>(128 + opcode);
-	if(size == 2){
-		buffer[1] = static_cast <uint8_t>(in.size());
+	buffer[0] = firstByte;
+	buffer[1] = secondByte;
+
+	// write the size to the remaining bytes in network byte order if size > 2
+	uint64_t currentByte;
+	size_t shiftAmount = (size - 3)*8;
+	for(size_t i=2, j=0; i<size; ++i, j += 8){
+		currentByte = (in.size()<<j)>>shiftAmount;
+		buffer[i] = static_cast <uint8_t>(currentByte);
 	}
-	else if(size == 4){
-		uint64_t isize = in.size();
-		uint64_t itsize;
-		buffer[1] = static_cast <uint8_t>(126);
-		buffer[2] = static_cast <uint8_t>(isize>>8);
-		itsize    = (isize<<8);
-		buffer[3] = static_cast <uint8_t>(itsize>>8);
-	}
-	else if(size == 10){
-		uint64_t isize = in.size();
-		uint64_t itsize;
-		buffer[1] = static_cast <uint8_t>(127);
-		buffer[2] = static_cast <uint8_t>(isize>>56);
-		for(size_t i=3, j=8; i<10; ++i,j+=8){
-			itsize = (isize<<j);
-			buffer[i] = static_cast <uint8_t>(itsize>>56);
-		}
-	}
+
 	return buffer;
 }
