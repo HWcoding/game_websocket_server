@@ -84,8 +84,10 @@ $(OBJ_DIR)%.o: export GCOV_PREFIX_STRIP = 6
 $(OBJ_DIR)%.o: $$(subst  +.,/, %.cpp) $(DEP_DIR)%.d
 	$(CXX) -c -o $@ $<
 	$(MOV_DEPS)
+ifneq (,$(findstring -DDEBUG,$(CFLAGS)))
 	mkdir -p $(OBJ_DIR)coverage/$(basename $(notdir $<))_test
 	cp -f $(OBJ_DIR)$*.gcno $(OBJ_DIR)coverage/$(basename $(notdir $<))_test/$*.gcno
+endif
 
 .PRECIOUS: $(DEP_DIR)%.d $(CPP_DIR)%.h.gch
 
