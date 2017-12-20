@@ -8,6 +8,7 @@
 
 #include "source/server/socket/set_of_file_descriptors.h"
 #include "source/data_types/socket_message.h"
+#include "source/server/socket/message_sender_interface.h"
 #include "source/server/socket/websocket/websocket_message_sender.h"
 #include "source/server/socket/system_wrapper.h"
 #include "source/logging/exception_handler.h"
