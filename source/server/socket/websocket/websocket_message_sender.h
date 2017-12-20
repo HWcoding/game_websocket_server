@@ -2,39 +2,62 @@
 #define SERVER_SOCKET_WEBSOCKET_WEBSOCKET_MESSAGE_SENDER_H_
 //#include "source/server/socket/websocket/websocket_message_sender.h"
 
-#include <unistd.h>
-#include <memory>
-#include <vector>
+#include <memory> // for std::unique_ptr
 #include "source/data_types/byte_array.h"
+#include "source/server/socket/message_sender_interface.h"
 
 class SetOfFileDescriptors;
 class SocketMessage;
 class SystemInterface;
 class WebsocketWriteBuffers;
 
-class MessageSenderInterface {
-public:
-	virtual void addMessage(SocketMessage &message) = 0;
-	virtual bool writeData(int FD) = 0;
-	virtual void closeFDHandler(int FD) = 0;
-	virtual ~MessageSenderInterface();
-protected:
-	MessageSenderInterface() = default;
-};
-
+/**
+ * Class responsible for sending data to clients using the Websocket protocol.
+ * Use addMessage to queue data in the buffer, and then use writeData when
+ * you are ready to begin sending it. Multiple calls to writeData may be
+ * required to send all the data.
+ *
+ */
 class WebsocketMessageSender : public MessageSenderInterface {
 public:
 	WebsocketMessageSender(SystemInterface *_systemWrap);
+
+	/* see source/server/socket/message_sender_interface.h */
 	void addMessage(SocketMessage &message) override;
+	/* see source/server/socket/message_sender_interface.h */
 	bool writeData(int FD) override;
+	/* see source/server/socket/message_sender_interface.h */
 	void closeFDHandler(int FD) override;
-	WebsocketMessageSender& operator=(const WebsocketMessageSender&) = delete;
-	WebsocketMessageSender(const WebsocketMessageSender&) = delete;
+
+	/** destructor */
 	~WebsocketMessageSender() override;
+
+	/** deleted */
+	WebsocketMessageSender& operator=(const WebsocketMessageSender&) = delete;
+
+	/** deleted */
+	WebsocketMessageSender(const WebsocketMessageSender&) = delete;
 protected:
-	std::unique_ptr<WebsocketWriteBuffers> writeBuffers;
-	ByteArray createFrameHeader(const ByteArray &in, uint8_t opcode);
+
+	/**
+	 * Creates a frame header for a single frame of a message and contains the
+	 * opcode and size of the frame.
+	 *
+	 * @param frameSize The size of the frame in bytes
+	 * @param opcode The opcode for the frame
+	 * @param finished true if this is the last frame in the message being sent
+	 *
+	 * @return ByteArray containing the FrameHeader
+	 *
+	 * @throws std::runtime_error if a fragmentation is used with a control opcode
+	 */
+	ByteArray createFrameHeader(size_t frameSize, uint8_t opcode, bool finished = true);
 private:
+
+	/** holds unsent messages for connected clients. */
+	std::unique_ptr<WebsocketWriteBuffers> writeBuffers;
+
+	/** maximum size that a single message can be */
 	size_t MaxWriteBufferSize;
 };
 
