@@ -1,4 +1,5 @@
 #define TEST_FILE_LINK_DEPENDENCIES "source/server/socket/websocket/websocket_write_buffer.cpp, \
+                                     source/server/socket/message_sender_interface.h, \
                                      source/server/socket/websocket/websocket_message_sender.cpp, \
                                      source/data_types/byte_array.cpp, \
                                      source/data_types/socket_message.cpp, \
@@ -13,147 +14,95 @@
 #include "tests/test.h"
 
 
+std::string testCreateFrameHeader(size_t messageSize, uint8_t opcode);
 
-
-
-std::string testCreateFrameHeader(const ByteArray &in, uint8_t opcode);
-
-
-class WebsocketWriteBuffersWrap : public WebsocketWriteBuffers
-{
-public:
-	WebsocketWriteBuffersWrap(MockSystemWrapper* sys): WebsocketWriteBuffers(sys){}
-
-	ByteArray getMessageFromBuffer(int i)
-	{
-		return writeBuffer[i].message;
-	}
-
-	void setBufferBegin(int i, size_t value)
-	{
-		writeBuffer[i].begin = value;
-	}
-	size_t getBufferBegin(int i)
-	{
-		return writeBuffer[i].begin;
-	}
-	size_t getBufferCount(int i)
-	{
-		return writeBuffer.count(i);
-	}
-};
 
 class WebsocketMessageSenderWrap : public WebsocketMessageSender
 {
 public:
-	WebsocketMessageSenderWrap(WebsocketWriteBuffers *_writeBuffers ) : WebsocketMessageSender(_writeBuffers){}
 	WebsocketMessageSenderWrap(SystemInterface *_systemWrap) : WebsocketMessageSender(_systemWrap){}
 
-	ByteArray getMessageFromBuffer(int i)
+	ByteArray createFrameHeader(size_t messageSize, uint8_t opcode)
 	{
-		WebsocketWriteBuffersWrap *wrap = dynamic_cast<WebsocketWriteBuffersWrap*>(writeBuffers.get());
-		return wrap->getMessageFromBuffer(i);
-	}
-	ByteArray createFrameHeader(const ByteArray &in, uint8_t opcode)
-	{
-		return WebsocketMessageSender::createFrameHeader(in, opcode);
+		return WebsocketMessageSender::createFrameHeader(messageSize, opcode);
 	}
 
 };
 
+// returns correct FrameHeader for the given ByteArray and opcode
 
-std::string testCreateFrameHeader(const ByteArray &in, uint8_t opcode){
-	size_t size = 2;
+std::string testCreateFrameHeader(size_t messageSize, uint8_t opcode){
+	size_t size;
 
-	if(in.size()>65535){
+	if(messageSize>65535){
 		size = 10;
 	}
-	else if(in.size()>125){
+	else if(messageSize>125){
 		size = 4;
+	}
+	else {
+		size = 2;
 	}
 
 	std::string buffer;
 	buffer.resize(size);
 	buffer[0] = static_cast <char>(128 + opcode);
 	if(size == 2){
-		buffer[1] = static_cast <char>(in.size());
+		// first byte is the size
+		buffer[1] = static_cast <char>(messageSize);
 	}
 	else if(size == 4){
-		uint64_t isize = in.size();
-		uint64_t itsize;
+		// first byte is magic number 126
 		buffer[1] = static_cast <char>(126);
-		buffer[2] = static_cast <char>(isize>>8);
-		itsize    = (isize<<8);
-		buffer[3] = static_cast <char>(itsize>>8);
+		// the following bytes are the message size in network byte order
+		buffer[2] = static_cast <char>((messageSize&0x000000000000FF00)>>8);
+		buffer[3] = static_cast <char>((messageSize&0x00000000000000FF));
 	}
 	else if(size == 10){
-		uint64_t isize = in.size();
-		uint64_t itsize;
+		// first byte is magic number 127
 		buffer[1] = static_cast <char>(127);
-		buffer[2] = static_cast <char>(isize>>56);
-		for(size_t i=3, j=8; i<10; ++i,j+=8){
-			itsize = (isize<<j);
-			buffer[i] = static_cast <char>(itsize>>56);
-		}
+		// the following bytes are the message size in network byte order
+		buffer[2] = static_cast <char>((messageSize & 0xFF00000000000000)>>(8*7));
+		buffer[3] = static_cast <char>((messageSize & 0x00FF000000000000)>>(8*6));
+		buffer[4] = static_cast <char>((messageSize & 0x0000FF0000000000)>>(8*5));
+		buffer[5] = static_cast <char>((messageSize & 0x000000FF00000000)>>(8*4));
+		buffer[6] = static_cast <char>((messageSize & 0x00000000FF000000)>>(8*3));
+		buffer[7] = static_cast <char>((messageSize & 0x0000000000FF0000)>>(8*2));
+		buffer[8] = static_cast <char>((messageSize & 0x000000000000FF00)>>(8*1));
+		buffer[9] = static_cast <char>((messageSize & 0x00000000000000FF)>>(8*0));
 	}
 	return buffer;
 }
 
 
-
-
 TEST(WebsocketMessageSenderTest, createFrameHeader)
 {
 	MockSystemWrapper systemWrap;
-	//SetOfFileDescriptors FDs(&systemWrap);
-	//FDs.addFD(1);
 	WebsocketMessageSenderWrap sender(&systemWrap);
 
+	std::string smallTestStringResult = sender.createFrameHeader(0, 2).toString();
+	EXPECT_STREQ( smallTestStringResult.c_str(), testCreateFrameHeader(0,2).c_str() );
 
+	smallTestStringResult = sender.createFrameHeader(125, 2).toString();
+	EXPECT_STREQ( smallTestStringResult.c_str(), testCreateFrameHeader(125,2).c_str() );
 
-	ByteArray testString;
-	testString.appendWithNoSize( generateTestString(125) );
-	ByteArray mediumTestString;
-	mediumTestString.appendWithNoSize( generateTestString(65535) );
-	ByteArray largeTestString;
-	largeTestString.appendWithNoSize( generateTestString(65536) );
+	std::string mediumTestStringResult = sender.createFrameHeader(126, 2).toString();
+	EXPECT_STREQ( mediumTestStringResult.c_str(), testCreateFrameHeader(126,2).c_str() );
 
+	mediumTestStringResult = sender.createFrameHeader(65535, 2).toString();
+	EXPECT_STREQ( mediumTestStringResult.c_str(), testCreateFrameHeader(65535,2).c_str() );
 
-	std::string testStringResult = sender.createFrameHeader(testString, 2).toString();
-	std::string mediumTestStringResult = sender.createFrameHeader(mediumTestString, 2).toString();
-	std::string largeTestStringResult = sender.createFrameHeader(largeTestString, 2).toString();
+	std::string largeTestStringResult = sender.createFrameHeader(65536, 2).toString();
+	EXPECT_STREQ( largeTestStringResult.c_str(), testCreateFrameHeader(65536,2).c_str() );
 
-
-	EXPECT_STREQ( testStringResult.c_str(), testCreateFrameHeader(testString,2).c_str() );
-
-	EXPECT_STREQ( mediumTestStringResult.c_str(), testCreateFrameHeader(mediumTestString,2).c_str() );
-
-	EXPECT_STREQ( largeTestStringResult.c_str(), testCreateFrameHeader(largeTestString,2).c_str() );
-
-
-	//if(testStringResult.compare(testCreateFrameHeader(testString,2)) !=0){
-	//	TEST_PRINT(redTestText("small string output is wrong"));
-	//	throw 1;
-	//}
-
-	//if(mediumTestStringResult.compare(testCreateFrameHeader(mediumTestString,2)) !=0){
-	//	TEST_PRINT(redTestText("medium string output is wrong"));
-	//	throw 1;
-	//}
-
-	//if(largeTestStringResult.compare(testCreateFrameHeader(largeTestString,2)) !=0){
-	//	TEST_PRINT(redTestText("large string output is wrong"));
-	//	throw 1;
-	//}
+	largeTestStringResult = sender.createFrameHeader(18446744073709551615U, 2).toString();
+	EXPECT_STREQ( largeTestStringResult.c_str(), testCreateFrameHeader(18446744073709551615U,2).c_str() );
 }
 
-
-
-TEST(WebsocketMessageSenderTest, addMessage)
+TEST(WebsocketMessageSenderTest, writeData)
 {
 	MockSystemWrapper systemWrap;
-	WebsocketWriteBuffersWrap * writeBuffer = new WebsocketWriteBuffersWrap(&systemWrap);
-	WebsocketMessageSenderWrap sender(writeBuffer);
+	WebsocketMessageSenderWrap sender(&systemWrap);
 
 	std::string testString("testing");
 	ByteArray IP;
@@ -165,21 +114,23 @@ TEST(WebsocketMessageSenderTest, addMessage)
 	ByteArray mess;
 	mess.appendWithNoSize("testing");
 
+	// create a message to add
 	SocketMessage testMessage(1, 1, 0, IP, Port, KEY, mess);
 
-	ByteArray expectedOutput = sender.createFrameHeader(testMessage.getMessage(), 2);
-	expectedOutput.append(testMessage.getMessage());
+	// create the expected buffer contents of the message.
+	// it should be a Frame Header followed by the message
+	ByteArray expected(testCreateFrameHeader(testMessage.getMessage().size(),2));
+	expected.append(testMessage.getMessage());
 
+	// add the message
 	sender.addMessage(testMessage);
 
-	std::string result = sender.getMessageFromBuffer(1).toString();
-	EXPECT_STREQ( result.c_str(), expectedOutput.toString().c_str() );
-	//if(sender.writeBuffers.writeBuffer[1].message.compare(expectedOutput)!= 0){
-	//	TEST_PRINT(redTestText("write buffer does not match input message"));
-	//	TEST_PRINT(redTestText("Expected:\n"<<expectedOutput<<"\nHas size: "<<expectedOutput.size() ));
-	//	TEST_PRINT(redTestText("In buffer:\n"<<sender.writeBuffers.writeBuffer[1].message<<"\nHas size: "<<sender.writeBuffers.writeBuffer[1].message.size() ));
-	//	throw 1;
-	//}
+	// write the data
+	sender.writeData(1);
+
+	// check the data to make sure it is correct
+	std::string data = systemWrap.GetWriteBuffer(1);
+	EXPECT_STREQ( data.c_str(), expected.toString().c_str());
 }
 
 
