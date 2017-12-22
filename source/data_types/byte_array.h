@@ -525,7 +525,7 @@ private:
 
 
 
-
+// appenders
 inline void ByteArray::append(const ByteArray &arr)
 {
 	appendBytes(&arr[0], arr.size());
@@ -545,6 +545,8 @@ inline void ByteArray::append(const T &num)
 	appendBytes(&num, sizeof (T));
 }
 
+
+// getters
 template<>
 inline bool ByteArray::getNext<bool>() const
 {
@@ -613,11 +615,6 @@ inline double ByteArray::getNextDouble() const
 inline bool ByteArray::getNextBool() const
 {
 	return getNext<bool>();
-}
-
-inline size_t ByteArray::tell() const
-{
-	return currentIndex;
 }
 
 
@@ -705,6 +702,11 @@ inline ByteArray& ByteArray::operator=( std::initializer_list<uint8_t> list )
 	std::vector<uint8_t>::operator=(list);
 	currentIndex = 0;
 	return *this;
+}
+
+inline size_t ByteArray::tell() const
+{
+	return currentIndex;
 }
 
 
