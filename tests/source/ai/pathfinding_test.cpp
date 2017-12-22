@@ -30,13 +30,13 @@ TEST(pathFinding, Astar)
 	graph.addNode(4, {2,2,2});
 	graph.addNode(5, {1,6,1});
 
-	graph.addEdge(0,1);
-	graph.addEdge(1,2);
-	graph.addEdge(1,4);
-	graph.addEdge(1,5);
-	graph.addEdge(4,2);
-	graph.addEdge(5,3);
-	graph.addEdge(2,3);
+	graph.addEdgeUseDistance(0,1);
+	graph.addEdgeUseDistance(1,2);
+	graph.addEdgeUseDistance(1,4);
+	graph.addEdgeUseDistance(1,5);
+	graph.addEdgeUseDistance(4,2);
+	graph.addEdgeUseDistance(5,3);
+	graph.addEdgeUseDistance(2,3);
 
 	std::vector<size_t> ints = Astar(0, 3, graph);
 
@@ -51,7 +51,7 @@ TEST(pathFinding, Astar)
 	graph2.addNode(0, {0,0,0});
 	graph2.addNode(1, {1,1,1});
 	graph2.addNode(2, {2,2,2});
-	graph2.addEdge(0,1);
+	graph2.addEdgeUseDistance(0,1);
 	// should not be able to find a path from 0-2 in graph2
 	ASSERT_THROW(ints = Astar(0, 2, graph2), std::runtime_error);
 

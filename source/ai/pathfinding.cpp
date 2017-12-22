@@ -5,41 +5,6 @@
 #include <set>
 #include "source/logging/exception_handler.h"
 
-#include <assert.h>
-
-
-
-
-namespace {
-
-double costEstimate(const Point3D &p1, const Point3D &p2)
-{
-	// estimatedDistance is inaccurate so we multiply by 0.9 to ensure it is
-	// less than the actual distance
-	return v_math::estimatedDistance(p1, p2)*0.9;
-}
-
-// we store this info in a separate structure so we can reuse nodegraph
-struct PathData
-{
-	// For each node, which node can it most efficiently be reached from.
-	// If a node can be reached from many nodes, cameFrom will eventually contain the
-	// most efficient previous step.
-	size_t cameFrom {0};
-	// The cost of getting from the start node to this node.
-	double costToNode {DBL_MAX};
-	// The total cost of getting from the start node to the goal by
-	// passing through this node. That value is partly known, partly heuristic.
-	double costToGoal {DBL_MAX};
-
-	PathData(){}
-	PathData(double _costToNode) : costToNode(_costToNode){}
-};
-
-} // namespace
-
-
-
 
 
 void PathSearchNode::addNeighbor(size_t node, double cost)
@@ -56,26 +21,65 @@ bool PathSearchNodeGraph::contains(size_t key) {
 	return false;
 }
 
-void PathSearchNodeGraph::addNode(size_t proxy, const Point3D &pos)
+void PathSearchNodeGraph::addNode(size_t handle, const Point3D &position)
 {
-	std::map<size_t, PathSearchNode>::emplace(proxy, PathSearchNode(proxy, pos));
+	std::map<size_t, PathSearchNode>::emplace(handle, PathSearchNode(handle, position));
 }
 
+void PathSearchNodeGraph::addEdge(size_t vertA, size_t vertB, double cost)
+{
+	std::map<size_t, PathSearchNode>::operator[](vertA).addNeighbor(vertB, cost);
+	if(!directed) {
+		std::map<size_t, PathSearchNode>::operator[](vertB).addNeighbor(vertA, cost);
+	}
+}
 
-void PathSearchNodeGraph::addEdge(size_t vertA, size_t vertB, double additionalCost)
+void PathSearchNodeGraph::addEdgeUseDistance(size_t vertA, size_t vertB, double additionalCost)
 {
 	PathSearchNode &A = std::map<size_t, PathSearchNode>::operator[](vertA);
-	PathSearchNode &B = std::map<size_t, PathSearchNode>::operator[](vertA);
+	PathSearchNode &B = std::map<size_t, PathSearchNode>::operator[](vertB);
 
 	double cost = v_math::distance(A.pos, B.pos)+additionalCost;
 
 	A.addNeighbor(vertB, cost);
-	B.addNeighbor(vertA, cost);
+	if(!directed) {
+		B.addNeighbor(vertA, cost);
+	}
 }
+
+
+
 
 
 std::vector<size_t> Astar(size_t start, size_t goal, PathSearchNodeGraph &nodeGraph)
 {
+	// we store this info in a separate structure so we can reuse nodegraph
+	struct PathData
+	{
+		// For each node, which node can it most efficiently be reached from.
+		// If a node can be reached from many nodes, cameFrom will eventually contain the
+		// most efficient previous step.
+		size_t cameFrom {0};
+		// The cost of getting from the start node to this node.
+		double costToNode {DBL_MAX};
+		// The total cost of getting from the start node to the goal by
+		// passing through this node. That value is partly known, partly heuristic.
+		double costToGoal {DBL_MAX};
+
+		PathData(){}
+		PathData(double _costToNode) : costToNode(_costToNode){}
+
+		static double costEstimate(const Point3D &p1, const Point3D &p2)
+		{
+			// estimatedDistance is inaccurate so we multiply by 0.9 to ensure it is
+			// less than the actual distance
+			return v_math::estimatedDistance(p1, p2)*0.9;
+		}
+	};
+
+
+
+
 	// check that the graph contains both the start and goal positions
 	if(!nodeGraph.contains(start)) {
 		throw std::runtime_error("Graph does not contain the start value");
@@ -102,7 +106,7 @@ std::vector<size_t> Astar(size_t start, size_t goal, PathSearchNodeGraph &nodeGr
 	auto &graphGoal = nodeGraph[goal];
 
 	// Total cost of getting from the start node to the goal is completely heuristic.
-	data.at(start).costToGoal = costEstimate(nodeGraph[start].pos, graphGoal.pos);
+	data.at(start).costToGoal = PathData::costEstimate(nodeGraph[start].pos, graphGoal.pos);
 
 
 
@@ -124,7 +128,7 @@ std::vector<size_t> Astar(size_t start, size_t goal, PathSearchNodeGraph &nodeGr
 		if( current == goal ) {
 			std::vector<size_t> output;
 			while (current != start){
-				output.push_back(nodeGraph[current].proxy);
+				output.push_back(nodeGraph[current].handle);
 				current = data.at(current).cameFrom;
 			}
 			std::reverse(output.begin(),output.end());
@@ -166,7 +170,7 @@ std::vector<size_t> Astar(size_t start, size_t goal, PathSearchNodeGraph &nodeGr
 			neighborData.cameFrom = current;
 			neighborData.costToNode = tentativeCostToNode;
 			neighborData.costToGoal = neighborData.costToNode + \
-			           costEstimate(nodeGraph[neighbor.node].pos, graphGoal.pos);
+			           PathData::costEstimate(nodeGraph[neighbor.node].pos, graphGoal.pos);
 		}
 	}
 	//no path found from start to goal
