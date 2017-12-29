@@ -8,7 +8,7 @@ class SocketMessage;
 class MoveHandler : public Listener
 {
 private:
-	struct MoveHandlerData;
+	class MoveHandlerData;
 	MoveHandlerData *d{nullptr};
 public:
 	MoveHandler(const MoveHandler&) = delete;

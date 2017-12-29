@@ -79,19 +79,21 @@ struct MoveMessage
 	}
 };
 
-struct MoveHandler::MoveHandlerData
+class MoveHandler::MoveHandlerData
 {
+public:
 	MappedVector<int,PositionData> positions{};
 	void setPosition(int playerID, const MoveMessage& message)
 	{
-		PositionData &player = positions[playerID];
-		if(isCheating(player, message.pos)){
+		PositionData &playerPosition = positions[playerID];
+		if(isCheating(playerPosition, message.pos)){
 			//TODO: placeholder
 		}
-		player = message.pos;
+		playerPosition = message.pos;
 	}
 	bool isCheating(const PositionData &current, const PositionData &proposed) const
 	{
+		//TODO: do something intellegent here.
 		double delta = v_math::squareDistance(current.pos,proposed.pos);
 		return delta>100;
 	}
@@ -105,8 +107,9 @@ void MoveHandler::callback( const SocketMessage &message)
 	MoveMessage mv(message);
 
 	d->setPosition(playerID, mv);
-	std::cout<<d->positions[playerID].pos.x<<", "<<d->positions[playerID].pos.y<<std::endl;
-	std::cout<<"moved"<<std::endl;
+	PositionData &playerPosition = d->positions[playerID];
+	std::cout << playerPosition.pos.x << ", " << playerPosition.pos.y << std::endl;
+	std::cout << "moved" << std::endl;
 	return;
 }
 
