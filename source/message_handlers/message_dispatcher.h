@@ -5,7 +5,7 @@
 #include <vector>
 
 class SocketMessage;
-struct MessageDispatcherListenersBase;
+class MessageDispatcherListenersBase;
 
 class MessageDispatcher
 {
