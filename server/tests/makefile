@@ -49,8 +49,8 @@ endif
 DEP_TEMP = $(DEP_DIR)temp/
 HEAD_PATH = $(PROJECT_DIRECTORY)
 
-TEST_FRAMEWORK_HEADER = $(PROJECT_DIRECTORY)external/google_test/include/
-TEST_FRAMEWORK_LIBRARY = $(PROJECT_DIRECTORY)external/google_test/google_test.a
+TEST_FRAMEWORK_HEADER = $(PROJECT_DIRECTORY)../external/google_test/include/
+TEST_FRAMEWORK_LIBRARY = $(PROJECT_DIRECTORY)../external/google_test/google_test.a
 
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP_TEMP)$*.Td
 MOV_DEPS = mv -f $(DEP_TEMP)$*.Td $(DEP_DIR)$*.d

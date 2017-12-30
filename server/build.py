@@ -280,9 +280,9 @@ def compileGoogleTest():
 
 # builds external dependancies
 def buildExternals():
-	makeDir("./external")
+	makeDir("../external")
 
-	os.chdir( "./external" )
+	os.chdir( "../external" )
 	Cppcheck_process = None
 	if not os.path.isfile( "./cppcheck_built" ):
 		downloadCppcheck()
@@ -303,7 +303,7 @@ def buildExternals():
 
 
 	#wait # for all packages to compile
-	os.chdir( "../" )
+	os.chdir( "../server" )
 
 
 
@@ -404,7 +404,7 @@ def isNotInstalled( program ):
 
 def codeAnalysis():
 	if getIsArgument("clean") == False :
-		make_process = subprocess.Popen(["./external/cppcheck/cppcheck",
+		make_process = subprocess.Popen(["../external/cppcheck/cppcheck",
 			"--quiet", "-I./", "--enable=warning,performance,information",
 			"-j8", "--cppcheck-build-dir=./analysis", "./source"], stderr=subprocess.STDOUT)
 		if make_process.wait() != 0:

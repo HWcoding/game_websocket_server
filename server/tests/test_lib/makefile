@@ -51,7 +51,7 @@ endif
 
 DEP_TEMP = $(DEP_DIR)temp/
 HEAD_PATH = $(PROJECT_DIRECTORY)
-TEST_FRAMEWORK_HEADER = $(PROJECT_DIRECTORY)external/google_test/include/
+TEST_FRAMEWORK_HEADER = $(PROJECT_DIRECTORY)../external/google_test/include/
 
 #compiler flags for generating dependency file
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP_TEMP)$*.Td
