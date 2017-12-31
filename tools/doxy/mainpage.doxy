@@ -1,0 +1,32 @@
+/**
+
+\mainpage Game Server
+
+\section mainpage_intro Introduction
+
+An Intro
+
+-# Some Ordered List.
+-# Some Ordered List.
+-# Some Ordered List.
+
+\section mainpage_docs Reference Documentation
+
+This is reference documentation
+
+- Some bullet points
+- Some bullet points
+
+
+
+
+
+*/
+
+//\section mainpage_tutorials Tutorials
+
+//Some tutorials at <a href="http://example.com">example.com</a> website.
+
+//\section mainpage_examples Examples
+
+//Some examples \subpage examples_page
