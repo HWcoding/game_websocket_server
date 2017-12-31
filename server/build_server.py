@@ -280,6 +280,7 @@ def compileGoogleTest():
 
 # builds external dependancies
 def buildExternals():
+	current = os.getcwd()
 	makeDir("../external")
 
 	os.chdir( "../external" )
@@ -303,7 +304,7 @@ def buildExternals():
 
 
 	#wait # for all packages to compile
-	os.chdir( "../server" )
+	os.chdir( current )
 
 
 
