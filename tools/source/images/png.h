@@ -18,18 +18,17 @@ class PngImage {
 
 public:
 	// color type
-	static const uint8_t PNG_GRAYSCALE	= 0;	//1, 2, 4, 8, 16	Each pixel is a greyscale sample
-	static const uint8_t PNG_TRUECOLOR	= 2;	//8, 16				Each pixel is an R,G,B triple
-	static const uint8_t PNG_INDEXCOLOR = 3;	//1, 2, 4, 8		Each pixel is a palette index; a PLTE chunk shall appear.
-	static const uint8_t PNG_GRAYSCALE_A = 4;	//8, 16				Each pixel is a greyscale sample followed by an alpha sample.
-	static const uint8_t PNG_TRUECOLOR_A = 6;	//8, 16				Each pixel is an R,G,B triple followed by an alpha sample.
+	static const uint8_t PNG_GRAYSCALE  = 0;    //1, 2, 4, 8, 16    Each pixel is a greyscale sample
+	static const uint8_t PNG_TRUECOLOR  = 2;    //8, 16             Each pixel is an R,G,B triple
+	static const uint8_t PNG_INDEXCOLOR = 3;    //1, 2, 4, 8        Each pixel is a palette index; a PLTE chunk shall appear.
+	static const uint8_t PNG_GRAYSCALE_A = 4;   //8, 16             Each pixel is a greyscale sample followed by an alpha sample.
+	static const uint8_t PNG_TRUECOLOR_A = 6;   //8, 16             Each pixel is an R,G,B triple followed by an alpha sample.
 
 	std::vector<uint8_t> createPNG(image &data, bool Alpha,
 	                             uint8_t _bitDepth, float _accuracy);
 
 	PngImage();
 };
-
 
 
 #endif /* SOURCE_IMAGES_PNG_H_ */

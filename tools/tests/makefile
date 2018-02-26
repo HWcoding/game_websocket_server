@@ -27,6 +27,7 @@ DEBUG_EXECUTABLE = $(PROJECT_DIRECTORY)tests/bin/debug/$(EXECUTABLE_NAME).test
 DEBUG_TEST_OBJECTS = $(addsuffix .o, $(addprefix $(DEBUG_OBJ_DIR), $(TEST_OBJECTS_NAME)))
 DEBUG_DEPFILES := $(patsubst %,$(DEBUG_DEP_DIR)%.d,$(basename $(notdir $(DEBUG_TEST_OBJECTS))))
 DEBUG_COVERAGE = $(PROJECT_DIRECTORY)objs/debug/coverage/
+GCOV_DIR = $(PROJECT_DIRECTORY)tests/gcov/
 
 OBJECTS = $(addsuffix .o, $(basename $(OBJECT_LIST)))
 
@@ -70,8 +71,8 @@ ifeq ($(COVERAGE),1)
 	$(CXX) -o $@ $^ $(LIBRARIES)
 	{ $(EXECUTABLE) 2> /dev/null ; [ $$? -eq 0 ] || touch $(CPP_FILE_NAME); \
 	gcov $(addprefix $(COVERAGE_DIR), $(notdir $(PROFILES))) > /dev/null; \
-	mv -f $(GCOV_FILENAME).cpp.gcov /home/pc001/Projects/server/tests/gcov/  2>/dev/null || true; \
-	mv -f $(GCOV_FILENAME).h.gcov /home/pc001/Projects/server/tests/gcov/  2>/dev/null || true; \
+	mv -f $(GCOV_FILENAME).cpp.gcov $(GCOV_DIR)  2>/dev/null || true; \
+	mv -f $(GCOV_FILENAME).h.gcov $(GCOV_DIR)  2>/dev/null || true; \
 	find . -maxdepth 1 -name "*.gcov" -type f -delete;}
 else
 	$(CXX) -o $@ $^ $(LIBRARIES)
