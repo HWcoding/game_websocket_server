@@ -21,13 +21,18 @@ import sys
 sys.dont_write_bytecode = True
 import os
 sys.path.insert(0,os.path.abspath("./server"))
+sys.path.insert(0,os.path.abspath("./tools"))
 
 import build_server
+import build_tools
 
 def main():
 
 	os.chdir( "./server" )
 	build_server.main()
+	os.chdir( "../" )
+	os.chdir( "./tools" )
+	build_tools.main()
 	os.chdir( "../" )
 
 if __name__ == "__main__":

@@ -71,8 +71,8 @@ $(LIBRARY_NAME): $(OBJECTS)
 	gcc-ar rcs $@ $^
 
 # in order for this rule to work filenames cannot contain the
-# string -!- or any of the special symbols make uses such as @ or $
-# In order to get the .cpp filename we replace all the -!- with /
+# string +. or any of the special symbols make uses such as @ or $
+# In order to get the .cpp filename we replace all the +. with /
 # This will give us the full path of the file.
 .SECONDEXPANSION:
 $(OBJ_DIR)%.o: $$(subst  +.,/, %.cpp) $(DEP_DIR)%.d

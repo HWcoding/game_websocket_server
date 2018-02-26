@@ -1,6 +1,6 @@
 
 EXECUTABLE_NAME = program
-RELEASE_LIBS = -lpthread -lstdc++ -lcrypto
+RELEASE_LIBS = -lpthread -lstdc++ -lcrypto -lz
 DEBUG_LIBS = -rdynamic -lpthread -lstdc++ -lcrypto -ldl -lz
 CPP_VERSION = -std=c++14
 FILE_LIST = "./source/main.cpp"
