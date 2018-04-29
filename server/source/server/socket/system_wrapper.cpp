@@ -4,7 +4,7 @@
 #include <netdb.h>
 #include <fcntl.h>
 #include <cstring>
-#include <errno.h>
+#include <cerrno>
 #include "source/logging/exception_handler.h"
 
 SystemInterface::~SystemInterface() = default;
@@ -24,7 +24,7 @@ size_t SystemWrapper::epollWait(int epollFD,  struct epoll_event *events, int MA
 			throw std::runtime_error(LOG_EXCEPTION(std::string()+std::strerror(error)+" in epoll_wait"));
 		}
 	}
-	size_t count = static_cast<size_t>(n);
+	auto count = static_cast<size_t>(n);
 	return count;
 }
 
@@ -126,7 +126,7 @@ size_t SystemWrapper::writeFD(int FD, const void *buf, size_t count) const{
 	ssize_t ret = write(FD, buf, count);
 	if(ret<0){
 		int error = errno;
-		if(error != EAGAIN && error != EWOULDBLOCK){
+		if(!(error == EAGAIN)){
 			throw std::runtime_error(LOG_EXCEPTION(std::string()+std::strerror(error)+" write error"));	//error
 		}
 		return 0;
@@ -151,7 +151,7 @@ size_t SystemWrapper::readFD(int FD, void *buf, size_t count, bool &done) const{
 	ssize_t ret = read(FD, buf, count);
 	if(ret<0){
 		int error = errno;
-		if(error != EAGAIN && error != EWOULDBLOCK){
+		if(error != EAGAIN){
 			throw std::runtime_error(LOG_EXCEPTION(std::string()+std::strerror(error)+" read error"));	//error
 		}
 		if(error == EAGAIN){
@@ -241,7 +241,7 @@ int SystemWrapper::acceptSocket(int sockfd, struct sockaddr *addr, unsigned int 
 	int ret = accept(sockfd, addr, addrlen );
 	if(ret == -1){
 		int error = errno;
-		if ((error == EAGAIN) || (error == EWOULDBLOCK)){	//We have processed all connections.
+		if (error == EAGAIN){	//We have processed all connections.
 
 		}
 		else{

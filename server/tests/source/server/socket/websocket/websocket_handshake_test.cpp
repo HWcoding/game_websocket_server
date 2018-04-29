@@ -2,10 +2,31 @@
                                      source/data_types/byte_array.cpp"
 
 #include "source/server/socket/websocket/websocket_handshake.h"
+#include "source/data_types/byte_array.h"
 #include "tests/test_lib/mocks_stubs/socket_test_helpers.h"
 
 #include "tests/test.h"
 
+ByteArray createTestHandshakeHeader(){
+	ByteArray output;
+
+	output.appendWithNoSize(std::string("GET /socket HTTP/1.1\r\n") );
+	output.appendWithNoSize(std::string("Host: localhost\r\n") );
+	output.appendWithNoSize(std::string("Connection: keep-alive, Upgrade\r\n") );
+	output.appendWithNoSize(std::string("Pragma: no-cache\r\n") );
+	output.appendWithNoSize(std::string("Cache-Control: no-cache\r\n") );
+	output.appendWithNoSize(std::string("Upgrade: websocket\r\n") );
+	output.appendWithNoSize(std::string("Origin: http://localhost:8080\r\n") );
+	output.appendWithNoSize(std::string("Sec-WebSocket-Version: 13\r\n") );
+	output.appendWithNoSize(std::string("User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.94 Safari/537.36\r\n") );
+	output.appendWithNoSize(std::string("Accept-Encoding: gzip, deflate, sdch\r\n") );
+	output.appendWithNoSize(std::string("Accept-Language: en-US,en;q=0.8\r\n") );
+	output.appendWithNoSize(std::string("Cookie: GameServer=CJP5G89v2O30Dx-StfclobgZ0AuIH8Nh74SEzHxvBJEZWG6yJ3smhW73TZgDMO0HEy8AvYhKgzxVry5Yby75oT-250dW6PTdm74rhmQyACSwbiAbvp67108QZid7KoPJjf-OuP1cf5Z31_eHimsW8JTIf9KINfG0yy31WuDb21XU-nH9EJcVKhdoXrQB_35DPIRymBxV85cENsxScjjMIBnI60mUR1koC5k_XcwSiTgnoT9ApEPwIX6Z9iw0tV2X7\r\n") );
+	output.appendWithNoSize(std::string("Sec-WebSocket-Key: +40NMxLMogWjfV/0HyjlxA==\r\n") );
+	output.appendWithNoSize(std::string("Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits\r\n") );
+	output.appendWithNoSize(std::string("Sec-WebSocket-Protocol: 05fcc56b7cb916d5e5a82081223b3357\r\n\r\n") );
+	return output;
+}
 
 class HandshakeHeadersWrap : public HandshakeHeaders
 {

@@ -36,7 +36,7 @@ WeakWarnings = " -Wall -Wextra -pedantic -ansi -Weffc++ -Wno-odr"
 TestWarnings = " -Wall -Wno-odr"
 
 ReleaseOptimizations = " -Ofast -falign-functions=16 -falign-loops=16 -march=native"
-DebugBuild = "CFLAGS=-DDEBUG -g3 -fno-omit-frame-pointer -fno-inline -fprofile-arcs -ftest-coverage"
+DebugBuild = "CFLAGS=-DDEBUG -O0 -g3 -coverage -fno-omit-frame-pointer -fno-inline -fprofile-arcs -ftest-coverage"
 ReleaseBuild = "CFLAGS=-DNDEBUG -flto " + ReleaseOptimizations
 
 
@@ -412,17 +412,17 @@ def codeAnalysis():
 			raise Exception
 
 		if getIsArgument( "tidy" ):
-			if isNotInstalled( "clang-tidy" ):
-				printHighlight( "Error: package clang-tidy is not installed" )
+			if isNotInstalled( "clang-tidy-6.0" ):
+				printHighlight( "Error: package clang-tidy-6.0 is not installed" )
 			else:
 				os.chdir( "./source" )
 				for root, dirs, files in os.walk("./"):
 					for file in files:
 						if file.endswith('.cpp'):
 							fullpath = os.path.join(root, file)
-							make_process = subprocess.Popen(["clang-tidy", fullpath,
-								"-extra-arg=-I../", "-extra-arg=-std=c++14",
-								"-checks=modernize-*,clang-analyzer-*,clang-analyzer-alpha.deadcode.UnreachableCode,-clang-analyzer-alpha.core.CastToStruct"],
+							make_process = subprocess.Popen(["clang-tidy-6.0", fullpath,
+								"-extra-arg=-I../", "-extra-arg=-std=c++17", "-quiet" ,
+								"-checks=modernize-*,clang-analyzer-*,clang-analyzer-alpha.deadcode.UnreachableCode,-clang-analyzer-alpha.core.CastToStruct", "--" ],
 								stderr=subprocess.STDOUT)
 							if make_process.wait() != 0:
 								raise Exception

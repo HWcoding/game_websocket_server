@@ -2,7 +2,7 @@
 EXECUTABLE_NAME = program
 RELEASE_LIBS = -lpthread -lstdc++ -lcrypto
 DEBUG_LIBS = -rdynamic -lpthread -lstdc++ -lcrypto -ldl
-CPP_VERSION = -std=c++14
+CPP_VERSION = -std=c++17
 FILE_LIST = "./source/main.cpp"
 COMP = g++
 CFLAGS = -DDEBUG -Og -g3 -fno-omit-frame-pointer -fno-inline

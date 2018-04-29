@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <sys/epoll.h>
 #include <netdb.h>
-#include <signal.h>
+#include <csignal>
 #include <atomic>
 
 #include "source/server/socket/set_of_file_descriptors.h"

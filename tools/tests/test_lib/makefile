@@ -1,10 +1,10 @@
 
 RELEASE_LIBS = -lpthread -lstdc++ -lcrypto -lm
 DEBUG_LIBS = -rdynamic -lpthread -lstdc++ -lcrypto -ldl
-CPP_VERSION = -std=c++14
+CPP_VERSION = -std=c++17
 FILE_LIST = "./source/main.cpp"
 COMP = g++
-CFLAGS = -DDEBUG -Og -g3 -fno-omit-frame-pointer -fno-inline
+CFLAGS = -DDEBUG -O0 -g3 -fno-omit-frame-pointer -fno-inline
 
 # we need to use absolute path for dependency files to work properly
 PROJECT_DIRECTORY := $(abspath ../../)/

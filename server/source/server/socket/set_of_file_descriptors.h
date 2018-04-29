@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include <mutex>
+#include <functional>
 
 #include "source/server/socket/file_descriptor.h"
 #include "source/data_types/byte_array.h"

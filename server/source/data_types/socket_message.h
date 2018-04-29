@@ -123,7 +123,7 @@ public:
 							const ByteArray _port, const ByteArray _CSRFkey,
 							const ByteArray _message) noexcept;
 
-	SocketMessage(const SocketMessage &m) noexcept; //copy constructor
+	SocketMessage(const SocketMessage &m) = default; //copy constructor
 
 	SocketMessage(SocketMessage&& m) noexcept; //move constructor
 
@@ -136,7 +136,7 @@ private:
 	int FD{-1};
 	uint32_t type{0};
 	uint32_t priority{0};
-	std::chrono::system_clock::time_point sentTime;
+	std::chrono::system_clock::time_point sentTime {};
 	ByteArray IP {};
 	ByteArray port {};
 	ByteArray CSRFkey {};

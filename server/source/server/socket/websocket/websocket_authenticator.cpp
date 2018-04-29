@@ -2,7 +2,7 @@
 #include <openssl/sha.h>
 #include <unistd.h>
 #include <string>
-#include <string.h>
+#include <cstring>
 #include "source/server/socket/set_of_file_descriptors.h"
 #include "source/server/socket/websocket/websocket_handshake.h"
 #include "source/server/socket/system_interface.h"
@@ -171,8 +171,8 @@ bool WebsocketAuthenticator::isCompleteHandshake(const ByteArray &in)
 {
 	if(in.size()<4)return false;
 	const size_t end = in.size()-1;
-	const uint8_t carriageReturn = static_cast<uint8_t>('\r');
-	const uint8_t newLine = static_cast<uint8_t>('\n');
+	auto carriageReturn = static_cast<const uint8_t>('\r');
+	auto newLine = static_cast<const uint8_t>('\n');
 
 	if(in[end-3] != carriageReturn || in[end-2] != newLine || in[end-1] != carriageReturn || in[end] != newLine) return false; //check for "\r\n\r\n" ending
 	return true;

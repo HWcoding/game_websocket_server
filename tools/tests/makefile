@@ -1,12 +1,12 @@
 #absolute paths are necessary for dependency files to work properly
 #our test executable will have the same name as the cpp file containing the tests
 EXECUTABLE_NAME = $(basename $(notdir $(FILENAME)))
-LIBRARIES = -lpthread -lstdc++ -lcrypto -ldl -lm
+LIBRARIES = -lpthread -lstdc++ -lcrypto -ldl -lm -lz
 
 PROJECT_DIRECTORY = $(abspath ../)/
-
+CPP_VERSION = -std=c++17
 COMP = g++
-CFLAGS = -DDEBUG -Og -g3 -fno-omit-frame-pointer -fno-inline
+CFLAGS = -DDEBUG -O0 -g3 -fno-omit-frame-pointer -fno-inline
 
 
 CPP_FILE_NAME = $(abspath $(FILENAME))
@@ -55,7 +55,7 @@ TEST_FRAMEWORK_LIBRARY = $(PROJECT_DIRECTORY)../external/google_test/google_test
 
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP_TEMP)$*.Td
 MOV_DEPS = mv -f $(DEP_TEMP)$*.Td $(DEP_DIR)$*.d
-CXX = $(COMP) -I $(HEAD_PATH) -isystem $(TEST_FRAMEWORK_HEADER) $(CFLAGS) -Winvalid-pch $(DEPFLAGS) -std=c++14
+CXX = $(COMP) -I $(HEAD_PATH) -isystem $(TEST_FRAMEWORK_HEADER) $(CFLAGS) -Winvalid-pch $(DEPFLAGS) $(CPP_VERSION)
 
 DEPFILES := $(patsubst %,$(DEP_DIR)%.d,$(basename $(notdir $(TEST_OBJECTS))))
 PROFILES := $(addprefix $(PROJECT_DIRECTORY)objs/debug/, $(subst  tests+.source,source,$(subst  /,+.,$(addsuffix .cpp, $(CPP_FILE_NAME:_test.cpp=)))))

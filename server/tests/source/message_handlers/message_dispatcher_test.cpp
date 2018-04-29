@@ -14,14 +14,23 @@
 //stubs
 class MoveHandler : public Listener
 {
+private:
+	class MoveHandlerData;
+	MoveHandlerData *d{nullptr};
 public:
-	void callback( const SocketMessage &message);
+	MoveHandler(const MoveHandler&) = delete;
+	MoveHandler& operator=(const MoveHandler&) = delete;
+
 	MoveHandler();
-	~MoveHandler();
+	~MoveHandler() override;
+	void callback( const SocketMessage &message) override;
 };
+
+class MoveHandler::MoveHandlerData {};
 MoveHandler::MoveHandler(){}
 MoveHandler::~MoveHandler(){}
 void MoveHandler::callback( const SocketMessage &message){(void)message;}
+
 
 class AbilityHandler : public Listener
 {

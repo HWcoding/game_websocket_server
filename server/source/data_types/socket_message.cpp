@@ -32,13 +32,7 @@ void SocketMessage::setMessage(	const ByteArray & _message)
 
 // constructors
 SocketMessage::SocketMessage() noexcept :
-	FD(-1), type(0),
-	priority(0),
-	sentTime(calculateTime()),
-	IP(),
-	port(),
-	CSRFkey(),
-	message()
+	sentTime(calculateTime())
 {}
 
 SocketMessage::SocketMessage(int _FD, uint32_t _type, uint32_t _priority, const ByteArray _IP,
@@ -55,16 +49,6 @@ SocketMessage::SocketMessage(int _FD, uint32_t _type, uint32_t _priority, const 
 	message(std::move(_message))
 {}
 
-SocketMessage::SocketMessage(const SocketMessage &m) noexcept : //copy constructor
-	FD(m.FD),
-	type(m.type),
-	priority(m.priority),
-	sentTime(m.sentTime),
-	IP(m.IP),
-	port(m.port),
-	CSRFkey(m.CSRFkey),
-	message(m.message)
-{}
 
 SocketMessage::SocketMessage(SocketMessage&& m) noexcept : //move constructor
 	FD(m.FD),

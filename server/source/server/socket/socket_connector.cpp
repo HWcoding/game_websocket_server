@@ -3,12 +3,12 @@
 #include "source/server/socket/system_wrapper.h"
 #include <sys/epoll.h>
 #include <sys/socket.h>
-#include <signal.h>
+#include <csignal>
 #include <netdb.h>
 #include <chrono>
 #include <thread>
 #include <atomic>
-#include <string.h>
+#include <cstring>
 #include "source/server/socket/websocket/websocket_authenticator.h"
 #include "source/data_types/byte_array.h"
 #include "source/logging/exception_handler.h"

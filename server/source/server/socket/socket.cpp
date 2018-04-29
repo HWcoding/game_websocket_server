@@ -1,5 +1,5 @@
 #include "source/server/socket/socket.h"
-#include <signal.h>
+#include <csignal>
 
 #include "source/server/socket/set_of_file_descriptors.h"
 #include "source/server/socket/socket_reader.h"

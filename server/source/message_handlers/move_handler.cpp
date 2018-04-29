@@ -56,7 +56,7 @@ struct MoveMessage
 {
 	PositionData pos{};
 
-	MoveMessage(){}
+	MoveMessage() = default;
 
 	explicit MoveMessage( const SocketMessage &message)
 	{

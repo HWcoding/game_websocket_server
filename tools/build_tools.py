@@ -412,7 +412,7 @@ def codeAnalysis():
 			raise Exception
 
 		if getIsArgument( "tidy" ):
-			if isNotInstalled( "clang-tidy" ):
+			if isNotInstalled( "clang-tidy-6.0" ):
 				printHighlight( "Error: package clang-tidy is not installed" )
 			else:
 				os.chdir( "./source" )
@@ -420,9 +420,9 @@ def codeAnalysis():
 					for file in files:
 						if file.endswith('.cpp'):
 							fullpath = os.path.join(root, file)
-							make_process = subprocess.Popen(["clang-tidy", fullpath,
-								"-extra-arg=-I../", "-extra-arg=-std=c++14",
-								"-checks=modernize-*,clang-analyzer-*,clang-analyzer-alpha.deadcode.UnreachableCode,-clang-analyzer-alpha.core.CastToStruct"],
+							make_process = subprocess.Popen(["clang-tidy-6.0", fullpath,
+								"-extra-arg=-I../", "-extra-arg=-std=c++17", "-quiet" ,
+								"-checks=modernize-*,clang-analyzer-*,clang-analyzer-alpha.deadcode.UnreachableCode,-clang-analyzer-alpha.core.CastToStruct", "--"],
 								stderr=subprocess.STDOUT)
 							if make_process.wait() != 0:
 								raise Exception
@@ -577,6 +577,7 @@ def getTestDependencies( file ):
 
 # takes a test .cpp filename as argument and compiles it
 def compileTest(file):
+
 	ObjectList = "OBJECT_LIST=" + getTestDependencies( file )
 	Cov = "COVERAGE=0"
 	if getIsArgument( "cov" ):
@@ -729,8 +730,8 @@ def main():
 
 	# build tests
 	printMinorHeader( "Building/Running Tests" )
-#	compileTestLibs()
-#	compileTestFiles()
+	compileTestLibs()
+	compileTestFiles()
 	printHighlight( "Finished" )
 
 	# doxygen

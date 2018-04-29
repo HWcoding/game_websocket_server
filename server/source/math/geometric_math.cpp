@@ -1,8 +1,8 @@
 
 #include "source/math/geometric_math.h"
 #include <cstdint>
-#include <math.h>
-#include <string.h>
+#include <cmath>
+#include <cstring>
 #include <xmmintrin.h>
 
 double fastInvSqrt(double input)
@@ -15,16 +15,16 @@ double fastInvSqrt(double input)
 	input *= 1.5 - halfInput*input*input;
 	return input;*/
 
-	float f = (float)input;
+	auto f = static_cast<float>(input);
 	float out;
 	_mm_store_ss( &out, _mm_rsqrt_ss( _mm_load_ss( &f ) ) );
-	return (double) out;
+	return static_cast<double>(out);
 }
 
 
 // extremely fast but very inaccurate. Good for heuristics
-// fastSqrt(100) = 10.25
-double fastSqrt(double f)
+// fastSqrtInaccurate(100) = 10.25
+double fastSqrtInaccurate(double f)
 {
 	uint64_t i;
 	memcpy(&i , &f, sizeof(uint64_t));
@@ -121,7 +121,7 @@ double distance(const Point3D &p1, const Point3D &p2)
 
 double estimatedDistance(const Point3D &a, const Point3D &b)
 {
-	return fastSqrt(squareDistance(a, b));
+	return fastSqrtInaccurate(squareDistance(a, b));
 }
 
 
@@ -225,17 +225,3 @@ bool doesRayIntersectSphere(const Ray &ray, const Sphere &sphere)
 
 
 } // namespace collision
-
-
-
-
-
-
-
-
-
-
-
-
-
-

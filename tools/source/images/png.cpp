@@ -1,6 +1,6 @@
 #include "source/images/png.h"
 #include <cstring>
-#include <iostream>
+//#include <iostream>
 #include <array>
 #include <cstdlib>
 #include "zlib.h"
@@ -16,7 +16,7 @@ namespace {
  * CRC (Cyclic Redundancy Check) employed in PNG chunks.
  * CRC code adapted from http://www.w3.org/TR/PNG/#D-CRCAppendix
  *
- * Use pngCrc() to generate a crc value for a buffer.
+ * Use PngCrc::generateCRC() to generate a crc value for a buffer.
  */
 
 class PngCrc {
@@ -132,7 +132,7 @@ void addIHDR(std::vector<uint8_t> &file, uint32_t height, uint32_t width, uint8_
 	uint8_t IHDR[25];
 	//add chunk length
 	uint32_t length = 13;
-	uint8_t* convertChar = reinterpret_cast<uint8_t *> (&length);
+	auto convertChar = reinterpret_cast<uint8_t *> (&length);
 	IHDR[0] = convertChar[3]; //reverse order for Big Endian
 	IHDR[1] = convertChar[2];
 	IHDR[2] = convertChar[1];
@@ -207,10 +207,10 @@ void addPLTE(std::vector<uint8_t> &file, std::vector<uint8_t> &table){
 
 
 void addIDAT(std::vector<uint8_t> &file, std::vector<uint8_t> &data){
-	uint32_t dataSize = static_cast<uint32_t>(data.size());
+	auto dataSize = static_cast<uint32_t>(data.size());
 	std::vector<uint8_t> IDAT(dataSize+12);
 	//add chunk length
-	uint8_t* convertChar = reinterpret_cast<uint8_t *> (&dataSize);
+	auto convertChar = reinterpret_cast<uint8_t *> (&dataSize);
 	IDAT[0] = convertChar[3]; //reverse order for Big Endian
 	IDAT[1] = convertChar[2];
 	IDAT[2] = convertChar[1];
@@ -240,7 +240,7 @@ void addIEND(std::vector<uint8_t> &file){
 	uint8_t IEND[12];
 	//add chunk length
 	uint32_t length = 0;
-	uint8_t* convertChar = reinterpret_cast<uint8_t *> (&length);
+	auto convertChar = reinterpret_cast<uint8_t *> (&length);
 	IEND[0] = convertChar[3]; //reverse order for Big Endian
 	IEND[1] = convertChar[2];
 	IEND[2] = convertChar[1];
@@ -267,7 +267,7 @@ void addIEND(std::vector<uint8_t> &file){
 
 bool isGrayScale(image &data, uint16_t accuracy){
 	const std::vector<pixel> &imageBuffer = data.getBuffer();
-	uint32_t length = static_cast<uint32_t>(data.size());
+	auto length = static_cast<uint32_t>(data.size());
 	uint32_t deviation = 0;
 	uint32_t diff = 0;
 	for(uint32_t i = 0; i < length; i++){
@@ -480,7 +480,6 @@ void filterChunk(std::vector<uint8_t> &filtered, std::vector<uint8_t> &Data, uin
 		cost = calculateFilterCost(tempfilteredE);
 		if(cost < minCost) {
 			cheapestfiltered = &tempfilteredE;
-			minCost = cost;
 		}
 	}
 
@@ -521,28 +520,20 @@ void filterChunk(std::vector<uint8_t> &filtered, std::vector<uint8_t> &Data, uin
 
 
 
-PngImage::PngImage():
-	height(0),
-	width(0),
-	bitDepth(0),
-	colorType(127)
-{}
-
 
 
 
 //vector version
 void PngImage::convertBitDepth(std::vector<uint8_t> &buffer, image &data, uint8_t pixelWidth){//TODO grayscale conversion
-	uint32_t pixelCount = static_cast<uint32_t>(data.size());
+	auto pixelCount = static_cast<uint32_t>(data.size());
 	uint8_t* convertChar;
 	uint32_t i =0;
 	uint32_t j =0;
 	uint32_t k =0;
 	uint32_t offset =0;
-	uint32_t widthP1 = (width*pixelWidth)+1;
 
 	if(bitDepth == 16){
-		widthP1 = (width*pixelWidth)+1;
+		uint32_t widthP1 = (width*pixelWidth)+1;
 		uint64_t size = 2*pixelCount*pixelWidth+height;
 		buffer.resize(size);
 		std::vector<uint8_t> filtered(size);
@@ -578,7 +569,7 @@ void PngImage::convertBitDepth(std::vector<uint8_t> &buffer, image &data, uint8_
 	}
 
 	else if(bitDepth == 8){
-		widthP1 = (width*pixelWidth)+1;
+		uint32_t widthP1 = (width*pixelWidth)+1;
 		uint64_t size = pixelCount*pixelWidth+height;
 		buffer.resize(size);
 		std::vector<uint8_t> filtered(size);
@@ -624,11 +615,13 @@ std::vector<uint8_t> PngImage::createPNG(image &data, bool Alpha, uint8_t _bitDe
 	if(_width == 0 || _height == 0){
 		throw std::runtime_error("width and height must not be zero PngImage::createPNG");
 	}
+
 	//temp.................................................................................................//
 	if(_bitDepth != 8 && _bitDepth != 16 ){
 		throw std::runtime_error("bitDepth must be 8 or 16 PngImage::createPNG");
 	}
-	//temp.................................................................................................//
+	//.....................................................................................................//
+
 	if(!(_bitDepth == 1 || _bitDepth == 2 || _bitDepth == 4 || _bitDepth == 8 || _bitDepth == 16)){
 		throw std::runtime_error("bitDepth must be 1,2,4,8,or 16 PngImage::createPNG");
 	}
@@ -643,7 +636,7 @@ std::vector<uint8_t> PngImage::createPNG(image &data, bool Alpha, uint8_t _bitDe
 	width = _width;
 	height = _height;
 	bitDepth = _bitDepth;
-	uint16_t accuracy = static_cast<uint16_t>(65535 *_accuracy);
+	auto accuracy = static_cast<uint16_t>(65535 *_accuracy);
 	bool grayscale = isGrayScale(data, accuracy);
 	//if(bitDepth<8)bitDepth = 8; //TODO enable bit depths below 8
 	//if(bitDepth<8){
@@ -673,19 +666,19 @@ std::vector<uint8_t> PngImage::createPNG(image &data, bool Alpha, uint8_t _bitDe
 	uint8_t pixelWidth = 0;
 	if(colorType == PNG_GRAYSCALE){
 		pixelWidth = static_cast<uint8_t>(bitDepth/8);
-		std::cout<<"color is Grayscale"<<std::endl;
+		//std::cout<<"color is Grayscale"<<std::endl;
 	}
 	else if(colorType == PNG_GRAYSCALE_A){
 		pixelWidth = static_cast<uint8_t>(bitDepth/4);
-		std::cout<<"color is GrayscaleA"<<std::endl;
+		//std::cout<<"color is GrayscaleA"<<std::endl;
 	}
 	else if(colorType == PNG_TRUECOLOR_A){
 		pixelWidth = static_cast<uint8_t>(bitDepth/2);
-		std::cout<<"color is TruecolorA"<<std::endl;
+		//std::cout<<"color is TruecolorA"<<std::endl;
 	}
 	else if(colorType == PNG_TRUECOLOR){
 		pixelWidth = static_cast<uint8_t>(3*bitDepth/8);
-		std::cout<<"color is Truecolor"<<std::endl;
+		//std::cout<<"color is Truecolor"<<std::endl;
 	}
 	else{
 		throw std::runtime_error("bad color type PngImage::createPNG");

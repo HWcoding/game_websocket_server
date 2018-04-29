@@ -1,7 +1,7 @@
 #include "source/server/socket/websocket/websocket_write_buffer.h"
 #include "source/server/socket/set_of_file_descriptors.h"
 #include "source/server/socket/system_wrapper.h"
-#include <string.h>
+#include <cstring>
 
 WriteBuffersInterface::~WriteBuffersInterface() = default;
 

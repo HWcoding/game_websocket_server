@@ -9,7 +9,7 @@
 
 void PathSearchNode::addNeighbor(size_t node, double cost)
 {
-	connectedNodes.push_back(ConnectedNode(node, cost));
+	connectedNodes.emplace_back(ConnectedNode(node, cost));
 }
 
 
@@ -66,7 +66,7 @@ std::vector<size_t> Astar(size_t start, size_t goal, PathSearchNodeGraph &nodeGr
 		// passing through this node. That value is partly known, partly heuristic.
 		double costToGoal {DBL_MAX};
 
-		PathData(){}
+		PathData() = default;
 		PathData(double _costToNode) : costToNode(_costToNode){}
 
 		static double costEstimate(const Point3D &p1, const Point3D &p2)

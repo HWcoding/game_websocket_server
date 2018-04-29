@@ -4,7 +4,7 @@
 #include "source/server/socket/set_of_file_descriptors.h"
 #include "source/data_types/socket_message.h"
 #include "source/data_types/message_type.h"
-#include <string.h>
+#include <cstring>
 #include "source/logging/exception_handler.h"
 
 
@@ -99,7 +99,7 @@ uint64_t WebsocketMessageProcessor::getNet64bit (uint8_t *in)
 	out[6]= in[1];
 	out[7]= in[0];
 
-	uint64_t *temp = reinterpret_cast<uint64_t *>(out);
+	auto temp = reinterpret_cast<uint64_t *>(out);
 	rval = *temp;
 	return rval;
 }
@@ -114,7 +114,7 @@ uint16_t WebsocketMessageProcessor::getNet16bit (uint8_t *in)
 	out[0]= in[1];
 	out[1]= in[0];
 
-	uint16_t *temp = reinterpret_cast<uint16_t *>(out);
+	auto temp = reinterpret_cast<uint16_t *>(out);
 	rval = *temp;
 	return rval;
 }
@@ -210,11 +210,11 @@ void WebsocketMessageProcessor::unmask (ByteArray &in, ByteArray &out, uint64_t 
 		uint64_t length64 = length-endBytes;
 		length64 /= 8; //convert length64 from number of bytes to number of 64bit ints
 
-		uint64_t *output64 = reinterpret_cast<uint64_t*>(&out[i+begin]);
+		auto output64 = reinterpret_cast<uint64_t*>(&out[i+begin]);
 		uint64_t offset= i;
 
 		uint64_t mask64 = 0;
-		uint8_t *tempMask = reinterpret_cast<uint8_t*>(&mask64);
+		auto tempMask = reinterpret_cast<uint8_t*>(&mask64);
 		for(int j = 0; j<8; ++j, ++i) {
 			tempMask[j] = mask[i % 4]; //build new 64bit mask starting were the previous loop left off (at i)
 		}
@@ -240,7 +240,7 @@ size_t WebsocketMessageProcessor::extractMessages (ByteArray &in, std::vector< B
 	types.reserve(10);
 	types.push_back(-1);
 	out.reserve(10);			//we could calculate how many messages are in 'in' here and reserve the correct number but it would be slow. 10 should cover most cases.
-	out.push_back( ByteArray() ); //create first element.
+	out.emplace_back( ByteArray() ); //create first element.
 
 	size_t currentM =0;
 	uint64_t start =0;
@@ -276,7 +276,7 @@ size_t WebsocketMessageProcessor::extractMessages (ByteArray &in, std::vector< B
 			return currentM;
 		}
 
-		uint8_t opcode = static_cast<uint8_t>(in[start] & 0x0F); //take low 4 bits of first byte
+		auto opcode = static_cast<uint8_t>(in[start] & 0x0F); //take low 4 bits of first byte
 		types[currentM] = opcode;
 
 		unmask(in, out[currentM], messageStart, size);
@@ -289,7 +289,7 @@ size_t WebsocketMessageProcessor::extractMessages (ByteArray &in, std::vector< B
 				completeFracture(out[currentM], types[currentM], outStart, FD);
 			}
 			types.push_back(-1);
-			out.push_back(ByteArray() );
+			out.emplace_back(ByteArray() );
 			currentM++;
 			if(types[currentM-1] == 8){ //close control frame
 				return currentM; //don't process further messages

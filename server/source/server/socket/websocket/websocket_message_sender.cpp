@@ -59,7 +59,7 @@ ByteArray WebsocketMessageSender::createFrameHeader(size_t frameSize, uint8_t op
 	}
 
 	// the first byte is fin followed by the 4-bit opcode
-	uint8_t firstByte = static_cast <uint8_t>(fin + opcode);
+	auto firstByte = static_cast <uint8_t>(fin + opcode);
 
 	// the second byte is the size of the message if it is less than or equal to
 	// 125, or if its larger, a magic number indicating the magnitude of the

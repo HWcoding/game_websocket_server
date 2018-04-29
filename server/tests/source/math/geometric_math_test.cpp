@@ -4,6 +4,7 @@
 #include "tests/test.h"
 #include "tests/test_lib/clock_cycle_counter.h"
 #include <cstdint>
+#include <cmath>
 
 #include "source/math/geometric_math.h"
 
@@ -26,7 +27,7 @@ void builtinSqrtProf(){
 }
 void fastSqrtProf(){
 	volatile double output = 1001;
-	output = fastSqrt(output);
+	output = fastSqrtInaccurate(output);
 }
 
 TEST(math, fastInvSqrt)
@@ -35,10 +36,16 @@ TEST(math, fastInvSqrt)
 }
 
 
-TEST(math, fastSqrt)
+TEST(math, fastSqrtInaccurate)
 {
 	//very inaccurate
-	EXPECT_NEAR(fastSqrt(100), 10, 0.3);
+	EXPECT_NEAR(fastSqrtInaccurate(100), 10, 0.3);
+}
+
+
+TEST(math, estimatedDistance)
+{
+	EXPECT_NEAR(v_math::estimatedDistance({0.0, 3.0, 0.0},{4.0, 0.0, 0.0}), 5.0, 0.15);
 }
 
 

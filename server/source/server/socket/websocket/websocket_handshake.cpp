@@ -1,4 +1,4 @@
-#include <string.h>
+#include <cstring>
 #include "source/server/socket/websocket/websocket_handshake.h"
 #include "source/logging/exception_handler.h"
 
@@ -242,9 +242,9 @@ std::vector< ByteArray > splitStringIntoLines(const ByteArray &s) {
 bool getNextLine(size_t &index, const ByteArray &in, ByteArray &out) {	// copies part of 'in' into 'out' beginning at position 'index' until the end of line.
 	out = ByteArray();
 
-	uint8_t carriageReturn = static_cast<uint8_t>('\r');
-	uint8_t newLine = static_cast<uint8_t>('\n');
-	uint8_t nullChar = static_cast<uint8_t>('\0');
+	auto carriageReturn = static_cast<uint8_t>('\r');
+	auto newLine = static_cast<uint8_t>('\n');
+	auto nullChar = static_cast<uint8_t>('\0');
 
 	while(out.empty() && index<in.size()){ // repeatedly call to skip over begining \r or \n
 		while(in[index] != carriageReturn && in[index] != newLine && in[index] != nullChar && index < in.size()){

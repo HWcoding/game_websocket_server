@@ -12,11 +12,28 @@ TEST(ByteArrayTest, TestSeek)
 	size_t testSize = test.size();
 
 	//try to seek past last element
-	EXPECT_ANY_THROW(test.seek(testSize));
+	EXPECT_THROW(test.seek(testSize), std::runtime_error);
 	//seek to last element
 	EXPECT_NO_THROW(test.seek(testSize-1));
 	EXPECT_EQ(test.tell(), (size_t)testSize-1);
 
+}
+
+
+TEST(ByteArrayTest, GetBytes)
+{
+	ByteArray test;
+	size_t testSize = test.size();
+	int dummy;
+
+	EXPECT_NO_THROW(test.getBytes( &dummy, testSize));
+	EXPECT_THROW(test.getBytes( &dummy, testSize + 1), std::runtime_error);
+
+	dummy = 8;
+	test.append(dummy);
+	dummy = 1;
+	test.getBytes( &dummy, sizeof(int));
+	EXPECT_EQ(dummy, 8);
 }
 
 
@@ -223,9 +240,20 @@ TEST(ByteArrayTest, TestStringInput)
 	std::string string3("test3");
 	test.append(string3);
 
+	EXPECT_NO_THROW(test.append(std::string(65535, 'n')));
+	EXPECT_THROW(test.append(std::string(65536, 'n')), std::runtime_error);
+
 	EXPECT_STREQ(test.getNextString().c_str(), string1.c_str());
 	EXPECT_STREQ(test.getNextString().c_str(), string2.c_str());
 	EXPECT_STREQ(test.getNextString().c_str(), string3.c_str());
+
+	test = ByteArray();
+	test.appendWithNoSize(string1);
+	EXPECT_STREQ(test.toString().c_str(), string1.c_str());
+
+	test = ByteArray();
+	EXPECT_STREQ(test.toString().c_str(), "");
+
 }
 
 

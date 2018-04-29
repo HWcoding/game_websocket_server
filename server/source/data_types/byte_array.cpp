@@ -1,5 +1,5 @@
 #include "source/data_types/byte_array.h"
-#include <string.h> //memcopy
+#include <cstring> //memcopy
 #include "source/logging/exception_handler.h"
 
 void ByteArray::appendBytes(const void* bytes, size_t sizeOfBytes)
@@ -27,7 +27,7 @@ void ByteArray::append(const std::string &str)
 	if(str.size() > 65535 ){
 		throw std::runtime_error(LOG_EXCEPTION("string is too large"));
 	}
-	uint16_t strSize = static_cast<uint16_t>( str.size() );
+	auto strSize = static_cast<uint16_t>( str.size() );
 	appendBytes(&strSize, sizeof (strSize));
 	appendBytes(str.c_str(), strSize);
 }
@@ -40,7 +40,7 @@ void ByteArray::appendWithNoSize(const std::string &str)
 std::string ByteArray::getNextString() const
 {
 	std::string output;
-	size_t strSize = static_cast<size_t>(getNextUint16());
+	auto strSize = static_cast<size_t>(getNextUint16());
 	output.resize(strSize);
 	getBytes(&output[0], strSize);
 	return output;

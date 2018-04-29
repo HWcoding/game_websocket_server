@@ -1,5 +1,5 @@
 #include "source/server/socket/socket_reader.h"
-#include <signal.h>
+#include <csignal>
 #include <atomic>
 #include <sys/epoll.h>
 #include <sys/socket.h>

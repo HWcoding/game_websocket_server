@@ -5,7 +5,7 @@
 #include "source/server/socket/system_wrapper.h"
 #include <sys/epoll.h>
 #include <sys/socket.h>
-#include <signal.h>
+#include <csignal>
 #include <netdb.h>
 #include <atomic>
 

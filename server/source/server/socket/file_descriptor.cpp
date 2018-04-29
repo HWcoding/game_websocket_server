@@ -2,17 +2,17 @@
 #include "source/server/socket/system_wrapper.h"
 #include <sys/epoll.h>
 #include <fcntl.h>
-#include <string.h>
+#include <cstring>
 
 
-FileDescriptor::FileDescriptor(SystemInterface *_systemWrap) : systemWrap(_systemWrap), mut(), IP(), port(), CSRFkey(), FD(-1) {}
+FileDescriptor::FileDescriptor(SystemInterface *_systemWrap) : systemWrap(_systemWrap) {}
 
-FileDescriptor::FileDescriptor(SystemInterface *_systemWrap, int _FD): systemWrap(_systemWrap), mut(), IP(), port(), CSRFkey(), FD(_FD) {}
+FileDescriptor::FileDescriptor(SystemInterface *_systemWrap, int _FD): systemWrap(_systemWrap), FD(_FD) {}
 
 /**
  * @throws std::system_error if lock fails followed by abort since it's declared noexcept
  */
-FileDescriptor::FileDescriptor(FileDescriptor&& f) noexcept: systemWrap(), mut(), IP(), port(), CSRFkey(), FD(-1) {	//move constructor
+FileDescriptor::FileDescriptor(FileDescriptor&& f) noexcept {	//move constructor
 	std::lock_guard<std::mutex> lck(f.mut);
 	FD = std::move(f.FD);
 	IP = std::move(f.IP);
@@ -26,7 +26,7 @@ FileDescriptor::FileDescriptor(FileDescriptor&& f) noexcept: systemWrap(), mut()
 /**
  * @throws std::system_error if lock fails followed by abort since it's declared noexcept
  */
-FileDescriptor::FileDescriptor(const FileDescriptor& f) noexcept : systemWrap(), mut(), IP(), port(), CSRFkey(), FD(-1) { //copy constructor
+FileDescriptor::FileDescriptor(const FileDescriptor& f) noexcept { //copy constructor
 	std::lock_guard<std::mutex> lck(f.mut);
 	FD = f.FD;
 	IP = f.IP;

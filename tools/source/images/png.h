@@ -7,11 +7,10 @@
 #include "source/images/image.h"
 
 class PngImage {
-
-	uint32_t height;
-	uint32_t width;
-	uint8_t bitDepth;
-	uint8_t colorType;
+	uint32_t height {0};
+	uint32_t width {0};
+	uint8_t bitDepth {0};
+	uint8_t colorType {127};
 
 	void convertBitDepth(std::vector<uint8_t> &buffer, image &data, uint8_t pixelWidth);
 	void createDataChunk(std::vector<uint8_t> &file, image &data, uint8_t pixelWidth);
@@ -27,7 +26,7 @@ public:
 	std::vector<uint8_t> createPNG(image &data, bool Alpha,
 	                             uint8_t _bitDepth, float _accuracy);
 
-	PngImage();
+	PngImage() = default;
 };
 
 

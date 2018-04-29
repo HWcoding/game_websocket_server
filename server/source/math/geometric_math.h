@@ -94,7 +94,7 @@ struct Capsule
 };
 
 
-double fastSqrt(double f);
+double fastSqrtInaccurate(double f);
 
 
 
