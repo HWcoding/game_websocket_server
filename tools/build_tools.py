@@ -406,7 +406,7 @@ def isNotInstalled( program ):
 def codeAnalysis():
 	if getIsArgument("clean") == False :
 		make_process = subprocess.Popen(["../external/cppcheck/cppcheck",
-			"--quiet", "-I./", "--enable=warning,performance,information",
+			"--quiet", "-I./", "--enable=warning,performance,information", "--inline-suppr",
 			"-j8", "--cppcheck-build-dir=./analysis", "./source"], stderr=subprocess.STDOUT)
 		if make_process.wait() != 0:
 			raise Exception

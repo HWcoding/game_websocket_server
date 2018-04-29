@@ -16,7 +16,7 @@ struct epoll_event;
 
 class SocketServerConnector : public SocketNode {
 public:
-	SocketServerConnector(const std::string &_port, SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, std::atomic<bool>* run);
+	SocketServerConnector(std::string _port, SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, std::atomic<bool>* run);
 	void setClientValidator(ClientValidatorInterface * validator);
 	~SocketServerConnector();
 

@@ -14,14 +14,14 @@
 #include "source/logging/exception_handler.h"
 
 
-
-SocketServerConnector::SocketServerConnector(const std::string &_port,
+//cppcheck-suppress passedByValue
+SocketServerConnector::SocketServerConnector(std::string _port,
                                              SystemInterface *_systemWrap,
                                              SetOfFileDescriptors *FDs,
                                              std::atomic<bool>* run) : SocketNode(_systemWrap, FDs, run),
                                                                        Authenticator(new WebsocketAuthenticator(_systemWrap, FDs)),
                                                                        maxMessageSize(99999),
-                                                                       port(_port),
+                                                                       port(std::move(_port)),
                                                                        listeningFD(-1)
 {
 	signal(SIGPIPE, SIG_IGN); //ignore error when writing to closed sockets to prevent crash on client disconnect
