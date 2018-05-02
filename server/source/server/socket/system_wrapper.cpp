@@ -7,8 +7,6 @@
 #include <cerrno>
 #include "source/logging/exception_handler.h"
 
-SystemInterface::~SystemInterface() = default;
-
 /**
  * @throws std::runtime_error
  */
@@ -250,4 +248,10 @@ int SystemWrapper::acceptSocket(int sockfd, struct sockaddr *addr, unsigned int 
 		done = true;
 	}
 	return ret;
+}
+
+
+SystemWrapper &SystemWrapper::getSystemInstance() {
+	static SystemWrapper wrapper = SystemWrapper();
+	return wrapper;
 }

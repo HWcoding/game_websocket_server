@@ -10,7 +10,7 @@
 #include "source/server/socket/file_descriptor.h"
 #include "source/data_types/byte_array.h"
 
-class SystemInterface;
+class SystemWrapper;
 
 class SetOfFileDescriptors{
 public:
@@ -26,7 +26,7 @@ public:
 	void startPollingForRead(int epoll, int FD);
 	void makeNonblocking (int FD);
 
-	SetOfFileDescriptors(SystemInterface *_systemWrap);
+	SetOfFileDescriptors();
 	~SetOfFileDescriptors();
 	ByteArray getIP(int FD);
 	ByteArray getPort(int FD);
@@ -40,7 +40,7 @@ private:
 	SetOfFileDescriptors& operator=(const SetOfFileDescriptors&) = delete;
 	SetOfFileDescriptors(const SetOfFileDescriptors&) = delete;
 
-	SystemInterface *systemWrap;
+	SystemWrapper &systemWrap;
 	std::unordered_map<int, FileDescriptor> openFDs;	//holds list of File Descriptors for all socket connections
 	std::mutex FDmut; //OpenFD mutex
 	std::vector<std::function<void(int)>> closeCallbacks; //array of functions to call when an FD is closed.  Each thread should add a callback so it can properly clean up when a connection is closed.

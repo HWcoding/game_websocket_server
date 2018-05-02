@@ -7,13 +7,13 @@
 #include <string>
 #include "source/data_types/byte_array.h"
 
-class SystemInterface;
+class SystemWrapper;
 struct epoll_event;
 
 class FileDescriptor{
 public:
-	FileDescriptor(SystemInterface *_systemWrap);
-	FileDescriptor(SystemInterface *_systemWrap, int _FD);
+	FileDescriptor();
+	FileDescriptor(int _FD);
 	FileDescriptor(FileDescriptor&& f) noexcept;
 	FileDescriptor(const FileDescriptor& f) noexcept;
 	FileDescriptor& operator=(FileDescriptor&& f);
@@ -41,7 +41,7 @@ private:
 	bool startPollingFD(epoll_event event, int epoll);
 	void setFDReadWrite(epoll_event event, int epoll);
 
-	SystemInterface *systemWrap {nullptr};
+	SystemWrapper &systemWrap;
 	mutable std::mutex mut {};
 	ByteArray IP {};
 	ByteArray port {};

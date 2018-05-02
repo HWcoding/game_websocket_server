@@ -1,4 +1,4 @@
-#ifndef SERVER_SOCKET_SYSTEM_INTERFACE_H_
+/*#ifndef SERVER_SOCKET_SYSTEM_INTERFACE_H_
 #define SERVER_SOCKET_SYSTEM_INTERFACE_H_
 //#include "source/server/socket/system_interface.h"
 
@@ -31,4 +31,4 @@ protected:
 	SystemInterface() = default;
 };
 
-#endif /* SERVER_SOCKET_SYSTEM_INTERFACE_H_ */
+#endif *//* SERVER_SOCKET_SYSTEM_INTERFACE_H_ */

@@ -1,5 +1,4 @@
 #define TEST_FILE_LINK_DEPENDENCIES "source/server/socket/file_descriptor.cpp, \
-									source/server/socket/system_wrapper.cpp, \
 									source/logging/exception_handler.cpp, \
 									source/server/socket/set_of_file_descriptors.cpp"
 
@@ -10,10 +9,14 @@
 
 
 class FDsTestFactory{
-	MockSystemWrapper systemWrap;
+	MockSystemWrapper &systemWrap;
 	SetOfFileDescriptors FDs;
 public:
-	FDsTestFactory(): systemWrap(), FDs(&systemWrap){}
+	FDsTestFactory() :
+		systemWrap(MockSystemWrapper::getMockSystemInstance(true)),
+		FDs()
+	{}
+
 	SetOfFileDescriptors* get(){
 		return &FDs;
 	}

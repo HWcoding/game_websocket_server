@@ -8,7 +8,6 @@
 
 class SetOfFileDescriptors;
 class SocketMessage;
-class SystemInterface;
 class WebsocketWriteBuffers;
 
 /**
@@ -20,7 +19,7 @@ class WebsocketWriteBuffers;
  */
 class WebsocketMessageSender : public MessageSenderInterface {
 public:
-	WebsocketMessageSender(SystemInterface *_systemWrap);
+	WebsocketMessageSender();
 
 	/* see source/server/socket/message_sender_interface.h */
 	void addMessage(SocketMessage &message) override;

@@ -12,12 +12,12 @@
 #include "source/logging/exception_handler.h"
 
 
-SocketReader::SocketReader(SystemInterface *_systemWrap, SetOfFileDescriptors *_FDs, std::atomic<bool>* run) : SocketNode(_systemWrap, _FDs, run),
-																										processor( new WebsocketMessageProcessor(_FDs) ),
-																										readerQueue(nullptr),
-																										waitingFDs(), waitingMut(),
-																										maxBufferSize(32760)
-																										{
+SocketReader::SocketReader(SetOfFileDescriptors *_FDs, std::atomic<bool>* run) : SocketNode(_FDs, run),
+                                                                                 processor( new WebsocketMessageProcessor(_FDs) ),
+                                                                                 readerQueue(nullptr),
+                                                                                 waitingFDs(), waitingMut(),
+                                                                                 maxBufferSize(32760)
+                                                                                 {
 	readerQueue = new MessageQueue(running);
 	processor->setReaderQueue(readerQueue);
 	fileDescriptors->addNewConnectionCallback(std::bind(&SocketReader::newConnectionHandler,this, std::placeholders::_1));
@@ -135,7 +135,7 @@ bool SocketReader::readChunkFromFD(int FD){
 
 	ByteArray buffer(maxBufferSize);
 	bool done;
-	size_t count = systemWrap->readFD(FD, &buffer[0], maxBufferSize, done);
+	size_t count = systemWrap.readFD(FD, &buffer[0], maxBufferSize, done);
 	if(done){ // if we read all data.
 		return true; // removeFromWaitingFDs(FD);
 	}

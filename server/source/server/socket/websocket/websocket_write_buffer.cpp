@@ -22,7 +22,7 @@ void WebsocketWriteBuffers::addMessage(int index, const ByteArray &in){
 bool WebsocketWriteBuffers::writeData(int index){
 	std::lock_guard<std::mutex> lck(mut);
 	pendingMessage& tempBuff = writeBuffer[index];
-	size_t  ret = systemWrap->writeFD(index, &tempBuff.message[tempBuff.begin],  tempBuff.message.size()-tempBuff.begin);
+	size_t  ret = systemWrap.writeFD(index, &tempBuff.message[tempBuff.begin],  tempBuff.message.size()-tempBuff.begin);
 	tempBuff.begin += ret;
 	if (tempBuff.begin == tempBuff.message.size()){ //all data in buffer is sent
 		writeBuffer.erase(index);
@@ -44,7 +44,7 @@ void WebsocketWriteBuffers::eraseBuffers(int index){
 	if(writeBuffer.count(index) > 0) writeBuffer.erase(index); //erase buffer if it exists;
 }
 
-WebsocketWriteBuffers::WebsocketWriteBuffers(SystemInterface *_systemWrap) : systemWrap(_systemWrap), mut(), writeBuffer(){}
+WebsocketWriteBuffers::WebsocketWriteBuffers() : systemWrap(SystemWrapper::getSystemInstance()), mut(), writeBuffer(){}
 WebsocketWriteBuffers::~WebsocketWriteBuffers(){
 	std::lock_guard<std::mutex> lck(mut); //don't destroy while a thread has a lock
 }

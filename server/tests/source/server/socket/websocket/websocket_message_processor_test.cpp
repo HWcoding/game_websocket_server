@@ -1,6 +1,5 @@
 #define TEST_FILE_LINK_DEPENDENCIES "source/server/socket/websocket/websocket_message_processor.cpp, \
                                      source/data_types/byte_array.cpp, \
-                                     source/server/socket/system_wrapper.cpp, \
                                      source/server/socket/websocket/websocket_read_buffer.cpp, \
                                      source/data_types/socket_message.cpp, \
                                      source/server/socket/set_of_file_descriptors.cpp, \
@@ -142,8 +141,9 @@ TEST(WebsocketMessageProcessorTest, test_GetNet64bit)
 	temp[6]= 165;
 	temp[7]= 86;
 
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
+	// reset system state
+	MockSystemWrapper::resetState();
+	SetOfFileDescriptors FDs;
 	FDs.addFD(1);
 	WebsocketMessageProcessorWrap processor(&FDs);
 
@@ -163,8 +163,9 @@ TEST(WebsocketMessageProcessorTest, testGetNet16bit)
 	temp[0]= 132; //Network byte order
 	temp[1]= 33;
 
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
+	// reset system state
+	MockSystemWrapper::resetState();
+	SetOfFileDescriptors FDs;
 	FDs.addFD(1);
 	WebsocketMessageProcessorWrap processor(&FDs);
 
@@ -177,9 +178,10 @@ TEST(WebsocketMessageProcessorTest, testGetNet16bit)
 
 TEST(WebsocketMessageProcessorTest, testCloseFDHandler)
 {
+	// reset system state
+	MockSystemWrapper::resetState();
 	//create processor for testing and set its state
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
+	SetOfFileDescriptors FDs;
 
 	ByteArray IP;
 	IP.appendWithNoSize("IP");
@@ -219,6 +221,9 @@ TEST(WebsocketMessageProcessorTest, testCloseFDHandler)
 
 TEST(WebsocketMessageProcessorTest, testUnmask)
 {
+	// reset system state
+	MockSystemWrapper::resetState();
+
 	uint32_t mask = 3893384930;
 	size_t messageSize = 4000;
 
@@ -246,8 +251,7 @@ TEST(WebsocketMessageProcessorTest, testUnmask)
 	fastMaskedTestString.append(reinterpret_cast<char*>(pMask),4);
 	fastMaskedTestString.append(maskedTestString);
 
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
+	SetOfFileDescriptors FDs;
 	FDs.addFD(1);
 	WebsocketMessageProcessorWrap processor(&FDs);
 
@@ -264,6 +268,9 @@ TEST(WebsocketMessageProcessorTest, testUnmask)
 
 TEST(WebsocketMessageProcessorTest, testProcessSockMessageWorks)
 {
+	// reset system state
+	MockSystemWrapper::resetState();
+
 	uint32_t mask = 3893384930;
 	uint32_t messageCount = 10;
 	size_t messageSize = 200;
@@ -280,8 +287,7 @@ TEST(WebsocketMessageProcessorTest, testProcessSockMessageWorks)
 	input.appendWithNoSize(maskedTestString);
 
 	//create processor for testing and set its state
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
+	SetOfFileDescriptors FDs;
 
 	ByteArray IP;
 	IP.appendWithNoSize("IP");
@@ -336,6 +342,9 @@ TEST(WebsocketMessageProcessorTest, testProcessSockMessageWorks)
 
 TEST(WebsocketMessageProcessorTest, testExtractMessageWorksWithPartialReads)
 {
+	// reset system state
+	MockSystemWrapper::resetState();
+
 	uint32_t mask = 3893384930;
 	uint32_t messageCount = 10;
 	size_t messageSize = 200;
@@ -347,8 +356,7 @@ TEST(WebsocketMessageProcessorTest, testExtractMessageWorksWithPartialReads)
 		maskedTestString.append(maskMessageForTesting(messages[i], mask+i, true, 130));
 	}
 
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
+	SetOfFileDescriptors FDs;
 	FDs.addFD(1);
 	WebsocketMessageProcessorWrap processor(&FDs);
 
@@ -379,6 +387,9 @@ TEST(WebsocketMessageProcessorTest, testExtractMessageWorksWithPartialReads)
 
 TEST(WebsocketMessageProcessorTest, testExtractMessageWorksWithWholeReads)
 {
+	// reset system state
+	MockSystemWrapper::resetState();
+
 	uint32_t mask = 3893384930;
 	uint32_t messageCount = 10;
 	size_t messageSize = 200;
@@ -390,8 +401,7 @@ TEST(WebsocketMessageProcessorTest, testExtractMessageWorksWithWholeReads)
 		maskedTestString.append(maskMessageForTesting(messages[i], mask+i, true, 130));
 	}
 
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
+	SetOfFileDescriptors FDs;
 	FDs.addFD(1);
 	WebsocketMessageProcessorWrap processor(&FDs);
 

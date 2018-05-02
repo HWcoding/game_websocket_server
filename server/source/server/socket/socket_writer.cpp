@@ -14,10 +14,9 @@
 #include "source/logging/exception_handler.h"
 
 
-SocketWriter::SocketWriter(SystemInterface *_systemWrap,
-                           SetOfFileDescriptors *FDs,
-                           std::atomic<bool>* run) : SocketNode(_systemWrap, FDs, run),
-                                                     sender(new WebsocketMessageSender(_systemWrap)),
+SocketWriter::SocketWriter(SetOfFileDescriptors *FDs,
+                           std::atomic<bool>* run) : SocketNode(FDs, run),
+                                                     sender(new WebsocketMessageSender()),
                                                      writePollingMut()
                                                      {
 

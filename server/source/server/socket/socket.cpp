@@ -13,11 +13,10 @@
 SocketInterface::~SocketInterface() = default;
 
 Socket::Socket(const ServerConfig &config, std::atomic<bool> * _shouldContinueRunning) : shouldContinueRunning(_shouldContinueRunning),
-									systemWrap( new SystemWrapper()),
-									FDs( new SetOfFileDescriptors( systemWrap.get() ) ),
-									reader(  new SocketReader(systemWrap.get(), FDs.get(), shouldContinueRunning) ),
-									writer( new SocketWriter(systemWrap.get(), FDs.get(), shouldContinueRunning) ),
-									connector( new SocketServerConnector(config.port, systemWrap.get(), FDs.get(), shouldContinueRunning) ),
+									FDs( new SetOfFileDescriptors() ),
+									reader(  new SocketReader(FDs.get(), shouldContinueRunning) ),
+									writer( new SocketWriter( FDs.get(), shouldContinueRunning) ),
+									connector( new SocketServerConnector(config.port, FDs.get(), shouldContinueRunning) ),
 									readerThread(),
 									writerThread(),
 									connectorThread() {
@@ -37,20 +36,20 @@ void Socket::shutdown()
 {
 	shouldContinueRunning->store(false); //tell loop in socket thread to exit and return
 	reader->shutdown();
-
+	LOG_INFO("Exiting. Waiting on connectorThread");
 	if(connectorThread.joinable()){
-		LOG_INFO("connectorThread Exiting");
 		connectorThread.join();//wait for thread to finish returning
+		LOG_INFO("connectorThread Exited. Waiting on readerThread");
 	}
 
 	if(readerThread.joinable()){
-		LOG_INFO("readerThread Exiting");
 		readerThread.join();//wait for thread to finish returning
+		LOG_INFO("readerThread Exited. Waiting on writerThread");
 	}
 
 	if(writerThread.joinable()){
-		LOG_INFO("writerThread Exiting");
 		writerThread.join();//wait for thread to finish returning
+		LOG_INFO("writerThread Exited");
 	}
 
 	LOG_INFO("Exited");
@@ -86,7 +85,7 @@ void Socket::startReader(){ //blocking! should only be called in a new thread
 	try{
 		reader->startPoll(); //loops until *shouldContinueRunning == false or error
 	}
-	catch(std::runtime_error &e) {
+	catch(std::runtime_error const &e) {
 		BACKTRACE_PRINT();
 		LOG_ERROR("runtime exception thrown: " << e.what() );
 	}
@@ -111,7 +110,7 @@ void Socket::startWriter(){ //blocking! should only be called in a new thread
 	try{
 		writer->startPoll(); //loops until *shouldContinueRunning == false
 	}
-	catch(std::runtime_error &e) {
+	catch(std::runtime_error const &e) {
 		BACKTRACE_PRINT();
 		LOG_ERROR("runtime exception thrown: " << e.what());
 	}
@@ -135,7 +134,7 @@ void Socket::startConnector(){ //blocking! should only be called in a new thread
 	try{
 		connector->startPoll(); //loops until *shouldContinueRunning == false
 	}
-	catch(std::runtime_error &e) {
+	catch(std::runtime_error const &e) {
 		BACKTRACE_PRINT();
 		LOG_ERROR("runtime exception thrown: " << e.what());
 	}

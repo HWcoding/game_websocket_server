@@ -1,6 +1,6 @@
 #ifndef TESTS_SERVER_MOCK_SYSTEM_WRAPPER_H
 #define TESTS_SERVER_MOCK_SYSTEM_WRAPPER_H
-#include "tests/test_lib/mocks_stubs/mock_system_wrapper.h"
+//#include "tests/test_lib/mocks_stubs/mock_system_wrapper.h"
 
 #include <memory>
 #include <string>
@@ -11,14 +11,14 @@ class MockSystemState;
 struct addrinfo;
 struct sockaddr_storage;
 
-class MockSystemWrapper : public SystemInterface{
+class MockSystemWrapper : public SystemWrapper {
 public:
 //mock specific members
 	char nullChar;
 	std::unique_ptr<struct addrinfo> mockAddrinfo;
 	struct addrinfo* mockAddrinfoPointer;
 	std::unique_ptr<struct sockaddr_storage> mockSockaddr;
-	mutable std::unique_ptr<MockSystemState> state;
+	//mutable std::unique_ptr<MockSystemState> state;
 
 	MockSystemWrapper();
 	~MockSystemWrapper();
@@ -28,9 +28,14 @@ public:
 	void SetBytesTillWriteFail(int socket, int bytes);
 	void ClearWriteBuffer(int FD);
 
-//emulated members
+	static MockSystemWrapper &getMockSystemInstance(bool reset = false);
+	static void resetState();
+
+
+
+    //redefined base members using compile seam
+	/*
 	size_t epollWait(int epollFD,  struct epoll_event *_events, int MAXEVENTS, int timeout) const;
-	int epollControl(int epoll, int op, int FD, struct epoll_event *event) const;
 	bool epollControlAdd(int epoll, int FD, struct epoll_event *event) const;
 	void epollControlDelete(int epoll, int FD, struct epoll_event *event) const;
 	void epollControlMod(int epoll, int FD, struct epoll_event *event) const;
@@ -50,9 +55,12 @@ public:
 	void bindSocket(int sockfd, const struct sockaddr *addr, unsigned int addrlen) const;
 	void listenSocket(int sockfd, int backlog) const;
 	int acceptSocket(int sockfd, struct sockaddr *addr, unsigned int *addrlen, bool &done) const;
+	SystemWrapper &SystemWrapper::getSystemInstance()
+	*/
 private:
-	MockSystemWrapper& operator=(const MockSystemWrapper&)=delete;
-	MockSystemWrapper(const MockSystemWrapper&)=delete;
+	MockSystemWrapper& operator=(MockSystemWrapper&& old);
+	MockSystemWrapper& operator=(const MockSystemWrapper&) = delete;
+	MockSystemWrapper(const MockSystemWrapper&) = delete;
 };
 
 #endif /* TESTS_SERVER_MOCK_SYSTEM_WRAPPER_H */

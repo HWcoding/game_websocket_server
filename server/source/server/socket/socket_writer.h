@@ -6,7 +6,6 @@
 #include <mutex>
 #include <memory>
 
-class SystemInterface;
 class SocketMessage;
 class SetOfFileDescriptors;
 class MessageSenderInterface;
@@ -17,7 +16,7 @@ public:
 	void newConnectionHandler(int FD);
 	void sendMessage(SocketMessage &message);
 
-	SocketWriter(SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, std::atomic<bool>* run);
+	SocketWriter(SetOfFileDescriptors *FDs, std::atomic<bool>* run);
 	~SocketWriter();
 private:
 	void setupEpoll() override;

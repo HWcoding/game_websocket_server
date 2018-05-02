@@ -5,8 +5,8 @@
 #include <cstring>
 #include "source/server/socket/set_of_file_descriptors.h"
 #include "source/server/socket/websocket/websocket_handshake.h"
-#include "source/server/socket/system_interface.h"
 #include "source/logging/exception_handler.h"
+#include "source/server/socket/system_wrapper.h"
 
 
 uint8_t convertTo64(uint8_t in);
@@ -86,14 +86,12 @@ ClientValidatorInterface::~ClientValidatorInterface() = default;
 
 
 
-WebsocketAuthenticator::WebsocketAuthenticator(SystemInterface *_systemWrap, SetOfFileDescriptors*FDs) :
-                                                  systemWrap(_systemWrap), handshakeReadBuffer(),
+WebsocketAuthenticator::WebsocketAuthenticator(SetOfFileDescriptors*FDs) :
+                                                  systemWrap(SystemWrapper::getSystemInstance()),
+                                                  handshakeReadBuffer(),
                                                   handshakeWriteBuffer(), maxHandshakeSize(2048),
                                                   fileDescriptors(FDs)
 {
-	if(systemWrap == nullptr) {
-		throw std::runtime_error(LOG_EXCEPTION("WebsocketAuthenticator systemWrap was null"));
-	}
 	if(FDs == nullptr) {
 		throw std::runtime_error(LOG_EXCEPTION("WebsocketAuthenticator FDs was null"));
 	}
@@ -239,7 +237,7 @@ bool WebsocketAuthenticator::isHandshakeInvalid(const ByteArray &handShake)
 bool WebsocketAuthenticator::sendHandshake(int FD)
 {
 	if(handshakeWriteBuffer.count(FD) != 0) {
-		size_t retSize = systemWrap->writeFD( FD, &handshakeWriteBuffer[FD][0], handshakeWriteBuffer[FD].size() );
+		size_t retSize = systemWrap.writeFD( FD, &handshakeWriteBuffer[FD][0], handshakeWriteBuffer[FD].size() );
 		if(retSize< handshakeWriteBuffer[FD].size()) { //we didn't write all our data
 			handshakeWriteBuffer[FD] = ByteArray( handshakeWriteBuffer[FD].begin()+static_cast<int64_t>(retSize), handshakeWriteBuffer[FD].end() );
 			return false;

@@ -2,8 +2,7 @@
                                      source/server/socket/message_sender_interface.h, \
                                      source/server/socket/websocket/websocket_message_sender.cpp, \
                                      source/data_types/byte_array.cpp, \
-                                     source/data_types/socket_message.cpp, \
-                                     source/server/socket/system_wrapper.cpp"
+                                     source/data_types/socket_message.cpp"
 
 #include "source/server/socket/websocket/websocket_write_buffer.h"
 #include "source/server/socket/websocket/websocket_message_sender.h"
@@ -20,13 +19,22 @@ std::string testCreateFrameHeader(size_t messageSize, uint8_t opcode);
 class WebsocketMessageSenderWrap : public WebsocketMessageSender
 {
 public:
-	WebsocketMessageSenderWrap(SystemInterface *_systemWrap) : WebsocketMessageSender(_systemWrap){}
+	WebsocketMessageSenderWrap() : WebsocketMessageSender(){}
 
 	ByteArray createFrameHeader(size_t messageSize, uint8_t opcode)
 	{
 		return WebsocketMessageSender::createFrameHeader(messageSize, opcode);
 	}
 
+};
+
+class MessageSenderTestFactory{
+public:
+	MockSystemWrapper &systemWrap;
+	WebsocketMessageSenderWrap MS;
+	MessageSenderTestFactory():
+		systemWrap(MockSystemWrapper::getMockSystemInstance(true)), MS()
+	{}
 };
 
 // returns correct FrameHeader for the given ByteArray and opcode
@@ -77,32 +85,36 @@ std::string testCreateFrameHeader(size_t messageSize, uint8_t opcode){
 
 TEST(WebsocketMessageSenderTest, createFrameHeader)
 {
-	MockSystemWrapper systemWrap;
-	WebsocketMessageSenderWrap sender(&systemWrap);
+	//MockSystemWrapper systemWrap;
+	//WebsocketMessageSenderWrap sender(&systemWrap);
 
-	std::string smallTestStringResult = sender.createFrameHeader(0, 2).toString();
+	MessageSenderTestFactory sender;
+
+	std::string smallTestStringResult = sender.MS.createFrameHeader(0, 2).toString();
 	EXPECT_STREQ( smallTestStringResult.c_str(), testCreateFrameHeader(0,2).c_str() );
 
-	smallTestStringResult = sender.createFrameHeader(125, 2).toString();
+	smallTestStringResult = sender.MS.createFrameHeader(125, 2).toString();
 	EXPECT_STREQ( smallTestStringResult.c_str(), testCreateFrameHeader(125,2).c_str() );
 
-	std::string mediumTestStringResult = sender.createFrameHeader(126, 2).toString();
+	std::string mediumTestStringResult = sender.MS.createFrameHeader(126, 2).toString();
 	EXPECT_STREQ( mediumTestStringResult.c_str(), testCreateFrameHeader(126,2).c_str() );
 
-	mediumTestStringResult = sender.createFrameHeader(65535, 2).toString();
+	mediumTestStringResult = sender.MS.createFrameHeader(65535, 2).toString();
 	EXPECT_STREQ( mediumTestStringResult.c_str(), testCreateFrameHeader(65535,2).c_str() );
 
-	std::string largeTestStringResult = sender.createFrameHeader(65536, 2).toString();
+	std::string largeTestStringResult = sender.MS.createFrameHeader(65536, 2).toString();
 	EXPECT_STREQ( largeTestStringResult.c_str(), testCreateFrameHeader(65536,2).c_str() );
 
-	largeTestStringResult = sender.createFrameHeader(18446744073709551615U, 2).toString();
+	largeTestStringResult = sender.MS.createFrameHeader(18446744073709551615U, 2).toString();
 	EXPECT_STREQ( largeTestStringResult.c_str(), testCreateFrameHeader(18446744073709551615U,2).c_str() );
 }
 
 TEST(WebsocketMessageSenderTest, writeData)
 {
-	MockSystemWrapper systemWrap;
-	WebsocketMessageSenderWrap sender(&systemWrap);
+	//MockSystemWrapper systemWrap;
+	//WebsocketMessageSenderWrap sender(&systemWrap);
+
+	MessageSenderTestFactory sender;
 
 	std::string testString("testing");
 	ByteArray IP;
@@ -123,13 +135,13 @@ TEST(WebsocketMessageSenderTest, writeData)
 	expected.append(testMessage.getMessage());
 
 	// add the message
-	sender.addMessage(testMessage);
+	sender.MS.addMessage(testMessage);
 
 	// write the data
-	sender.writeData(1);
+	sender.MS.writeData(1);
 
 	// check the data to make sure it is correct
-	std::string data = systemWrap.GetWriteBuffer(1);
+	std::string data = sender.systemWrap.GetWriteBuffer(1);
 	EXPECT_STREQ( data.c_str(), expected.toString().c_str());
 }
 

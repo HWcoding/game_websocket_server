@@ -3,7 +3,7 @@
 #include "source/logging/exception_handler.h"
 
 
-SetOfFileDescriptors::SetOfFileDescriptors(SystemInterface *_systemWrap) : systemWrap(_systemWrap), openFDs(), FDmut(), closeCallbacks(), newConnectionCallbacks(){}
+SetOfFileDescriptors::SetOfFileDescriptors() : systemWrap(SystemWrapper::getSystemInstance()), openFDs(), FDmut(), closeCallbacks(), newConnectionCallbacks(){}
 
 /**
  * @throws std::system_error if lock fails
@@ -13,7 +13,7 @@ SetOfFileDescriptors::~SetOfFileDescriptors()
 	std::lock_guard<std::mutex> lck(FDmut); //don't destroy while other threads are accessing this
 	for (auto& elem: openFDs){ //close remaining FDs
 		int FD = elem.second.getFD();
-		systemWrap->closeFD(FD);
+		systemWrap.closeFD(FD);
 		LOG_INFO("removed FD "<<FD);
 	}
 }
@@ -130,7 +130,7 @@ int SetOfFileDescriptors::addFD(int FD)
 	if(FD>0 && openFDs.count(FD)==0){ //a negative number is an error message passed through this function. Don't add to FDs. Just return the error.
 		openFDs.emplace(std::piecewise_construct,
 						std::forward_as_tuple(FD),
-						std::forward_as_tuple(systemWrap,FD));
+						std::forward_as_tuple(FD));
 	}
 	else return -1;
 	return FD;
@@ -200,7 +200,7 @@ int SetOfFileDescriptors::removeFD(int FD)
 		{
 			std::lock_guard<std::mutex> lock_FD(FDmut);
 			if(unlockedIsFDOpen(FD)){
-				systemWrap->closeFD(FD);
+				systemWrap.closeFD(FD);
 				openFDs.erase(FD);
 			}
 		}

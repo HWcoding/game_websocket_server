@@ -16,10 +16,9 @@
 
 //cppcheck-suppress passedByValue
 SocketServerConnector::SocketServerConnector(std::string _port,
-                                             SystemInterface *_systemWrap,
                                              SetOfFileDescriptors *FDs,
-                                             std::atomic<bool>* run) : SocketNode(_systemWrap, FDs, run),
-                                                                       Authenticator(new WebsocketAuthenticator(_systemWrap, FDs)),
+                                             std::atomic<bool>* run) : SocketNode(FDs, run),
+                                                                       Authenticator(new WebsocketAuthenticator(FDs)),
                                                                        maxMessageSize(99999),
                                                                        port(std::move(_port)),
                                                                        listeningFD(-1)
@@ -51,8 +50,8 @@ bool SocketServerConnector::handleEpollErrors(epoll_event &event){
 		LOG_ERROR("epoll error");
 		int error = 0;
 		socklen_t errlen = sizeof(error);
-		if (systemWrap->getSockOpt(event.data.fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void *>(&error), &errlen) == 0){
-			LOG_ERROR("error: " << systemWrap->strError(error) );
+		if (systemWrap.getSockOpt(event.data.fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void *>(&error), &errlen) == 0){
+			LOG_ERROR("error: " << systemWrap.strError(error) );
 		}
 		closeFD(event.data.fd);
 
@@ -117,19 +116,19 @@ bool SocketServerConnector::createAndBindListeningFD(struct addrinfo *addressInf
 
 	for(rp = addressInfo; rp != nullptr; rp = rp->ai_next){
 		try{
-			listeningFD = systemWrap->createSocket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+			listeningFD = systemWrap.createSocket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		}
 		catch(std::runtime_error & ret){
 			continue;
 		}
 
 		try{
-			systemWrap->bindSocket(listeningFD, rp->ai_addr, rp->ai_addrlen);
+			systemWrap.bindSocket(listeningFD, rp->ai_addr, rp->ai_addrlen);
 			addFD(listeningFD);
 			return true;
 		}
 		catch(std::runtime_error & ret){
-			systemWrap->closeFD(listeningFD);
+			systemWrap.closeFD(listeningFD);
 			listeningFD = -1;
 		}
 	}
@@ -148,7 +147,7 @@ int SocketServerConnector::getListeningPort(){
 	struct addrinfo *result;
 	result = nullptr;
 	createAddressInfoHints(hints);
-	systemWrap->getAddrInfo(nullptr, port.c_str(), &hints, &result);
+	systemWrap.getAddrInfo(nullptr, port.c_str(), &hints, &result);
 	LOG_INFO("Trying to bind to port " << port);
 
 	bool done = false;
@@ -158,7 +157,7 @@ int SocketServerConnector::getListeningPort(){
 			std::this_thread::sleep_for( std::chrono::milliseconds(100) ); //port was busy, take a break before retrying
 		}
 	}
-	systemWrap->freeAddrInfo (result);
+	systemWrap.freeAddrInfo (result);
 
 	if (!done){
 		throw std::runtime_error(LOG_EXCEPTION(std::string() + "Could not bind port: " + port));
@@ -175,7 +174,7 @@ void SocketServerConnector::openListeningPort(){
 		throw std::runtime_error(LOG_EXCEPTION(" listeningFD equals -1"));
 	}
 	fileDescriptors->makeNonblocking(listeningFD);
-	systemWrap->listenSocket(listeningFD, SOMAXCONN);
+	systemWrap.listenSocket(listeningFD, SOMAXCONN);
 	fileDescriptors->startPollingForRead(epollFD, listeningFD);
 }
 
@@ -186,7 +185,7 @@ void SocketServerConnector::getPortAndIP(int FD, struct sockaddr &in_addr, unsig
 	memset(&hbuf[0], 0, NI_MAXHOST);
 	memset(&sbuf[0], 0, NI_MAXSERV);
 
-	systemWrap->getNameInfo(&in_addr, in_len, hbuf, sizeof hbuf, sbuf, sizeof sbuf, NI_NUMERICHOST | NI_NUMERICSERV);
+	systemWrap.getNameInfo(&in_addr, in_len, hbuf, sizeof hbuf, sbuf, sizeof sbuf, NI_NUMERICHOST | NI_NUMERICSERV);
 	LOG_INFO("Accepted connection on descriptor " << FD << " (host=" << hbuf << ", port=" << sbuf << ")");
 
 	size_t hbufLength = strnlen(hbuf,NI_MAXHOST);
@@ -206,7 +205,7 @@ void SocketServerConnector::newConnection(){
 		socklen_t in_len = sizeof in_addr;
 		bool done;
 
-		int newConnection = fileDescriptors->addFD(systemWrap->acceptSocket(listeningFD, &in_addr, &in_len, done));
+		int newConnection = fileDescriptors->addFD(systemWrap.acceptSocket(listeningFD, &in_addr, &in_len, done));
 		if (done){
 			break; //We have processed all connections.
 		}
@@ -261,7 +260,7 @@ void SocketServerConnector::readHandshake(int FD){
 	std::array<uint8_t, buffSize> buf;
 	while (*running){
 		bool done;
-		size_t count = systemWrap->readFD(FD, &buf[0], buffSize-1, done);
+		size_t count = systemWrap.readFD(FD, &buf[0], buffSize-1, done);
 		if(done){
 			processHandshake(buffer, FD);
 			break;

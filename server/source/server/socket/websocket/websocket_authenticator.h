@@ -9,7 +9,7 @@
 #include "source/server/socket/websocket/websocket_client_validator.h"
 #include "source/server/socket/authenticator_interface.h"
 
-class SystemInterface;
+class SystemWrapper;
 class SetOfFileDescriptors;
 class HandshakeHeaders;
 class HandshakeHeadersInterface;
@@ -17,7 +17,7 @@ class HandshakeHeadersInterface;
 class WebsocketAuthenticator : public AuthenticatorInterface
 {
 public:
-	WebsocketAuthenticator(SystemInterface *_systemWrap, SetOfFileDescriptors*FDs);
+	WebsocketAuthenticator(SetOfFileDescriptors*FDs);
 	~WebsocketAuthenticator() override = default;
 	void processHandshake(const ByteArray &in, int FD) override;
 	bool sendHandshake(int FD) override;
@@ -39,7 +39,7 @@ private:
 
 	WebsocketAuthenticator& operator=(const WebsocketAuthenticator&) = delete;
 	WebsocketAuthenticator(const WebsocketAuthenticator&) = delete;
-	SystemInterface *systemWrap;
+	SystemWrapper &systemWrap;
 	std::unordered_map<int,ByteArray > handshakeReadBuffer;
 	std::unordered_map<int,ByteArray > handshakeWriteBuffer;
 	size_t maxHandshakeSize;

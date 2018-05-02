@@ -8,7 +8,6 @@
 #include <atomic>
 
 class SocketMessage;
-class SystemWrapper;
 class SetOfFileDescriptors;
 class SocketReader;
 class SocketWriter;
@@ -62,7 +61,6 @@ private:
 	Socket(const Socket&) = delete;
 
 	std::atomic<bool> * shouldContinueRunning; //flag to tell the thread to end looping and exit
-	std::unique_ptr<SystemWrapper> systemWrap;
 	std::unique_ptr<SetOfFileDescriptors> FDs;
 	std::unique_ptr<SocketReader> reader;
 	std::unique_ptr<SocketWriter> writer;

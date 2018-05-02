@@ -18,12 +18,12 @@ protected:
 	WriteBuffersInterface() = default;
 };
 
-class SystemInterface;
+class SystemWrapper;
 class SetOfFileDescriptors;
 
 class WebsocketWriteBuffers : public WriteBuffersInterface{ //holds data shared across threads
 private:
-	SystemInterface *systemWrap;
+	SystemWrapper &systemWrap;
 	mutable std::mutex mut; // used for multi threaded writing.  A lock needs to be done before accessing the following variables
 
 	WebsocketWriteBuffers& operator=(const WebsocketWriteBuffers&) = delete;
@@ -40,7 +40,7 @@ public:
 	bool writeData(int index) override;
 	size_t messageSize(int index) const override;
 	void eraseBuffers(int index) override;
-	WebsocketWriteBuffers(SystemInterface *_systemWrap);
+	WebsocketWriteBuffers();
 	~WebsocketWriteBuffers() override;
 };
 

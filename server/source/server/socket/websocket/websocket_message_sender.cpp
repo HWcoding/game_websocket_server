@@ -8,8 +8,8 @@
 
 WebsocketMessageSender::~WebsocketMessageSender() = default;
 
-WebsocketMessageSender::WebsocketMessageSender(SystemInterface *_systemWrap) :
-		writeBuffers( new WebsocketWriteBuffers(_systemWrap) ),
+WebsocketMessageSender::WebsocketMessageSender() :
+		writeBuffers( new WebsocketWriteBuffers() ),
 		MaxWriteBufferSize(2097152){}
 
 

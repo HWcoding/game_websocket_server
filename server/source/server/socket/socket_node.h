@@ -6,7 +6,7 @@
 #include <vector>
 #include <memory>
 
-class SystemInterface;
+class SystemWrapper;
 class SetOfFileDescriptors;
 struct epoll_event;
 
@@ -17,14 +17,14 @@ public:
 	virtual ~SocketNode();
 
 protected:
-	SocketNode(SystemInterface *_systemWrap, SetOfFileDescriptors *FDs, std::atomic<bool>* run);
+	SocketNode(SetOfFileDescriptors *FDs, std::atomic<bool>* run);
 	virtual void setupEpoll();
 	virtual bool handleEpollErrors(epoll_event &event);
 	virtual void handleEpollRead(epoll_event &event) = 0;
 	virtual void handleEpollWrite(epoll_event &event) = 0;
 	virtual int getWaitTime();
 
-	SystemInterface *systemWrap;
+	SystemWrapper &systemWrap;
 	std::atomic<bool> *running;
 	SetOfFileDescriptors *fileDescriptors;
 	int MAXEVENTS;

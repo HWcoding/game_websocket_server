@@ -5,41 +5,37 @@
 #include <cstring>
 
 
-FileDescriptor::FileDescriptor(SystemInterface *_systemWrap) : systemWrap(_systemWrap) {}
+FileDescriptor::FileDescriptor() : systemWrap(SystemWrapper::getSystemInstance()) {}
 
-FileDescriptor::FileDescriptor(SystemInterface *_systemWrap, int _FD): systemWrap(_systemWrap), FD(_FD) {}
+FileDescriptor::FileDescriptor(int _FD): systemWrap(SystemWrapper::getSystemInstance()), FD(_FD) {}
 
 /**
  * @throws std::system_error if lock fails followed by abort since it's declared noexcept
  */
-FileDescriptor::FileDescriptor(FileDescriptor&& f) noexcept {	//move constructor
+FileDescriptor::FileDescriptor(FileDescriptor&& f) noexcept :systemWrap(SystemWrapper::getSystemInstance()) {	//move constructor
 	std::lock_guard<std::mutex> lck(f.mut);
 	FD = std::move(f.FD);
 	IP = std::move(f.IP);
 	port = std::move(f.port);
 	CSRFkey = std::move(f.CSRFkey);
-	systemWrap = f.systemWrap;
-	f.systemWrap = nullptr;
 	f.FD = -1;
 }
 
 /**
  * @throws std::system_error if lock fails followed by abort since it's declared noexcept
  */
-FileDescriptor::FileDescriptor(const FileDescriptor& f) noexcept { //copy constructor
+FileDescriptor::FileDescriptor(const FileDescriptor& f) noexcept :systemWrap(SystemWrapper::getSystemInstance()) { //copy constructor
 	std::lock_guard<std::mutex> lck(f.mut);
 	FD = f.FD;
 	IP = f.IP;
 	port = f.port;
 	CSRFkey = f.CSRFkey;
-	systemWrap = f.systemWrap;
-
 }
 
 /**
  * @throws std::system_error if lock fails
  */
-FileDescriptor& FileDescriptor::operator=(FileDescriptor&& f){ //move assignment
+FileDescriptor& FileDescriptor::operator=(FileDescriptor&& f) { //move assignment
 	if (this != &f){
 		std::unique_lock<std::mutex> lhs_lk(mut, std::defer_lock);
 		std::unique_lock<std::mutex> rhs_lk(f.mut, std::defer_lock);
@@ -48,8 +44,6 @@ FileDescriptor& FileDescriptor::operator=(FileDescriptor&& f){ //move assignment
 		IP = std::move(f.IP);
 		port = std::move(f.port);
 		CSRFkey = std::move(f.CSRFkey);
-		systemWrap = f.systemWrap;
-		f.systemWrap = nullptr;
 		f.FD =-1;
 	}
 	return *this;
@@ -58,7 +52,7 @@ FileDescriptor& FileDescriptor::operator=(FileDescriptor&& f){ //move assignment
 /**
  * @throws std::system_error if lock fails
  */
-FileDescriptor& FileDescriptor::operator=(const FileDescriptor& f){ //copy assignment
+FileDescriptor& FileDescriptor::operator=(const FileDescriptor& f) { //copy assignment
 	if (this != &f){
 		std::unique_lock<std::mutex> lhs_lk(mut, std::defer_lock);
 		std::unique_lock<std::mutex> rhs_lk(f.mut, std::defer_lock);
@@ -67,7 +61,6 @@ FileDescriptor& FileDescriptor::operator=(const FileDescriptor& f){ //copy assig
 		IP = f.IP;
 		port = f.port;
 		CSRFkey = f.CSRFkey;
-		systemWrap = f.systemWrap;
 	}
 	return *this;
 }
@@ -188,7 +181,7 @@ void FileDescriptor::pollForRead(int epoll){
  */
 void FileDescriptor::setFDReadWrite(epoll_event event, int epoll){
 	std::lock_guard<std::mutex> lck(mut);
-	systemWrap->epollControlMod(epoll, FD, &event);
+	systemWrap.epollControlMod(epoll, FD, &event);
 }
 
 /**
@@ -196,7 +189,7 @@ void FileDescriptor::setFDReadWrite(epoll_event event, int epoll){
  */
 void FileDescriptor::stopPollingFD(int epoll){
 	std::lock_guard<std::mutex> lck(mut);
-	systemWrap->epollControlDelete(epoll, FD, nullptr);
+	systemWrap.epollControlDelete(epoll, FD, nullptr);
 }
 
 /**
@@ -229,7 +222,7 @@ void FileDescriptor::startPollingForRead(int epoll){
  */
 bool FileDescriptor::startPollingFD(epoll_event event, int epoll){
 	std::lock_guard<std::mutex> lck(mut);
-	return systemWrap->epollControlAdd(epoll, FD, &event);
+	return systemWrap.epollControlAdd(epoll, FD, &event);
 }
 
 /**
@@ -238,7 +231,7 @@ bool FileDescriptor::startPollingFD(epoll_event event, int epoll){
  */
 void FileDescriptor::makeNonblocking (){
 	std::lock_guard<std::mutex> lck(mut);
-	int flags = systemWrap->getFlags(FD);
+	int flags = systemWrap.getFlags(FD);
 	flags |= O_NONBLOCK;
-	systemWrap->setFlags(FD, flags);
+	systemWrap.setFlags(FD, flags);
 }

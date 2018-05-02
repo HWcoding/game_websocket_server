@@ -1,6 +1,5 @@
 #define TEST_FILE_LINK_DEPENDENCIES "source/data_types/byte_array.cpp, \
-									source/server/socket/file_descriptor.cpp, \
-									source/server/socket/system_wrapper.cpp"
+									source/server/socket/file_descriptor.cpp"
 
 #include "source/server/socket/file_descriptor.h"
 #include "tests/test_lib/mocks_stubs/mock_system_wrapper.h"
@@ -8,10 +7,10 @@
 #include "tests/test.h"
 
 class FD_TestFactory{
-	MockSystemWrapper systemWrap;
+	MockSystemWrapper &systemWrap;
 public:
 	FileDescriptor FD;
-	FD_TestFactory(int index): systemWrap(), FD(&systemWrap,index){
+	FD_TestFactory(int index): systemWrap(MockSystemWrapper::getMockSystemInstance(true)), FD(index){
 		FD.setIP("testIP");
 		FD.setPort("testPort");
 		FD.setCSRFkey("testCSRFkey");
@@ -68,9 +67,8 @@ TEST(FileDescriptorTest, CopyConstructor)
 
 TEST(FileDescriptorTest, MoveAssignment)
 {
-	MockSystemWrapper systemWrap;
 	FD_TestFactory testDescriptor(1);
-	FileDescriptor movedCopy(&systemWrap,-1);
+	FileDescriptor movedCopy(-1);
 
 	movedCopy = std::move( *testDescriptor );
 
