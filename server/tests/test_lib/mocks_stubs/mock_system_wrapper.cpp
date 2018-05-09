@@ -12,11 +12,9 @@
 #include <netdb.h>
 
 
-class MockSocket {
-public:
-	//struct addrinfo address;
-
-	bool hasEvent;
+class MockSocket
+{
+	bool hasNewEvent;
 	struct epoll_event event;
 
 	std::string	socketReadBuffer;
@@ -28,23 +26,78 @@ public:
 	int protocol;
 	struct sockaddr_storage address;
 
-	int BytesUntilWriteFail; //number of bytes to write before simulating a full buffer. A negative value turns off the feature. -1 by default
-	int BytesUntilReadFail; //number of bytes to read before simulating an empty buffer. A negative value turns off the feature. -1 by default
-
+	ssize_t bytesUntilWriteFail; //number of bytes to write before simulating a full buffer. A negative value turns off the feature. -1 by default
+	ssize_t bytesUntilReadFail; //number of bytes to read before simulating an empty buffer. A negative value turns off the feature. -1 by default
+public:
 	MockSocket();
+	bool hasEvent();
+	const struct epoll_event &getEvent();
+	int getFlags();
+	void setFlags(int _flags);
+
+	void setBytesUntilWriteFail(ssize_t bytes);
+	void setBytesUntilReadFail(ssize_t bytes);
+
+	void setSocketWriteBuffer(std::string buf);
+	void setSocketReadBuffer(std::string buf);
+
+	const std::string &getSocketWriteBuffer();
+	const std::string &getSocketReadBuffer();
+
 	void create(int _family, int _socktype, int _protocol);
 	int bind(const struct sockaddr *ai_addr, unsigned int ai_addrlen);
 	size_t readDataFromReadBuffer(char* buffer, size_t amount);
 	size_t writeDataToWriteBuffer(const char* buffer, size_t amount);
 };
 
-MockSocket::MockSocket() : hasEvent(false),  event(), socketReadBuffer(),
+
+MockSocket::MockSocket() : hasNewEvent(false),  event(), socketReadBuffer(),
                            socketWriteBuffer(), flags(0), family(0), socktype(0),
-                           protocol(0), address(), BytesUntilWriteFail(-1),
-                           BytesUntilReadFail(-1) {
+                           protocol(0), address(), bytesUntilWriteFail(-1),
+                           bytesUntilReadFail(-1) {
 	memset(&address,0, sizeof(address));
 	event.data.fd = -1;
 	event.events = 0;
+}
+
+void MockSocket::setBytesUntilWriteFail(ssize_t bytes) {
+	bytesUntilWriteFail = bytes;
+}
+
+void MockSocket::setBytesUntilReadFail(ssize_t bytes) {
+	bytesUntilReadFail = bytes;
+}
+
+bool MockSocket::hasEvent() {
+	return hasNewEvent & event.events;
+}
+
+const struct epoll_event &MockSocket::getEvent() {
+	return event;
+}
+
+int MockSocket::getFlags() {
+	return flags;
+}
+
+void MockSocket::setFlags(int _flags) {
+	flags = _flags;
+}
+
+void MockSocket::setSocketWriteBuffer(std::string buf) {
+	socketWriteBuffer = std::move(buf);
+}
+
+void MockSocket::setSocketReadBuffer(std::string buf) {
+	socketReadBuffer = std::move(buf);
+}
+
+const std::string &MockSocket::getSocketWriteBuffer() {
+	return socketWriteBuffer;
+}
+
+const std::string &MockSocket::getSocketReadBuffer() {
+	return socketReadBuffer;
 }
 
 void MockSocket::create(int _family, int _socktype, int _protocol) {
@@ -64,10 +117,10 @@ int MockSocket::bind(const struct sockaddr *ai_addr, unsigned int ai_addrlen) {
 
 size_t MockSocket::readDataFromReadBuffer(char* buffer, size_t amount) {
 	//if the amount to read is more than the bytes until a simulated empty buffer, set the amount to the bytes fail value
-	if(BytesUntilReadFail >= 0 && static_cast<size_t>(BytesUntilReadFail) < amount) {
-		amount = static_cast<size_t>(BytesUntilReadFail);
+	if(bytesUntilReadFail >= 0 && static_cast<size_t>(bytesUntilReadFail) < amount) {
+		amount = static_cast<size_t>(bytesUntilReadFail);
 	}
-	//if the amount to read is more than is left in the readBuffer, set it ot the amount left in the read buffer
+	//if the amount to read is more than is left in the readBuffer, set it to the amount left in the read buffer
 	size_t length = amount < socketReadBuffer.size() ? amount : socketReadBuffer.size();
 	memcpy(buffer, socketReadBuffer.c_str(), length);
 	//set the read buffer to contain the remaining unread bits
@@ -83,8 +136,8 @@ size_t MockSocket::readDataFromReadBuffer(char* buffer, size_t amount) {
 
 size_t MockSocket::writeDataToWriteBuffer(const char* buffer, size_t amount) {
 	//if the amount to write is more than the bytes until a simulated full buffer, set the amount to the bytes fail value
-	if(BytesUntilWriteFail >= 0 && static_cast<size_t>(BytesUntilWriteFail) < amount) {
-		amount = static_cast<size_t>(BytesUntilWriteFail);
+	if(bytesUntilWriteFail >= 0 && static_cast<size_t>(bytesUntilWriteFail) < amount) {
+		amount = static_cast<size_t>(bytesUntilWriteFail);
 	}
 	socketWriteBuffer.append(buffer, amount);
 	return amount;
@@ -94,18 +147,27 @@ size_t MockSocket::writeDataToWriteBuffer(const char* buffer, size_t amount) {
 
 
 
-class MockEpoll {
-public:
+
+
+
+
+
+
+
+
+class MockEpoll
+{
+//public:
 	std::map<int,struct epoll_event> monitoredFDs;
 	std::vector<struct epoll_event> events;
-
+public:
 	MockEpoll();
 	void fillEvents(std::map<int,MockSocket> &Clients, int MAXEVENTS);
 	struct epoll_event* getEvents();
-	void addFD(int FD,epoll_event _event);
+	void setFD(int FD,epoll_event _event);
 	void removeFD(int FD);
-
-
+	const struct epoll_event &getFD(int FD);
+	size_t copyEventsTo(struct epoll_event *destination, size_t maxSize);
 };
 
 MockEpoll::MockEpoll(): monitoredFDs(), events() {}
@@ -115,12 +177,12 @@ void MockEpoll::fillEvents(std::map<int, MockSocket> &Clients, int MAXEVENTS) {
 	int i = 0;
 	for(auto FD : monitoredFDs) {
 		MockSocket client = Clients[FD.first];
-		if(client.hasEvent && (client.event.events & FD.second.events) ) {
+		if(client.hasEvent() && FD.second.events) {
 			++i;
 			if(i > MAXEVENTS) {
 				break;
 			}
-			events.push_back( client.event );
+			events.push_back( client.getEvent() );
 		}
 	}
 }
@@ -130,35 +192,64 @@ struct epoll_event* MockEpoll::getEvents() {
 }
 
 
-void MockEpoll::addFD(int FD, epoll_event _event) {
+void MockEpoll::setFD(int FD, epoll_event _event) {
 	monitoredFDs[FD] = _event;
+}
+const struct epoll_event &MockEpoll::getFD(int FD) {
+	return monitoredFDs[FD];
 }
 
 void MockEpoll::removeFD(int FD) {
 	monitoredFDs.erase(FD);
 }
 
+size_t MockEpoll::copyEventsTo(struct epoll_event *destination, size_t maxSize) {
+	size_t copySize = events.size();
+	if(copySize>maxSize) copySize = maxSize;
+	memcpy(destination, &events[0], copySize);
+	return events.size();
+}
 
 
 
 
 
-class MockSystemState {
-public:
+
+
+
+
+
+
+
+
+
+class MockSystemState
+{
 	std::map<int,MockEpoll>		epolls;
 	std::map<int,MockSocket>	sockets;
 	int nextAvailableFD;
-
+public:
 	MockSystemState();
 	int getNewFD();
 	int addEpoll();
 	void removeEpoll(int FD);
 	int addSocket(MockSocket &client);
 	void removeSocket(int FD);
-	void SetReadBuffer(int FD, std::string buf);
-	std::string GetReadBuffer(int FD);
-	std::string GetWriteBuffer(int FD);
-	void ClearWriteBuffer(int FD);
+	void setReadBuffer(int FD, std::string buf);
+	std::string getReadBuffer(int FD);
+	std::string getWriteBuffer(int FD);
+	void clearWriteBuffer(int FD);
+	void setEvent(int epoll, int FD, struct epoll_event *event);
+	void removeFD(int epoll, int FD);
+	void addFD(int epoll, int FD, struct epoll_event *event);
+	void setBytesTillWriteFail(int socket, ssize_t bytes);
+	void setBytesTillReadFail(int socket, ssize_t bytes);
+	size_t epollWait(int epollFD, struct epoll_event *_events, int maxSize);
+	int getSocketFlags(int socket);
+	void setSocketFlags(int socket, int flags);
+	size_t writeToSocket(int socket, const char *buf, size_t count);
+	size_t readFromSocket(int socket, char *buf, size_t count);
+	void bindSocket(int socket, const struct sockaddr *addr, unsigned int addrlen);
 
 	static MockSystemState &getState(bool reset = false) {
 		static MockSystemState state = MockSystemState();
@@ -170,12 +261,62 @@ public:
 };
 
 
+void MockSystemState::setEvent(int epoll, int FD, struct epoll_event *event) {
+	epolls[epoll].setFD(FD, *event);
+}
+
+void MockSystemState::removeFD(int epoll, int FD) {
+	epolls[epoll].removeFD(FD);
+}
+
+void MockSystemState::addFD(int epoll, int FD, struct epoll_event *event) {
+	epolls[epoll].setFD(FD, *event);
+}
+
+void MockSystemState::setBytesTillWriteFail(int socket, ssize_t bytes) {
+	sockets[socket].setBytesUntilWriteFail(bytes);
+}
+void MockSystemState::setBytesTillReadFail(int socket, ssize_t bytes) {
+	sockets[socket].setBytesUntilReadFail(bytes);
+}
+
+int MockSystemState::getSocketFlags(int socket) {
+	return sockets[socket].getFlags();
+}
+
+void MockSystemState::setSocketFlags(int socket, int flags) {
+	sockets[socket].setFlags(flags);
+}
+
+
+size_t MockSystemState::writeToSocket(int socket, const char *buf, size_t count) {
+	return sockets[socket].writeDataToWriteBuffer(buf, count);
+}
+
+size_t MockSystemState::readFromSocket(int socket, char *buf, size_t count) {
+	return sockets[socket].readDataFromReadBuffer(buf, count) ;
+}
+
+
+
+void MockSystemState::bindSocket(int socket, const struct sockaddr *addr,
+	                             unsigned int addrlen) {
+	sockets[socket].bind(addr, addrlen);
+}
+
+
+size_t MockSystemState::epollWait(int epollFD,
+	                            struct epoll_event *_events,
+	                            int maxSize) {
+	MockEpoll& epoll = epolls[epollFD];
+	epoll.fillEvents(sockets, maxSize);
+	return epoll.copyEventsTo(_events, static_cast<size_t>(maxSize));
+}
 
 
 
 int MockSystemState::getNewFD() {
-	++nextAvailableFD;
-	return nextAvailableFD;
+	return ++nextAvailableFD;
 }
 
 int MockSystemState::addEpoll() {
@@ -206,21 +347,22 @@ MockSystemState::MockSystemState(): epolls(), sockets(), nextAvailableFD(1) {
 
 }
 
-void MockSystemState::SetReadBuffer(int FD, std::string buf) {
-	sockets[FD].socketReadBuffer = buf;
+void MockSystemState::setReadBuffer(int FD, std::string buf) {
+	sockets[FD].setSocketReadBuffer(std::move(buf));
 }
 
-std::string MockSystemState::GetReadBuffer(int FD) {
-	return sockets[FD].socketReadBuffer;
+std::string MockSystemState::getReadBuffer(int FD) {
+	return sockets[FD].getSocketReadBuffer();
 }
 
-std::string MockSystemState::GetWriteBuffer(int FD) {
-	return sockets[FD].socketWriteBuffer;
+std::string MockSystemState::getWriteBuffer(int FD) {
+	return sockets[FD].getSocketWriteBuffer();
 }
 
-void MockSystemState::ClearWriteBuffer(int FD) {
-	sockets[FD].socketWriteBuffer = std::string();
+void MockSystemState::clearWriteBuffer(int FD) {
+	sockets[FD].setSocketWriteBuffer(std::move(std::string()));
 }
+
 
 
 
@@ -248,39 +390,27 @@ MockSystemWrapper& MockSystemWrapper::operator=(MockSystemWrapper&& old) {
 
 MockSystemWrapper::~MockSystemWrapper(){}
 
-void MockSystemWrapper::SetReadBuffer(int FD, std::string buf) {
-	MockSystemState::getState().SetReadBuffer(FD, buf);
+void MockSystemWrapper::setReadBuffer(int FD, std::string buf) {
+	MockSystemState::getState().setReadBuffer(FD, buf);
 }
 
-std::string MockSystemWrapper::GetReadBuffer(int FD) {
-	return MockSystemState::getState().GetReadBuffer(FD);
+std::string MockSystemWrapper::getReadBuffer(int FD) {
+	return MockSystemState::getState().getReadBuffer(FD);
 }
 
-void MockSystemWrapper::ClearWriteBuffer(int FD) {
-	return MockSystemState::getState().ClearWriteBuffer(FD);
+void MockSystemWrapper::clearWriteBuffer(int FD) {
+	return MockSystemState::getState().clearWriteBuffer(FD);
 }
 
-std::string MockSystemWrapper::GetWriteBuffer(int FD) {
-	return MockSystemState::getState().GetWriteBuffer(FD);
+std::string MockSystemWrapper::getWriteBuffer(int FD) {
+	return MockSystemState::getState().getWriteBuffer(FD);
 }
 
-void MockSystemWrapper::SetBytesTillWriteFail(int socket, int bytes) {
-	MockSystemState::getState().sockets[socket].BytesUntilWriteFail = bytes;
+void MockSystemWrapper::setBytesTillWriteFail(int socket, ssize_t bytes) {
+	MockSystemState::getState().setBytesTillWriteFail(socket, bytes);
 }
-
-static int epollControl(int epoll, int op, int FD, struct epoll_event *event) {
-	//return epoll_ctl(epoll, op, FD, event);
-	if(op == EPOLL_CTL_MOD){
-		MockSystemState::getState().epolls[epoll].monitoredFDs[FD] = *event;
-
-	}
-	if(op == EPOLL_CTL_DEL){
-		MockSystemState::getState().epolls[epoll].removeFD(FD);
-	}
-	if(op == EPOLL_CTL_ADD){
-		MockSystemState::getState().epolls[epoll].addFD(FD, *event);
-	}
-	return 0;
+void MockSystemWrapper::setBytesTillReadFail(int socket, ssize_t bytes) {
+	MockSystemState::getState().setBytesTillReadFail(socket, bytes);
 }
 
 void MockSystemWrapper::resetState() {
@@ -296,20 +426,39 @@ MockSystemWrapper &MockSystemWrapper::getMockSystemInstance(bool reset) {
 	return wrapper;
 }
 
+static int epollControl(int epoll, int op, int FD, struct epoll_event *event) {
+	//return epoll_ctl(epoll, op, FD, event);
+	if(op == EPOLL_CTL_MOD){
+		MockSystemState::getState().setEvent(epoll, FD, event);
+	}
+	if(op == EPOLL_CTL_DEL){
+		MockSystemState::getState().removeFD(epoll, FD);
+	}
+	if(op == EPOLL_CTL_ADD){
+		MockSystemState::getState().addFD(epoll, FD, event);
+	}
+	return 0;
+}
 
-//redefined base members using compile seam
+
+
+
+
+
+
+
+
+
+
+
+//redefined base members using link seam
 size_t SystemWrapper::epollWait(int epollFD,
 	                            struct epoll_event *_events,
 	                            int MAXEVENTS, int timeout) const {
 	//return epoll_wait(epollFD,  events, MAXEVENTS, timeout);
 	//std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
 	(void)timeout; // to clear unused warning
-	MockEpoll& epoll = MockSystemState::getState().epolls[epollFD];
-	epoll.fillEvents(MockSystemState::getState().sockets, MAXEVENTS);
-	int copySize = static_cast<int>(epoll.events.size() );
-	if(copySize>MAXEVENTS) copySize = MAXEVENTS;
-	memcpy(_events, epoll.getEvents(), static_cast<size_t>(copySize));
-	return epoll.events.size();
+	return MockSystemState::getState().epollWait(epollFD, _events, MAXEVENTS);
 }
 
 bool SystemWrapper::epollControlAdd(int epoll, int FD,
@@ -334,12 +483,12 @@ int SystemWrapper::epollCreate(int flags) const {
 
 int SystemWrapper::getFlags(int FD) const {
 	//return fcntl (FD,F_GETFL, 0);
-	return MockSystemState::getState().sockets[FD].flags;
+	return MockSystemState::getState().getSocketFlags(FD);
 }
 
 void SystemWrapper::setFlags(int FD, int _flags) const {
 	//return fcntl (FD, F_SETFL, flags);
-	MockSystemState::getState().sockets[FD].flags = _flags;
+	MockSystemState::getState().setSocketFlags(FD, _flags);
 }
 
 void SystemWrapper::closeFD(int FD) const {
@@ -349,13 +498,13 @@ void SystemWrapper::closeFD(int FD) const {
 
 size_t SystemWrapper::writeFD(int FD, const void *buf, size_t count) const {
 	//return write(FD, buf, count);
-	return MockSystemState::getState().sockets[FD].writeDataToWriteBuffer(static_cast<const char*>(buf), count);
+	return MockSystemState::getState().writeToSocket(FD, static_cast<const char*>(buf), count);
 }
 
 size_t SystemWrapper::readFD(int FD, void *buf, size_t count, bool &done) const {
 	done = true;
 	//return read(FD, buf, count);
-	return MockSystemState::getState().sockets[FD].readDataFromReadBuffer(static_cast<char*>(buf), count) ;
+	return MockSystemState::getState().readFromSocket(FD, static_cast<char*>(buf), count);
 }
 
 void SystemWrapper::getNameInfo(const struct sockaddr *sa, unsigned int salen,
@@ -424,7 +573,7 @@ void SystemWrapper::bindSocket(int sockfd,
 	                           const struct sockaddr *addr,
 	                           unsigned int addrlen) const {
 	//return bind(sockfd, addr, addrlen);
-	MockSystemState::getState().sockets[sockfd].bind(addr, addrlen);
+	MockSystemState::getState().bindSocket(sockfd, addr, addrlen);
 }
 
 void SystemWrapper::listenSocket(int sockfd, int backlog) const {

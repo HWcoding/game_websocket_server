@@ -22,11 +22,12 @@ public:
 
 	MockSystemWrapper();
 	~MockSystemWrapper();
-	void SetReadBuffer(int FD, std::string buf);
-	std::string GetReadBuffer(int FD);
-	std::string GetWriteBuffer(int FD);
-	void SetBytesTillWriteFail(int socket, int bytes);
-	void ClearWriteBuffer(int FD);
+	void setReadBuffer(int FD, std::string buf);
+	std::string getReadBuffer(int FD);
+	std::string getWriteBuffer(int FD);
+	void setBytesTillWriteFail(int socket, ssize_t bytes);
+	void setBytesTillReadFail(int socket, ssize_t bytes);
+	void clearWriteBuffer(int FD);
 
 	static MockSystemWrapper &getMockSystemInstance(bool reset = false);
 	static void resetState();

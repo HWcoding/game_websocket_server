@@ -110,18 +110,18 @@ TEST(WebsocketAuthenticatorTest, sendHandshake)
 	authenticator.WA.processHandshake(validHeader,1);
 
 	// set the system to simulate a full buffer on socket 1 after 10 bytes are written
-	authenticator.systemWrap.SetBytesTillWriteFail(1, 10);
+	authenticator.systemWrap.setBytesTillWriteFail(1, 10);
 	// should return false with partial write
 	EXPECT_EQ(false, authenticator.WA.sendHandshake(1));
 	EXPECT_EQ(false, authenticator.WA.sendHandshake(1));
 
 	// set system to allow all bytes to be written
-	authenticator.systemWrap.SetBytesTillWriteFail(1, -1);
+	authenticator.systemWrap.setBytesTillWriteFail(1, -1);
 	// should return true after writing all bytes
 	EXPECT_EQ(true, authenticator.WA.sendHandshake(1));
 
 	// get the written data from the system
-	std::string data = authenticator.systemWrap.GetWriteBuffer(1);
+	std::string data = authenticator.systemWrap.getWriteBuffer(1);
 
 	// check the data to make sure it is correct
 	std::string expected = createTestResponseHandshakeHeader().toString();

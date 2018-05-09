@@ -141,7 +141,7 @@ TEST(WebsocketMessageSenderTest, writeData)
 	sender.MS.writeData(1);
 
 	// check the data to make sure it is correct
-	std::string data = sender.systemWrap.GetWriteBuffer(1);
+	std::string data = sender.systemWrap.getWriteBuffer(1);
 	EXPECT_STREQ( data.c_str(), expected.toString().c_str());
 }
 

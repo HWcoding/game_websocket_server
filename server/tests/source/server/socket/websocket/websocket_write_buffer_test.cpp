@@ -56,7 +56,7 @@ TEST(WebsocketWriteBufferTest, addMessageProperlyAddsTwoMessages)
 	testBuffer.WB.addMessage(1, input);
 
 	testBuffer.WB.writeData(1);
-	std::string result = testBuffer.systemWrap.GetWriteBuffer(1);
+	std::string result = testBuffer.systemWrap.getWriteBuffer(1);
 
 	EXPECT_STREQ(result.c_str(), twoStringsAppended.c_str());
 }
@@ -77,10 +77,10 @@ TEST(WebsocketWriteBufferTest, addMessageWorksAfterWriteDataFailedToWriteWholeBu
 	//write the first 100001 bytes to buffer then clear it
 	testBuffer.WB.addMessage(1, input);
 
-	testBuffer.systemWrap.SetBytesTillWriteFail(1,100001);
+	testBuffer.systemWrap.setBytesTillWriteFail(1,100001);
 	testBuffer.WB.writeData(1); //should stop afer writing 100001 bytes
-	testBuffer.systemWrap.ClearWriteBuffer(1);
-	testBuffer.systemWrap.SetBytesTillWriteFail(1,-1);// set write to not fail
+	testBuffer.systemWrap.clearWriteBuffer(1);
+	testBuffer.systemWrap.setBytesTillWriteFail(1,-1);// set write to not fail
 
 	//write another message to buffer
 	ByteArray a;
@@ -90,7 +90,7 @@ TEST(WebsocketWriteBufferTest, addMessageWorksAfterWriteDataFailedToWriteWholeBu
 	testBuffer.WB.writeData(1);
 
 	//check buffer to see if the remaining part of the first message is still in buffer
-	std::string result = testBuffer.systemWrap.GetWriteBuffer(1);
+	std::string result = testBuffer.systemWrap.getWriteBuffer(1);
 
 	EXPECT_STREQ(result.c_str(), appendedTestStringValue.c_str());
 }
@@ -129,7 +129,7 @@ TEST(WebsocketWriteBufferTest, WriteDataTest)
 
 	testBuffer.WB.writeData(1);
 
-	std::string result = testBuffer.systemWrap.GetWriteBuffer(1);
+	std::string result = testBuffer.systemWrap.getWriteBuffer(1);
 
 	EXPECT_STREQ( result.c_str(), testString.c_str() );
 	EXPECT_EQ( testBuffer.WB.messageSize(1), 0 );		//Error is buffer was not cleared after writing
