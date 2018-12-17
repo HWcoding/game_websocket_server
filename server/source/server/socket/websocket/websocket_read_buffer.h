@@ -41,7 +41,7 @@ protected:
 			totalSize += addSize;
 		}
 		void clear(){
-			buffer=std::vector< ByteArray >();
+			buffer = std::vector< ByteArray >();
 			totalSize = 0;
 			expectedSize = -1;
 		}

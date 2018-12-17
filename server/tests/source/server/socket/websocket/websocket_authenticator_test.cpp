@@ -50,9 +50,34 @@ class AuthenticatorTestFactory{
 public:
 	MockSystemWrapper &systemWrap;
 	WebsocketAuthenticator WA;
+
+
+	class MyClientValidator : public ClientValidatorInterface
+	{
+	public:
+
+		bool areClientHeadersValid(ConnectionHeaders &headers) override
+		{
+			(void)headers;
+			//accept all connections
+			return true;
+		}
+		bool isClientIPValid(std::string &IP, std::string &port) override
+		{
+			(void)IP;
+			(void)port;
+			//accept all connections
+			return true;
+		}
+		~MyClientValidator() override = default;
+	};
+
+	MyClientValidator validator;
 	AuthenticatorTestFactory(SetOfFileDescriptors*FDs ):
 		systemWrap(MockSystemWrapper::getMockSystemInstance(true)), WA(FDs)
-	{}
+	{
+		WA.setClientValidator(&validator);
+	}
 };
 
 TEST(WebsocketAuthenticatorTest, WebsocketAuthenticator)

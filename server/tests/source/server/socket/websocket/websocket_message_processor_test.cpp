@@ -35,12 +35,21 @@ public:
 	using WebsocketMessageProcessor::getNet16bit;
 };
 
+//release build
+//Built on: Sat Aug 11 00:42:13 2018
+//extract processed at a rate of 2.90605e-06 Gb/s
+//extract processed 100MBs in 2.75288e+08 milliseconds
+
+//release build
+//Built on: Thu Aug 23 14:55:46 2018
+//extract processed at a rate of 2.17512e-06 Gb/s
+//extract processed 100MBs in 3.67796e+08 milliseconds
 
 
-/*void test_ExtractMessage_performance(){
+void test_ExtractMessage_performance(){
 	std::vector< ByteArray > splitMessage;
 	uint32_t mask = 3893384930;
-	size_t messageSize = 1000000;
+	size_t messageSize = 100000000;
 	profiling::PerformanceTimer timer;
 	{//build a vector of string fragments (splitMessage) simulating a long message retreived over multiple reads
 		std::string testString = generateTestString(messageSize);
@@ -52,13 +61,16 @@ public:
 		}
 	}
 
-	MockSystemWrapper systemWrap;
-	SetOfFileDescriptors FDs(&systemWrap);
+	// reset system state
+	MockSystemWrapper::resetState();
+
+	//MockSystemWrapper systemWrap;
+	SetOfFileDescriptors FDs;
 	FDs.addFD(1);
 	WebsocketMessageProcessorWrap processor(&FDs);
 
 	double totalTime = DBL_MAX;
-	int count = 10;
+	int count = 20;
 	while(--count){
 		std::vector< ByteArray > decoded;
 		std::vector<int> types;
@@ -75,7 +87,7 @@ public:
 }
 
 
-void test_Unmask_performance(){
+/*oid test_Unmask_performance(){
 	profiling::PerformanceTimer timer;
 	uint32_t mask = 3893384930;
 	size_t messageSize = 100000000;

@@ -25,9 +25,12 @@ sys.path.insert(0,os.path.abspath("./tools"))
 
 import build_server
 import build_tools
+import time
+
 
 def main():
-
+	build_server.printMajorHeader("Building")
+	print ( build_server.highlight( "Built on: ") + time.strftime("%c"))
 	os.chdir( "./server" )
 	build_server.main()
 	os.chdir( "../" )

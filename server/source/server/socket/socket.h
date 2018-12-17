@@ -14,31 +14,43 @@ class SocketWriter;
 class SocketServerConnector;
 class ClientValidatorInterface;
 
-class SocketInterface{
+class SocketInterface
+{
 public:
-	virtual SocketMessage getNextMessage() =0;
-	virtual void setClientValidator(ClientValidatorInterface * validator) =0;
-	virtual void sendMessage(SocketMessage &message) =0;
-	virtual void disconnectClient(int FD) =0;
-	virtual void shutdown() =0;
-	virtual bool isRunning() =0;
-	virtual ~SocketInterface();
+	virtual SocketMessage getNextMessage() = 0;
+	virtual void setClientValidator(ClientValidatorInterface * validator) = 0;
+	virtual void sendMessage(SocketMessage &message) = 0;
+	virtual void disconnectClient(int FD) = 0;
+	virtual void shutdown() = 0;
+	virtual bool isRunning() = 0;
+	virtual ~SocketInterface() = default;
 protected:
 	SocketInterface() = default;
 };
 
-struct ServerConfig {
-	std::string port = std::string();
-	int64_t loopSpeed = 100;
-	int MAXEVENTS = 200;
-	size_t MaxReaderSocketBufferSize = 32760;
-	size_t MaxWebsocketReadBufferSize = 262144;
-	int maxWaitTime = 1000;
-	size_t maxHandshakeSize = 2048;
-	ServerConfig() {}
+struct ServerConfig
+{
+	/** the port to connect the websocket on **/
+	std::string port {std::string("443")};
+	int64_t loopSpeed {100};
+	/** the maximum number of messages to read from the kernel on each epoll **/
+	int maxEvents {200};
+	/** the size of the buffer used to store messages from a client **/
+	size_t MaxReaderSocketBufferSize {32760};
+	/** the size of the buffer used to store messages waiting to be sent to a client */
+	size_t MaxWebsocketReadBufferSize {262144};
+	/** the number of milliseconds that the server threads should hang during epoll calls if no messages are present */
+	int maxWaitTime {1000};
+	/** the maximum allowable size of a handshake message from a client */
+	size_t maxHandshakeSize {2048};
+	ServerConfig() = default;
 };
 
-class Socket : public SocketInterface{ ///class starts new threads to handle socket io and cleans up on destruction
+/**
+ * Class starts new threads to handle socket io and cleans up on destruction
+ */
+class Socket : public SocketInterface
+{
 
 public:
 	Socket(const ServerConfig &config, std::atomic<bool> * _shouldContinueRunning);

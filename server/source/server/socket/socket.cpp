@@ -9,9 +9,6 @@
 #include "source/data_types/socket_message.h"
 #include "source/logging/exception_handler.h"
 
-
-SocketInterface::~SocketInterface() = default;
-
 Socket::Socket(const ServerConfig &config, std::atomic<bool> * _shouldContinueRunning) : shouldContinueRunning(_shouldContinueRunning),
 									FDs( new SetOfFileDescriptors() ),
 									reader(  new SocketReader(FDs.get(), shouldContinueRunning) ),

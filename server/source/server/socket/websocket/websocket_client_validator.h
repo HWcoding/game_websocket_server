@@ -10,15 +10,15 @@ public:
 	bool areClientHeadersValid(ConnectionHeaders &headers) override
 	{
 		(void)headers;
-		//accept all traffic
-		return true;
+		//reject all traffic
+		return false;
 	}
 	bool isClientIPValid(std::string &IP, std::string &port) override
 	{
 		(void)IP;
 		(void)port;
-		//accept all traffic
-		return true;
+		//reject all traffic
+		return false;
 	}
 	~DefaultClientValidator() override = default;
 };

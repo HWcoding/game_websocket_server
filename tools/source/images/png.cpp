@@ -319,7 +319,8 @@ void compressBuffer(std::vector<uint8_t> &data){
 		throw std::runtime_error("zlib compress failed in PngImage::compress");
 		return;
 	}
-	compressed.resize(outputSize);//needed because compress shrinks outputSize
+	//needed because compress shrinks outputSize
+	compressed.resize(outputSize);
 	data = compressed;
 	return;
 }
