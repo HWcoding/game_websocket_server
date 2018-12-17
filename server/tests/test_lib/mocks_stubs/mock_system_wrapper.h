@@ -11,7 +11,35 @@ class MockSystemState;
 struct addrinfo;
 struct sockaddr_storage;
 
-class MockSystemWrapper : public SystemWrapper {
+
+class MockSystemWrapperState {
+public:
+//mock specific members
+	char nullChar;
+	std::unique_ptr<struct addrinfo> mockAddrinfo;
+	struct addrinfo* mockAddrinfoPointer;
+	std::unique_ptr<struct sockaddr_storage> mockSockaddr;
+	//mutable std::unique_ptr<MockSystemState> state;
+
+	MockSystemWrapperState();
+	~MockSystemWrapperState();
+	void setReadBuffer(int FD, std::string buf);
+	std::string getReadBuffer(int FD);
+	std::string getWriteBuffer(int FD);
+	void setBytesTillWriteFail(int socket, ssize_t bytes);
+	void setBytesTillReadFail(int socket, ssize_t bytes);
+	void clearWriteBuffer(int FD);
+
+	static MockSystemWrapperState &getMockSystemInstance(bool reset = false);
+	static void resetState();
+
+private:
+	MockSystemWrapperState& operator=(MockSystemWrapperState&& old);
+	MockSystemWrapperState& operator=(const MockSystemWrapperState&) = delete;
+	MockSystemWrapperState(const MockSystemWrapperState&) = delete;
+};
+
+/*class MockSystemWrapper {//: public SystemWrapper {
 public:
 //mock specific members
 	char nullChar;
@@ -30,7 +58,7 @@ public:
 	void clearWriteBuffer(int FD);
 
 	static MockSystemWrapper &getMockSystemInstance(bool reset = false);
-	static void resetState();
+	static void resetState();*/
 
 
 
@@ -58,10 +86,10 @@ public:
 	int acceptSocket(int sockfd, struct sockaddr *addr, unsigned int *addrlen, bool &done) const;
 	SystemWrapper &SystemWrapper::getSystemInstance()
 	*/
-private:
+/*private:
 	MockSystemWrapper& operator=(MockSystemWrapper&& old);
 	MockSystemWrapper& operator=(const MockSystemWrapper&) = delete;
 	MockSystemWrapper(const MockSystemWrapper&) = delete;
-};
+};*/
 
 #endif /* TESTS_SERVER_MOCK_SYSTEM_WRAPPER_H */

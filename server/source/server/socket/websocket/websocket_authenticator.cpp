@@ -87,7 +87,6 @@ ClientValidatorInterface::~ClientValidatorInterface() = default;
 
 
 WebsocketAuthenticator::WebsocketAuthenticator(SetOfFileDescriptors*FDs) :
-                                                  systemWrap(SystemWrapper::getSystemInstance()),
                                                   handshakeReadBuffer(),
                                                   handshakeWriteBuffer(), maxHandshakeSize(2048),
                                                   fileDescriptors(FDs)
@@ -237,7 +236,7 @@ bool WebsocketAuthenticator::isHandshakeInvalid(const ByteArray &handShake)
 bool WebsocketAuthenticator::sendHandshake(int FD)
 {
 	if(handshakeWriteBuffer.count(FD) != 0) {
-		size_t retSize = systemWrap.writeFD( FD, &handshakeWriteBuffer[FD][0], handshakeWriteBuffer[FD].size() );
+		size_t retSize = writeFD( FD, &handshakeWriteBuffer[FD][0], handshakeWriteBuffer[FD].size() );
 		if(retSize< handshakeWriteBuffer[FD].size()) { //we didn't write all our data
 			handshakeWriteBuffer[FD] = ByteArray( handshakeWriteBuffer[FD].begin()+static_cast<int64_t>(retSize), handshakeWriteBuffer[FD].end() );
 			return false;

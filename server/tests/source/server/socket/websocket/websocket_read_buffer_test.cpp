@@ -37,12 +37,10 @@ public:
 
 class ReadBufferTestFactory{
 public:
-	MockSystemWrapper &systemWrap;
 	WebsocketReadBuffersWrap RB;
-	ReadBufferTestFactory(SetOfFileDescriptors *FDs, size_t size):
-		systemWrap(MockSystemWrapper::getMockSystemInstance(true)),
-		RB(FDs, size)
-	{}
+	ReadBufferTestFactory(SetOfFileDescriptors *FDs, size_t size): RB(FDs, size) {
+		MockSystemWrapperState::resetState();
+	}
 };
 
 

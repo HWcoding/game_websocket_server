@@ -9,11 +9,11 @@
 
 
 class FDsTestFactory{
-	MockSystemWrapper &systemWrap;
+	MockSystemWrapperState &systemWrap;
 	SetOfFileDescriptors FDs;
 public:
 	FDsTestFactory() :
-		systemWrap(MockSystemWrapper::getMockSystemInstance(true)),
+		systemWrap(MockSystemWrapperState::getMockSystemInstance(true)),
 		FDs()
 	{}
 

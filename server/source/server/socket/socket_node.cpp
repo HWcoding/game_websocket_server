@@ -13,8 +13,7 @@
 
 
 SocketNode::SocketNode(SetOfFileDescriptors *FDs,
-                       std::atomic<bool>* run) : systemWrap(SystemWrapper::getSystemInstance()),
-                                                 running(run),
+                       std::atomic<bool>* run) : running(run),
                                                  fileDescriptors(FDs),
                                                  MAXEVENTS(9999),
                                                  epollFD(-1)
@@ -24,7 +23,7 @@ SocketNode::SocketNode(SetOfFileDescriptors *FDs,
 
 SocketNode::~SocketNode(){
 	if(epollFD != -1){
-		systemWrap.closeFD(epollFD);
+		closeFD(epollFD);
 		epollFD = -1;
 	}
 }
@@ -45,8 +44,8 @@ bool SocketNode::handleEpollErrors(epoll_event &event){
 		LOG_ERROR("epoll error");
 		int error = 0;
 		socklen_t errlen = sizeof(error);
-		if (systemWrap.getSockOpt(event.data.fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void *>(&error), &errlen) == 0){
-			LOG_ERROR("error: " << systemWrap.strError(error) );
+		if (getSockOpt(event.data.fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void *>(&error), &errlen) == 0){
+			LOG_ERROR("error: " << strError(error) );
 		}
 		else {
 			LOG_ERROR("epoll error");
@@ -58,7 +57,7 @@ bool SocketNode::handleEpollErrors(epoll_event &event){
 }
 
 void SocketNode::processEvents(std::vector<epoll_event> &events){
-	size_t numberOfEvents = systemWrap.epollWait(epollFD, &events[0], MAXEVENTS, getWaitTime());
+	size_t numberOfEvents = epollWait(epollFD, &events[0], MAXEVENTS, getWaitTime());
 	for (size_t i = 0; i < numberOfEvents; ++i){
 		if(handleEpollErrors(events[i])){
 			continue; //an error occured; move to next event
@@ -81,6 +80,6 @@ void SocketNode::startPoll(){
 }
 
 void SocketNode::setupEpoll(){
-	epollFD = systemWrap.epollCreate(0);
+	epollFD = epollCreate(0);
 }
 

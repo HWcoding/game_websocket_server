@@ -9,7 +9,6 @@
 #include "source/server/socket/websocket/websocket_client_validator.h"
 #include "source/server/socket/authenticator_interface.h"
 
-class SystemWrapper;
 class SetOfFileDescriptors;
 class HandshakeHeaders;
 class HandshakeHeadersInterface;
@@ -39,7 +38,6 @@ private:
 
 	WebsocketAuthenticator& operator=(const WebsocketAuthenticator&) = delete;
 	WebsocketAuthenticator(const WebsocketAuthenticator&) = delete;
-	SystemWrapper &systemWrap;
 	std::unordered_map<int,ByteArray > handshakeReadBuffer;
 	std::unordered_map<int,ByteArray > handshakeWriteBuffer;
 	size_t maxHandshakeSize;

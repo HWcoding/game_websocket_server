@@ -5,14 +5,14 @@
 #include <cstring>
 
 
-FileDescriptor::FileDescriptor() : systemWrap(SystemWrapper::getSystemInstance()) {}
+FileDescriptor::FileDescriptor() {}
 
-FileDescriptor::FileDescriptor(int _FD): systemWrap(SystemWrapper::getSystemInstance()), FD(_FD) {}
+FileDescriptor::FileDescriptor(int _FD): FD(_FD) {}
 
 /**
  * @throws std::system_error if lock fails followed by abort since it's declared noexcept
  */
-FileDescriptor::FileDescriptor(FileDescriptor&& f) noexcept :systemWrap(SystemWrapper::getSystemInstance()) {	//move constructor
+FileDescriptor::FileDescriptor(FileDescriptor&& f) noexcept {	//move constructor
 	std::lock_guard<std::mutex> lck(f.mut);
 	FD = std::move(f.FD);
 	IP = std::move(f.IP);
@@ -24,7 +24,7 @@ FileDescriptor::FileDescriptor(FileDescriptor&& f) noexcept :systemWrap(SystemWr
 /**
  * @throws std::system_error if lock fails followed by abort since it's declared noexcept
  */
-FileDescriptor::FileDescriptor(const FileDescriptor& f) noexcept :systemWrap(SystemWrapper::getSystemInstance()) { //copy constructor
+FileDescriptor::FileDescriptor(const FileDescriptor& f) noexcept { //copy constructor
 	std::lock_guard<std::mutex> lck(f.mut);
 	FD = f.FD;
 	IP = f.IP;
@@ -181,7 +181,7 @@ void FileDescriptor::pollForRead(int epoll){
  */
 void FileDescriptor::setFDReadWrite(epoll_event event, int epoll){
 	std::lock_guard<std::mutex> lck(mut);
-	systemWrap.epollControlMod(epoll, FD, &event);
+	epollControlMod(epoll, FD, &event);
 }
 
 /**
@@ -189,7 +189,7 @@ void FileDescriptor::setFDReadWrite(epoll_event event, int epoll){
  */
 void FileDescriptor::stopPollingFD(int epoll){
 	std::lock_guard<std::mutex> lck(mut);
-	systemWrap.epollControlDelete(epoll, FD, nullptr);
+	epollControlDelete(epoll, FD, nullptr);
 }
 
 /**
@@ -222,7 +222,7 @@ void FileDescriptor::startPollingForRead(int epoll){
  */
 bool FileDescriptor::startPollingFD(epoll_event event, int epoll){
 	std::lock_guard<std::mutex> lck(mut);
-	return systemWrap.epollControlAdd(epoll, FD, &event);
+	return epollControlAdd(epoll, FD, &event);
 }
 
 /**
@@ -231,7 +231,7 @@ bool FileDescriptor::startPollingFD(epoll_event event, int epoll){
  */
 void FileDescriptor::makeNonblocking (){
 	std::lock_guard<std::mutex> lck(mut);
-	int flags = systemWrap.getFlags(FD);
+	int flags = getFlags(FD);
 	flags |= O_NONBLOCK;
-	systemWrap.setFlags(FD, flags);
+	setFlags(FD, flags);
 }

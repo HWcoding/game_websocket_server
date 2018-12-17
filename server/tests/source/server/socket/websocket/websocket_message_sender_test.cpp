@@ -30,10 +30,10 @@ public:
 
 class MessageSenderTestFactory{
 public:
-	MockSystemWrapper &systemWrap;
+	MockSystemWrapperState &systemWrap;
 	WebsocketMessageSenderWrap MS;
 	MessageSenderTestFactory():
-		systemWrap(MockSystemWrapper::getMockSystemInstance(true)), MS()
+		systemWrap(MockSystemWrapperState::getMockSystemInstance(true)), MS()
 	{}
 };
 

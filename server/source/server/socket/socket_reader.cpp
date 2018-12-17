@@ -135,7 +135,7 @@ bool SocketReader::readChunkFromFD(int FD){
 
 	ByteArray buffer(maxBufferSize);
 	bool done;
-	size_t count = systemWrap.readFD(FD, &buffer[0], maxBufferSize, done);
+	size_t count = readFD(FD, &buffer[0], maxBufferSize, done);
 	if(done){ // if we read all data.
 		return true; // removeFromWaitingFDs(FD);
 	}

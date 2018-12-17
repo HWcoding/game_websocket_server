@@ -62,9 +62,8 @@ void test_ExtractMessage_performance(){
 	}
 
 	// reset system state
-	MockSystemWrapper::resetState();
+	MockSystemWrapperState::resetState();
 
-	//MockSystemWrapper systemWrap;
 	SetOfFileDescriptors FDs;
 	FDs.addFD(1);
 	WebsocketMessageProcessorWrap processor(&FDs);
@@ -154,7 +153,7 @@ TEST(WebsocketMessageProcessorTest, test_GetNet64bit)
 	temp[7]= 86;
 
 	// reset system state
-	MockSystemWrapper::resetState();
+	MockSystemWrapperState::resetState();
 	SetOfFileDescriptors FDs;
 	FDs.addFD(1);
 	WebsocketMessageProcessorWrap processor(&FDs);
@@ -176,7 +175,7 @@ TEST(WebsocketMessageProcessorTest, testGetNet16bit)
 	temp[1]= 33;
 
 	// reset system state
-	MockSystemWrapper::resetState();
+	MockSystemWrapperState::resetState();
 	SetOfFileDescriptors FDs;
 	FDs.addFD(1);
 	WebsocketMessageProcessorWrap processor(&FDs);
@@ -191,7 +190,7 @@ TEST(WebsocketMessageProcessorTest, testGetNet16bit)
 TEST(WebsocketMessageProcessorTest, testCloseFDHandler)
 {
 	// reset system state
-	MockSystemWrapper::resetState();
+	MockSystemWrapperState::resetState();
 	//create processor for testing and set its state
 	SetOfFileDescriptors FDs;
 
@@ -234,7 +233,7 @@ TEST(WebsocketMessageProcessorTest, testCloseFDHandler)
 TEST(WebsocketMessageProcessorTest, testUnmask)
 {
 	// reset system state
-	MockSystemWrapper::resetState();
+	MockSystemWrapperState::resetState();
 
 	uint32_t mask = 3893384930;
 	size_t messageSize = 4000;
@@ -281,7 +280,7 @@ TEST(WebsocketMessageProcessorTest, testUnmask)
 TEST(WebsocketMessageProcessorTest, testProcessSockMessageWorks)
 {
 	// reset system state
-	MockSystemWrapper::resetState();
+	MockSystemWrapperState::resetState();
 
 	uint32_t mask = 3893384930;
 	uint32_t messageCount = 10;
@@ -355,7 +354,7 @@ TEST(WebsocketMessageProcessorTest, testProcessSockMessageWorks)
 TEST(WebsocketMessageProcessorTest, testExtractMessageWorksWithPartialReads)
 {
 	// reset system state
-	MockSystemWrapper::resetState();
+	MockSystemWrapperState::resetState();
 
 	uint32_t mask = 3893384930;
 	uint32_t messageCount = 10;
@@ -400,7 +399,7 @@ TEST(WebsocketMessageProcessorTest, testExtractMessageWorksWithPartialReads)
 TEST(WebsocketMessageProcessorTest, testExtractMessageWorksWithWholeReads)
 {
 	// reset system state
-	MockSystemWrapper::resetState();
+	MockSystemWrapperState::resetState();
 
 	uint32_t mask = 3893384930;
 	uint32_t messageCount = 10;

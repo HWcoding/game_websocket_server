@@ -10,7 +10,7 @@
 /**
  * @throws std::runtime_error
  */
-size_t SystemWrapper::epollWait(int epollFD,  struct epoll_event *events, int MAXEVENTS, int timeout) const{
+size_t epollWait(int epollFD,  struct epoll_event *events, int MAXEVENTS, int timeout) {
 	int n = 0;
 	n = epoll_wait(epollFD,  events, MAXEVENTS, timeout);
 	if(n<0){
@@ -29,7 +29,7 @@ size_t SystemWrapper::epollWait(int epollFD,  struct epoll_event *events, int MA
 /**
  * @throws std::runtime_error
  */
-bool SystemWrapper::epollControlAdd(int epoll, int FD, struct epoll_event *event) const{
+bool epollControlAdd(int epoll, int FD, struct epoll_event *event) {
 	int ret =  epoll_ctl(epoll, EPOLL_CTL_ADD, FD, event);
 	if (ret == -1){
 		if(errno != EEXIST){
@@ -43,14 +43,14 @@ bool SystemWrapper::epollControlAdd(int epoll, int FD, struct epoll_event *event
 	return false;
 }
 
-void SystemWrapper::epollControlDelete(int epoll, int FD, struct epoll_event *event) const{
+void epollControlDelete(int epoll, int FD, struct epoll_event *event) {
 	epoll_ctl(epoll, EPOLL_CTL_DEL, FD, event);
 }
 
 /**
  * @throws std::runtime_error
  */
-void SystemWrapper::epollControlMod(int epoll, int FD, struct epoll_event *event) const{
+void epollControlMod(int epoll, int FD, struct epoll_event *event) {
 	int ret = epoll_ctl(epoll, EPOLL_CTL_MOD, FD, event);
 	if (ret == -1){
 		if(event->events == (EPOLLOUT|EPOLLET)){
@@ -70,7 +70,7 @@ void SystemWrapper::epollControlMod(int epoll, int FD, struct epoll_event *event
 /**
  * @throws std::runtime_error
  */
-int SystemWrapper::epollCreate(int flags) const{
+int epollCreate(int flags) {
 	int epollFD = epoll_create1(flags);
 	if(epollFD == -1){
 		int error = errno;
@@ -82,7 +82,7 @@ int SystemWrapper::epollCreate(int flags) const{
 /**
  * @throws std::runtime_error
  */
-int SystemWrapper::getFlags(int FD) const{
+int getFlags(int FD) {
 	int flags = fcntl (FD,F_GETFL, 0);
 	if (flags == -1){
 		int error = errno;
@@ -94,7 +94,7 @@ int SystemWrapper::getFlags(int FD) const{
 /**
  * @throws std::runtime_error
  */
-void SystemWrapper::setFlags(int FD, int flags) const{
+void setFlags(int FD, int flags) {
 	int ret = fcntl (FD, F_SETFL, flags);
 	if (ret == -1){
 		int error = errno;
@@ -102,7 +102,7 @@ void SystemWrapper::setFlags(int FD, int flags) const{
 	}
 }
 
-void SystemWrapper::closeFD(int FD) const{
+void closeFD(int FD) {
 	int ret = close(FD);
 	if(ret == -1){
 		int error = errno;
@@ -113,7 +113,7 @@ void SystemWrapper::closeFD(int FD) const{
 /**
  * @throws std::runtime_error
  */
-size_t SystemWrapper::writeFD(int FD, const void *buf, size_t count) const{
+size_t writeFD(int FD, const void *buf, size_t count) {
 	if(buf == nullptr || FD<0){
 		throw std::runtime_error(LOG_EXCEPTION("bad input. buf: "+std::to_string(reinterpret_cast<uint64_t>(buf))+" FD: "+std::to_string(FD)));
 	}
@@ -137,7 +137,7 @@ size_t SystemWrapper::writeFD(int FD, const void *buf, size_t count) const{
 /**
  * @throws std::runtime_error
  */
-size_t SystemWrapper::readFD(int FD, void *buf, size_t count, bool &done) const{
+size_t readFD(int FD, void *buf, size_t count, bool &done) {
 	done = false;
 	if(buf == nullptr || FD<0){
 		throw std::runtime_error(LOG_EXCEPTION("bad input. buf: "+std::to_string(reinterpret_cast<uint64_t>(buf))+" FD: "+std::to_string(FD)));	//error
@@ -165,7 +165,7 @@ size_t SystemWrapper::readFD(int FD, void *buf, size_t count, bool &done) const{
 /**
  * @throws std::runtime_error
  */
-void SystemWrapper::getNameInfo(const struct sockaddr *sa, unsigned int salen, char *host , unsigned int hostlen,  char *serv, unsigned int servlen, int flags) const{
+void getNameInfo(const struct sockaddr *sa, unsigned int salen, char *host , unsigned int hostlen,  char *serv, unsigned int servlen, int flags) {
 	if(sa == nullptr || host == nullptr || serv == nullptr){
 		throw std::runtime_error(LOG_EXCEPTION("Input pointer was null. "));
 	}
@@ -178,33 +178,33 @@ void SystemWrapper::getNameInfo(const struct sockaddr *sa, unsigned int salen, c
 /**
  * @throws std::runtime_error
  */
-void SystemWrapper::getAddrInfo(const char *node, const char *service, const struct addrinfo *hints, struct addrinfo **res) const{
+void getAddrInfo(const char *node, const char *service, const struct addrinfo *hints, struct addrinfo **res) {
 	int ret = getaddrinfo(node, service, hints, res);
 	if (ret != 0){
 		throw std::runtime_error(LOG_EXCEPTION("getaddrinfoWrap: "+gaiStrError (ret)));
 	}
 }
 
-void SystemWrapper::freeAddrInfo(struct addrinfo *res) const{
+void freeAddrInfo(struct addrinfo *res) {
 	freeaddrinfo(res);
 }
 
-const char* SystemWrapper::gaiStrError(int errcode) const{
+const char* gaiStrError(int errcode) {
 	return gai_strerror(errcode);
 }
 
-int SystemWrapper::getSockOpt(int sockfd, int level, int optname, void *optval, unsigned int *optlen) const{
+int getSockOpt(int sockfd, int level, int optname, void *optval, unsigned int *optlen) {
 	return getsockopt(sockfd, level, optname, optval, optlen);
 }
 
-char* SystemWrapper::strError(int errnum) const{
+char* strError(int errnum) {
 	return std::strerror(errnum);
 }
 
 /**
  * @throws std::runtime_error
  */
-int SystemWrapper::createSocket(int domain, int type, int protocol) const{
+int createSocket(int domain, int type, int protocol) {
 	int ret = socket(domain, type, protocol);
 	if(ret < 0){
 		throw std::runtime_error(LOG_EXCEPTION("failed to create socket"));
@@ -215,7 +215,7 @@ int SystemWrapper::createSocket(int domain, int type, int protocol) const{
 /**
  * @throws std::runtime_error
  */
-void SystemWrapper::bindSocket(int sockfd, const struct sockaddr *addr, unsigned int addrlen) const{
+void bindSocket(int sockfd, const struct sockaddr *addr, unsigned int addrlen) {
 	int ret =bind(sockfd, addr, addrlen);
 	if(ret != 0){
 		throw std::runtime_error(LOG_EXCEPTION("failed to bind socket"));
@@ -225,7 +225,7 @@ void SystemWrapper::bindSocket(int sockfd, const struct sockaddr *addr, unsigned
 /**
  * @throws std::runtime_error
  */
-void SystemWrapper::listenSocket(int sockfd, int backlog) const{
+void listenSocket(int sockfd, int backlog) {
 	int ret = listen(sockfd, backlog);
 	if(ret == -1){
 		int error = errno;
@@ -234,7 +234,7 @@ void SystemWrapper::listenSocket(int sockfd, int backlog) const{
 }
 
 
-int SystemWrapper::acceptSocket(int sockfd, struct sockaddr *addr, unsigned int *addrlen, bool &done) const{
+int acceptSocket(int sockfd, struct sockaddr *addr, unsigned int *addrlen, bool &done) {
 	done = false;
 	int ret = accept(sockfd, addr, addrlen );
 	if(ret == -1){
@@ -248,10 +248,4 @@ int SystemWrapper::acceptSocket(int sockfd, struct sockaddr *addr, unsigned int 
 		done = true;
 	}
 	return ret;
-}
-
-
-SystemWrapper &SystemWrapper::getSystemInstance() {
-	static SystemWrapper wrapper = SystemWrapper();
-	return wrapper;
 }

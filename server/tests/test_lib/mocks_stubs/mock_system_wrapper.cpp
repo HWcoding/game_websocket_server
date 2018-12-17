@@ -370,7 +370,30 @@ void MockSystemState::clearWriteBuffer(int FD) {
 
 
 
-MockSystemWrapper::MockSystemWrapper(): SystemWrapper(), nullChar(0),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MockSystemWrapperState::MockSystemWrapperState(): nullChar(0),
                         mockAddrinfo(new addrinfo()), mockAddrinfoPointer(NULL),
                         mockSockaddr(new sockaddr_storage()) {
 	memset(mockAddrinfo.get(), 0, sizeof(addrinfo));
@@ -379,7 +402,7 @@ MockSystemWrapper::MockSystemWrapper(): SystemWrapper(), nullChar(0),
 	mockAddrinfoPointer = mockAddrinfo.get();
 }
 
-MockSystemWrapper& MockSystemWrapper::operator=(MockSystemWrapper&& old) {
+MockSystemWrapperState& MockSystemWrapperState::operator=(MockSystemWrapperState&& old) {
 	if( &old != this) {
 		mockAddrinfo.reset(old.mockAddrinfo.release());
 		mockAddrinfoPointer = mockAddrinfo.get();
@@ -388,43 +411,80 @@ MockSystemWrapper& MockSystemWrapper::operator=(MockSystemWrapper&& old) {
 	return *this;
 }
 
-MockSystemWrapper::~MockSystemWrapper(){}
+MockSystemWrapperState::~MockSystemWrapperState(){}
 
-void MockSystemWrapper::setReadBuffer(int FD, std::string buf) {
+void MockSystemWrapperState::setReadBuffer(int FD, std::string buf) {
 	MockSystemState::getState().setReadBuffer(FD, buf);
 }
 
-std::string MockSystemWrapper::getReadBuffer(int FD) {
+std::string MockSystemWrapperState::getReadBuffer(int FD) {
 	return MockSystemState::getState().getReadBuffer(FD);
 }
 
-void MockSystemWrapper::clearWriteBuffer(int FD) {
+void MockSystemWrapperState::clearWriteBuffer(int FD) {
 	return MockSystemState::getState().clearWriteBuffer(FD);
 }
 
-std::string MockSystemWrapper::getWriteBuffer(int FD) {
+std::string MockSystemWrapperState::getWriteBuffer(int FD) {
 	return MockSystemState::getState().getWriteBuffer(FD);
 }
 
-void MockSystemWrapper::setBytesTillWriteFail(int socket, ssize_t bytes) {
+void MockSystemWrapperState::setBytesTillWriteFail(int socket, ssize_t bytes) {
 	MockSystemState::getState().setBytesTillWriteFail(socket, bytes);
 }
-void MockSystemWrapper::setBytesTillReadFail(int socket, ssize_t bytes) {
+void MockSystemWrapperState::setBytesTillReadFail(int socket, ssize_t bytes) {
 	MockSystemState::getState().setBytesTillReadFail(socket, bytes);
 }
 
-void MockSystemWrapper::resetState() {
-	MockSystemWrapper::getMockSystemInstance(true);
+void MockSystemWrapperState::resetState() {
+	MockSystemWrapperState::getMockSystemInstance(true);
 }
 
-MockSystemWrapper &MockSystemWrapper::getMockSystemInstance(bool reset) {
-	static MockSystemWrapper wrapper;
+MockSystemWrapperState &MockSystemWrapperState::getMockSystemInstance(bool reset) {
+	static MockSystemWrapperState wrapper;
 	if(reset) {
 		MockSystemState::getState(true);
-		wrapper = std::move(MockSystemWrapper());
+		wrapper = std::move(MockSystemWrapperState());
 	}
 	return wrapper;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 static int epollControl(int epoll, int op, int FD, struct epoll_event *event) {
 	//return epoll_ctl(epoll, op, FD, event);
@@ -442,74 +502,65 @@ static int epollControl(int epoll, int op, int FD, struct epoll_event *event) {
 
 
 
-
-
-
-
-
-
-
-
-
 //redefined base members using link seam
-size_t SystemWrapper::epollWait(int epollFD,
+size_t epollWait(int epollFD,
 	                            struct epoll_event *_events,
-	                            int MAXEVENTS, int timeout) const {
+	                            int MAXEVENTS, int timeout) {
 	//return epoll_wait(epollFD,  events, MAXEVENTS, timeout);
 	//std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
 	(void)timeout; // to clear unused warning
 	return MockSystemState::getState().epollWait(epollFD, _events, MAXEVENTS);
 }
 
-bool SystemWrapper::epollControlAdd(int epoll, int FD,
-	                                struct epoll_event *event) const {
+bool epollControlAdd(int epoll, int FD,
+	                                struct epoll_event *event) {
 	epollControl(epoll, EPOLL_CTL_ADD, FD, event);
 	return false;
 }
-void SystemWrapper::epollControlDelete(int epoll, int FD,
-	                                   struct epoll_event *event) const {
+void epollControlDelete(int epoll, int FD,
+	                                   struct epoll_event *event) {
 	epollControl(epoll, EPOLL_CTL_DEL, FD, event);
 }
-void SystemWrapper::epollControlMod(int epoll, int FD,
-	                                struct epoll_event *event) const {
+void epollControlMod(int epoll, int FD,
+	                                struct epoll_event *event) {
 	epollControl(epoll, EPOLL_CTL_MOD, FD, event);
 }
 
-int SystemWrapper::epollCreate(int flags) const {
+int epollCreate(int flags) {
 	//return epoll_create1(flags);
 	++flags;//to clear unused warning
 	return MockSystemState::getState().addEpoll();
 }
 
-int SystemWrapper::getFlags(int FD) const {
+int getFlags(int FD) {
 	//return fcntl (FD,F_GETFL, 0);
 	return MockSystemState::getState().getSocketFlags(FD);
 }
 
-void SystemWrapper::setFlags(int FD, int _flags) const {
+void setFlags(int FD, int _flags) {
 	//return fcntl (FD, F_SETFL, flags);
 	MockSystemState::getState().setSocketFlags(FD, _flags);
 }
 
-void SystemWrapper::closeFD(int FD) const {
+void closeFD(int FD) {
 	//return close(FD);
 	MockSystemState::getState().removeSocket(FD);
 }
 
-size_t SystemWrapper::writeFD(int FD, const void *buf, size_t count) const {
+size_t writeFD(int FD, const void *buf, size_t count) {
 	//return write(FD, buf, count);
 	return MockSystemState::getState().writeToSocket(FD, static_cast<const char*>(buf), count);
 }
 
-size_t SystemWrapper::readFD(int FD, void *buf, size_t count, bool &done) const {
+size_t readFD(int FD, void *buf, size_t count, bool &done) {
 	done = true;
 	//return read(FD, buf, count);
 	return MockSystemState::getState().readFromSocket(FD, static_cast<char*>(buf), count);
 }
 
-void SystemWrapper::getNameInfo(const struct sockaddr *sa, unsigned int salen,
+void getNameInfo(const struct sockaddr *sa, unsigned int salen,
 	                            char *host , unsigned int hostlen,  char *serv,
-	                            unsigned int servlen, int flags) const {
+	                            unsigned int servlen, int flags) {
 	//return getnameinfo(sa, salen, host , hostlen,  serv, servlen, flags);
 	(void)sa;//to clear unused warning
 	(void)salen;//to clear unused warning
@@ -518,32 +569,32 @@ void SystemWrapper::getNameInfo(const struct sockaddr *sa, unsigned int salen,
 	if(serv!=NULL && servlen >0) serv[0] = '\0';
 }
 
-void SystemWrapper::getAddrInfo(const char *node, const char *service,
+void getAddrInfo(const char *node, const char *service,
 	                            const struct addrinfo *hints,
-	                            struct addrinfo **res) const {
+	                            struct addrinfo **res) {
 	//return getaddrinfo(node, service, hints, res);
 	(void)node;//to clear unused warning
 	(void)service;//to clear unused warning
 	(void)hints;//to clear unused warning
 
-	memcpy(res, &MockSystemWrapper::getMockSystemInstance().mockAddrinfoPointer, sizeof(addrinfo*));
+	memcpy(res, &MockSystemWrapperState::getMockSystemInstance().mockAddrinfoPointer, sizeof(addrinfo*));
 }
 
-void SystemWrapper::freeAddrInfo(struct addrinfo *res) const {
+void freeAddrInfo(struct addrinfo *res) {
 	//freeaddrinfo(res);
 	(void)res;//to clear unused warning
 	return;
 }
 
-const char* SystemWrapper::gaiStrError(int errcode) const {
+const char* gaiStrError(int errcode) {
 	//return gai_strerror(errcode);
 	(void)errcode;//to clear unused warning
-	return &MockSystemWrapper::getMockSystemInstance().nullChar;
+	return &MockSystemWrapperState::getMockSystemInstance().nullChar;
 }
 
-int SystemWrapper::getSockOpt(int sockfd, int level,
+int getSockOpt(int sockfd, int level,
 	                          int optname, void *optval,
-	                          unsigned int *optlen) const {
+	                          unsigned int *optlen) {
 	//return getsockopt(sockfd, level, optname, optval, optlen);
 	(void)sockfd;//to clear unused warning
 	(void)level;//to clear unused warning
@@ -555,13 +606,13 @@ int SystemWrapper::getSockOpt(int sockfd, int level,
 
 }
 
-char* SystemWrapper::strError(int errnum) const {
+char* strError(int errnum) {
 	//return strerror(errnum);
 	(void)errnum;//to clear unused warning
-	return &MockSystemWrapper::getMockSystemInstance().nullChar;
+	return &MockSystemWrapperState::getMockSystemInstance().nullChar;
 }
 
-int SystemWrapper::createSocket(int domain, int type, int protocol) const {
+int createSocket(int domain, int type, int protocol) {
 	//return socket(domain, type, protocol);
 
 	MockSocket socket;
@@ -569,21 +620,21 @@ int SystemWrapper::createSocket(int domain, int type, int protocol) const {
 	return MockSystemState::getState().addSocket(socket);
 }
 
-void SystemWrapper::bindSocket(int sockfd,
+void bindSocket(int sockfd,
 	                           const struct sockaddr *addr,
-	                           unsigned int addrlen) const {
+	                           unsigned int addrlen) {
 	//return bind(sockfd, addr, addrlen);
 	MockSystemState::getState().bindSocket(sockfd, addr, addrlen);
 }
 
-void SystemWrapper::listenSocket(int sockfd, int backlog) const {
+void listenSocket(int sockfd, int backlog) {
 	//return listen(sockfd, backlog);
 	(void)sockfd;//to clear unused warning
 	(void)backlog;//to clear unused warning
 }
 
-int SystemWrapper::acceptSocket(int sockfd, struct sockaddr *addr,
-	                            unsigned int *addrlen, bool &done) const {
+int acceptSocket(int sockfd, struct sockaddr *addr,
+	                            unsigned int *addrlen, bool &done) {
 	//return accept(sockfd, addr, addrlen);
 	done = false;
 	(void)sockfd;//to clear unused warning
@@ -592,8 +643,4 @@ int SystemWrapper::acceptSocket(int sockfd, struct sockaddr *addr,
 	int ret = MockSystemState::getState().getNewFD();
 	if (ret == -1) done = true;
 	return ret;
-}
-
-SystemWrapper &SystemWrapper::getSystemInstance() {
-	return dynamic_cast<SystemWrapper&>(MockSystemWrapper::getMockSystemInstance());
 }

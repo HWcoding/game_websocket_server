@@ -36,9 +36,9 @@ public:
 
 class WriteBufferTestFactory{
 public:
-	MockSystemWrapper &systemWrap;
+	MockSystemWrapperState &systemWrap;
 	WebsocketWriteBuffersWrap WB;
-	WriteBufferTestFactory(): systemWrap(MockSystemWrapper::getMockSystemInstance(true)), WB(){}
+	WriteBufferTestFactory(): systemWrap(MockSystemWrapperState::getMockSystemInstance(true)), WB(){}
 };
 
 

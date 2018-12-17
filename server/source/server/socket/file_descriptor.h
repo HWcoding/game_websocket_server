@@ -7,7 +7,6 @@
 #include <string>
 #include "source/data_types/byte_array.h"
 
-class SystemWrapper;
 struct epoll_event;
 
 class FileDescriptor{
@@ -41,7 +40,6 @@ private:
 	bool startPollingFD(epoll_event event, int epoll);
 	void setFDReadWrite(epoll_event event, int epoll);
 
-	SystemWrapper &systemWrap;
 	mutable std::mutex mut {};
 	ByteArray IP {};
 	ByteArray port {};

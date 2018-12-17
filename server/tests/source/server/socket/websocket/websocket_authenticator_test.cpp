@@ -48,7 +48,7 @@ ByteArray createTestResponseHandshakeHeader(){
 
 class AuthenticatorTestFactory{
 public:
-	MockSystemWrapper &systemWrap;
+	MockSystemWrapperState &systemWrap;
 	WebsocketAuthenticator WA;
 
 
@@ -74,7 +74,7 @@ public:
 
 	MyClientValidator validator;
 	AuthenticatorTestFactory(SetOfFileDescriptors*FDs ):
-		systemWrap(MockSystemWrapper::getMockSystemInstance(true)), WA(FDs)
+		systemWrap(MockSystemWrapperState::getMockSystemInstance(true)), WA(FDs)
 	{
 		WA.setClientValidator(&validator);
 	}

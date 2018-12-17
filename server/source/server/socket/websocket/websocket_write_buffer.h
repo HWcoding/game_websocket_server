@@ -23,7 +23,6 @@ class SetOfFileDescriptors;
 
 class WebsocketWriteBuffers : public WriteBuffersInterface{ //holds data shared across threads
 private:
-	SystemWrapper &systemWrap;
 	mutable std::mutex mut; // used for multi threaded writing.  A lock needs to be done before accessing the following variables
 
 	WebsocketWriteBuffers& operator=(const WebsocketWriteBuffers&) = delete;

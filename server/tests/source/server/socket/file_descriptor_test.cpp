@@ -7,10 +7,10 @@
 #include "tests/test.h"
 
 class FD_TestFactory{
-	MockSystemWrapper &systemWrap;
 public:
 	FileDescriptor FD;
-	FD_TestFactory(int index): systemWrap(MockSystemWrapper::getMockSystemInstance(true)), FD(index){
+	FD_TestFactory(int index): FD(index){
+		MockSystemWrapperState::resetState();
 		FD.setIP("testIP");
 		FD.setPort("testPort");
 		FD.setCSRFkey("testCSRFkey");

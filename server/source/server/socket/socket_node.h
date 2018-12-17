@@ -6,7 +6,6 @@
 #include <vector>
 #include <memory>
 
-class SystemWrapper;
 class SetOfFileDescriptors;
 struct epoll_event;
 
@@ -24,7 +23,6 @@ protected:
 	virtual void handleEpollWrite(epoll_event &event) = 0;
 	virtual int getWaitTime();
 
-	SystemWrapper &systemWrap;
 	std::atomic<bool> *running;
 	SetOfFileDescriptors *fileDescriptors;
 	int MAXEVENTS;

@@ -3,7 +3,7 @@
 #include "source/logging/exception_handler.h"
 
 
-SetOfFileDescriptors::SetOfFileDescriptors() : systemWrap(SystemWrapper::getSystemInstance()), openFDs(), FDmut(), closeCallbacks(), newConnectionCallbacks(){}
+SetOfFileDescriptors::SetOfFileDescriptors() : openFDs(), FDmut(), closeCallbacks(), newConnectionCallbacks(){}
 
 /**
  * @throws std::system_error if lock fails
@@ -13,7 +13,7 @@ SetOfFileDescriptors::~SetOfFileDescriptors()
 	std::lock_guard<std::mutex> lck(FDmut); //don't destroy while other threads are accessing this
 	for (auto& elem: openFDs){ //close remaining FDs
 		int FD = elem.second.getFD();
-		systemWrap.closeFD(FD);
+		closeFD(FD);
 		LOG_INFO("removed FD "<<FD);
 	}
 }
@@ -200,7 +200,7 @@ int SetOfFileDescriptors::removeFD(int FD)
 		{
 			std::lock_guard<std::mutex> lock_FD(FDmut);
 			if(unlockedIsFDOpen(FD)){
-				systemWrap.closeFD(FD);
+				closeFD(FD);
 				openFDs.erase(FD);
 			}
 		}
