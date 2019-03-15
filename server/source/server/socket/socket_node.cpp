@@ -21,16 +21,16 @@ SocketNode::SocketNode(SetOfFileDescriptors *FDs,
 	signal(SIGPIPE, SIG_IGN); //ignore error when writing to closed sockets to prevent crash on client disconnect
 }
 
-SocketNode::~SocketNode(){
-	if(epollFD != -1){
+SocketNode::~SocketNode() {
+	if(epollFD != -1) {
 		closeFD(epollFD);
 		epollFD = -1;
 	}
 }
 
-void SocketNode::closeFD(int FD){
+void SocketNode::closeFD(int FD) {
 	int ret= fileDescriptors->removeFD(FD);
-	if(ret == -1){
+	if(ret == -1) {
 		LOG_ERROR("File descriptor " << FD << " failed to close properly. ");
 	}
 }
@@ -39,12 +39,12 @@ int SocketNode::getWaitTime() {
 	return 2000;
 }
 
-bool SocketNode::handleEpollErrors(epoll_event &event){
-	if ( (event.events & EPOLLERR) || (event.events & EPOLLHUP) ){// An error occured
+bool SocketNode::handleEpollErrors(epoll_event &event) {
+	if ( (event.events & EPOLLERR) || (event.events & EPOLLHUP) ) {// An error occured
 		LOG_ERROR("epoll error");
 		int error = 0;
 		socklen_t errlen = sizeof(error);
-		if (getSockOpt(event.data.fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void *>(&error), &errlen) == 0){
+		if (getSockOpt(event.data.fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void *>(&error), &errlen) == 0) {
 			LOG_ERROR("error: " << strError(error) );
 		}
 		else {
@@ -56,10 +56,10 @@ bool SocketNode::handleEpollErrors(epoll_event &event){
 	return false;
 }
 
-void SocketNode::processEvents(std::vector<epoll_event> &events){
+void SocketNode::processEvents(std::vector<epoll_event> &events) {
 	size_t numberOfEvents = epollWait(epollFD, &events[0], MAXEVENTS, getWaitTime());
-	for (size_t i = 0; i < numberOfEvents; ++i){
-		if(handleEpollErrors(events[i])){
+	for (size_t i = 0; i < numberOfEvents; ++i) {
+		if(handleEpollErrors(events[i])) {
 			continue; //an error occured; move to next event
 		}
 		handleEpollRead(events[i]);
@@ -67,19 +67,18 @@ void SocketNode::processEvents(std::vector<epoll_event> &events){
 	}
 }
 
-void SocketNode::startPoll(){
+void SocketNode::startPoll() {
 	LOG_INFO("poll started");
 	setupEpoll();
 
 	std::vector<epoll_event> events;
 	events.resize( static_cast<size_t>(MAXEVENTS) );
 
-	while(running->load()){	//The event loop
+	while(running->load()) {	//The event loop
 		processEvents(events);
 	}
 }
 
-void SocketNode::setupEpoll(){
+void SocketNode::setupEpoll() {
 	epollFD = epollCreate(0);
 }
-

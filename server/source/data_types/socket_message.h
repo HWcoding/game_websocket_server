@@ -21,9 +21,19 @@ public:
 		return FD;
 	}
 
+	void setFD( int _FD )
+	{
+		FD = _FD;
+	}
+
 	uint32_t getType() const
 	{
 		return type;
+	}
+
+	void setType( uint32_t _type )
+	{
+		type = _type;
 	}
 
 	uint32_t getPriority() const
@@ -31,9 +41,19 @@ public:
 		return priority;
 	}
 
+	void setPriority( uint32_t _priority )
+	{
+		priority = _priority;
+	}
+
 	std::chrono::system_clock::time_point getSentTime() const
 	{
 		return sentTime;
+	}
+
+	void setSentTime( std::chrono::system_clock::time_point _sentTime )
+	{
+		sentTime = _sentTime;
 	}
 
 	ByteArray getIP() const
@@ -41,14 +61,29 @@ public:
 		return IP;
 	}
 
+	void setIP( ByteArray _IP )
+	{
+		IP = _IP;
+	}
+
 	ByteArray getPort() const
 	{
 		return port;
 	}
 
+	void setPort( ByteArray _port )
+	{
+		port = _port;
+	}
+
 	ByteArray getCSRFkey() const
 	{
 		return CSRFkey;
+	}
+
+	void setCSRFkey( ByteArray _CSRFkey )
+	{
+		CSRFkey = _CSRFkey;
 	}
 
 	int8_t getNextInt8() const

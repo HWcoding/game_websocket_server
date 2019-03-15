@@ -9,7 +9,7 @@
 
 class SocketMessage;
 
-class MessageQueue{
+class MessageQueue  {
 public:
 	MessageQueue(std::atomic<bool> *run);
 	~MessageQueue();

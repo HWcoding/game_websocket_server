@@ -4,7 +4,60 @@
 #include "source/logging/exception_handler.h"
 
 
-void WebsocketReadBuffers::addMessage(int index, ByteArray &in)
+
+void WebsocketReadBuffers::addMessage(ByteArray &in, int index ) {
+	std::lock_guard<std::mutex> lck(mut);
+	PartialMessage& tempBuff = messageBuffer[index];
+	if(in.size()+tempBuff.size() <= maxMessageSize) {
+		//tempBuff.increaseSize(in.size());
+		//tempBuff.buffer.push_back(std::move(in));
+		tempBuff.addPartialMessage(ByteArray &in, 0);
+	}
+	else {
+		throw std::runtime_error(LOG_EXCEPTION("Message expected size too large. Expectedsize: "+std::to_string(tempBuff.expectedSize)));
+	}
+}
+
+bool WebsocketReadBuffers::extractMessage(ByteArray &out, size_t position, int index)
+{
+	std::lock_guard<std::mutex> lck(mut);
+	auto fdBuffer = currentMessage[index];
+	ByteArray message= fdBuffer.extractPartialMessage();
+	if(message.size() > 0) {
+		out.insert( out.begin() + static_cast<int64_t>(position), message.begin(), message.end() );
+		return true;
+	}
+	return false;
+}
+bool WebsocketReadBuffers::messageIsEmpty(int index)
+{
+	std::lock_guard<std::mutex> lck(mut);
+	auto fdBuffer = currentMessage[index];
+	return fdBuffer.buffer.empty() || fdBuffer.buffer.front().empty();
+}
+
+void WebsocketReadBuffers::eraseBuffers(int index)
+{
+	std::lock_guard<std::mutex> lck(mut);
+	messageBuffer.erase(index); //erase buffer;
+}
+
+WebsocketReadBuffers::WebsocketReadBuffers(SetOfFileDescriptors *FDs, size_t size):
+
+	maxMessageSize(size),
+	mut(),
+	fileDescriptors(FDs),
+	messageBuffer(),
+	fractureBuffer(),
+	fractureBufferType()
+
+{}
+WebsocketReadBuffers::~WebsocketReadBuffers()
+{
+	std::lock_guard<std::mutex> lck(mut); //don't destroy while a thread has a lock
+}
+
+/*void WebsocketReadBuffers::addMessage(int index, ByteArray &in)
 {
 	std::lock_guard<std::mutex> lck(mut);
 	if(fileDescriptors->isFDOpen(index)) {
@@ -166,3 +219,4 @@ WebsocketReadBuffers::~WebsocketReadBuffers()
 {
 	std::lock_guard<std::mutex> lck(mut); //don't destroy while a thread has a lock
 }
+*/

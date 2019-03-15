@@ -35,16 +35,6 @@ public:
 	using WebsocketMessageProcessor::getNet16bit;
 };
 
-//release build
-//Built on: Sat Aug 11 00:42:13 2018
-//extract processed at a rate of 2.90605e-06 Gb/s
-//extract processed 100MBs in 2.75288e+08 milliseconds
-
-//release build
-//Built on: Thu Aug 23 14:55:46 2018
-//extract processed at a rate of 2.17512e-06 Gb/s
-//extract processed 100MBs in 3.67796e+08 milliseconds
-
 
 void test_ExtractMessage_performance(){
 	std::vector< ByteArray > splitMessage;
@@ -69,7 +59,7 @@ void test_ExtractMessage_performance(){
 	WebsocketMessageProcessorWrap processor(&FDs);
 
 	double totalTime = DBL_MAX;
-	int count = 20;
+	int count = 10;
 	while(--count){
 		std::vector< ByteArray > decoded;
 		std::vector<int> types;
@@ -82,7 +72,7 @@ void test_ExtractMessage_performance(){
 	}
 	double gBitsPerSec = static_cast<double>(messageSize)/(totalTime*125000);
 	std::cout<<"extract processed at a rate of "<<gBitsPerSec<<" Gb/s"<<std::endl;
-	std::cout<<"extract processed "<<messageSize/1000000<<"MBs in "<<totalTime<<" milliseconds"<<std::endl;
+	std::cout<<"extract processed "<<messageSize/125000<<" Megabits in "<<totalTime<<" milliseconds"<<std::endl;
 }
 
 
@@ -432,11 +422,16 @@ TEST(WebsocketMessageProcessorTest, testExtractMessageWorksWithWholeReads)
 }
 
 
+//extract processed at a rate of 2.43902 Gb/s
+//extract processed 800Megabits in 328 milliseconds
+//release
+//extract processed at a rate of 3.26531 Gb/s
+//extract processed 800 Megabits in 245 milliseconds
 
 
 int main(int argc, char *argv[])
 {
-	//test_ExtractMessage_performance();
+	test_ExtractMessage_performance();
 	//test_Unmask_performance();
 	::testing::InitGoogleTest(&argc, argv);
 	StaySilentOnSuccess();

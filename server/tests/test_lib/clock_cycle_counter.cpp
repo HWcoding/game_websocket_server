@@ -20,12 +20,12 @@ int64_t countCpuCycles(void (*func)(void), int64_t iterations)
 
 void PerformanceTimer::start() {
 	using namespace std::chrono;
-	time = static_cast<double>(steady_clock::now().time_since_epoch().count());
+	time = static_cast<double>(duration_cast<std::chrono::milliseconds>(steady_clock::now().time_since_epoch()).count());
 }
 
 double PerformanceTimer::end() {
 	using namespace std::chrono;
-	return static_cast<double>(steady_clock::now().time_since_epoch().count()) - time;
+	return static_cast<double>(duration_cast<std::chrono::milliseconds>(steady_clock::now().time_since_epoch()).count()) - time;
 }
 
 } // profiling

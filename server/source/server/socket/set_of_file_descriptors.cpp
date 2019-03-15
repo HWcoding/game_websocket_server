@@ -205,7 +205,7 @@ int SetOfFileDescriptors::removeFD(int FD)
 			}
 		}
 	}
-	catch(...){ //this function is called in destructors and should not throw
+	catch(...) { //this function is called in destructors and should not throw
 		BACKTRACE_PRINT();
 		ret = -1;
 	}
