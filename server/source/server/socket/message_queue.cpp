@@ -34,6 +34,7 @@ SocketMessage MessageQueue::getNextMessage_Blocking(){ //blocks thread on empty 
 }
 
 bool MessageQueue::isEmpty(){
+	std::lock_guard<std::mutex> lck(mut);
 	return Queue.empty();
 }
 

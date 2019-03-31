@@ -89,29 +89,6 @@ public:
 
 
 
-
-
-
-
-/*void addSig(std::vector<uint8_t> &file);
-void addIHDR(std::vector<uint8_t> &file, uint32_t height, uint32_t width, uint8_t bitDepth, uint8_t colorType);
-//void addPLTE(std::vector<uint8_t> &file, std::vector<uint8_t> &table);
-void addIDAT(std::vector<uint8_t> &file, std::vector<uint8_t> &data);
-void addIEND(std::vector<uint8_t> &file);
-bool isGrayScale(image &data, uint16_t accuracy);
-//bool isIndexed(std::vector<uint16_t> &data, uint16_t accuracy);
-//void createTable(std::vector<uint8_t> &file, std::vector<uint16_t> &data);
-void compressBuffer(std::vector<uint8_t> &data);
-uint32_t testCompress(std::vector<uint8_t> &data);
-void scanfilter1(std::vector<uint8_t> &filtered, std::vector<uint8_t> &Data, uint64_t start, uint64_t end,  uint8_t pixelWidth);
-void scanfilter2(std::vector<uint8_t> &filtered, std::vector<uint8_t> &Data, uint64_t start, uint64_t end);
-void filterChunk(std::vector<uint8_t> &filtered, std::vector<uint8_t> &Data, uint64_t start, uint64_t end,  uint8_t pixelWidth);*/
-
-
-
-
-
-
 void addSig(std::vector<uint8_t> &file){
 	uint8_t sig [8];
 	sig[0] = 137;	//high bit set
@@ -495,35 +472,6 @@ void filterChunk(std::vector<uint8_t> &filtered, std::vector<uint8_t> &Data, uin
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //vector version
 void PngImage::convertBitDepth(std::vector<uint8_t> &buffer, image &data, uint8_t pixelWidth){//TODO grayscale conversion
 	auto pixelCount = static_cast<uint32_t>(data.size());
@@ -542,24 +490,32 @@ void PngImage::convertBitDepth(std::vector<uint8_t> &buffer, image &data, uint8_
 			offset = i*(widthP1);
 
 			buffer[offset] = 0;//filler for filter type
-			for(j = 1, k= 0; j<widthP1; j+=6, k++){
-				convertChar = reinterpret_cast<uint8_t *>(&(data.getAt(k,i).red));
-				buffer[j+offset] = convertChar[1];
-				buffer[j+offset+1] = convertChar[0];
+			for(j = 1, k= 0; j<widthP1; k++){
+				if(colorType == PNG_TRUECOLOR || colorType == PNG_TRUECOLOR_A) {
+					convertChar = reinterpret_cast<uint8_t *>(&(data.getAt(k,i).red));
+					buffer[j+offset] = convertChar[1];
+					buffer[j+offset+1] = convertChar[0];
 
-				convertChar = reinterpret_cast<uint8_t *>(&(data.getAt(k,i).green));
-				buffer[j+offset+2] = convertChar[1];
-				buffer[j+offset+3] = convertChar[0];
+					convertChar = reinterpret_cast<uint8_t *>(&(data.getAt(k,i).green));
+					buffer[j+offset+2] = convertChar[1];
+					buffer[j+offset+3] = convertChar[0];
 
-				convertChar = reinterpret_cast<uint8_t *>(&(data.getAt(k,i).blue));
-				buffer[j+offset+4] = convertChar[1];
-				buffer[j+offset+5] = convertChar[0];
+					convertChar = reinterpret_cast<uint8_t *>(&(data.getAt(k,i).blue));
+					buffer[j+offset+4] = convertChar[1];
+					buffer[j+offset+5] = convertChar[0];
+					j+=6;
+				} else if(colorType == PNG_GRAYSCALE || colorType == PNG_GRAYSCALE_A ) {
+					convertChar = reinterpret_cast<uint8_t *>(&(data.getAt(k,i).red));
+					buffer[j+offset] = convertChar[1];
+					buffer[j+offset+1] = convertChar[0];
+					j+=2;
+				}
 
 				if(colorType == PNG_GRAYSCALE_A ||
 					colorType == PNG_TRUECOLOR_A) {
 					convertChar = reinterpret_cast<uint8_t *>(&(data.getAt(k,i).alpha));
-					buffer[j+offset+6] = convertChar[1];
-					buffer[j+offset+7] = convertChar[0];
+					buffer[j+offset] = convertChar[1];
+					buffer[j+offset+1] = convertChar[0];
 					j+=2;
 				}
 			}
@@ -578,13 +534,19 @@ void PngImage::convertBitDepth(std::vector<uint8_t> &buffer, image &data, uint8_
 			offset = i*(widthP1);
 
 			buffer[offset] = 0;//filler for filter type
-			for(j = 1, k= 0; j<widthP1; j+=3, k++){
-				buffer[j+offset] = static_cast<uint8_t>(data.getAt(k,i).red>>8);
-				buffer[j+offset+1] = static_cast<uint8_t>(data.getAt(k,i).green>>8);
-				buffer[j+offset+2] = static_cast<uint8_t>(data.getAt(k,i).blue>>8);
+			for(j = 1, k= 0; j<widthP1; k++){
+				if(colorType == PNG_TRUECOLOR || colorType == PNG_TRUECOLOR_A) {
+					buffer[j+offset] = static_cast<uint8_t>(data.getAt(k,i).red>>8);
+					buffer[j+offset+1] = static_cast<uint8_t>(data.getAt(k,i).green>>8);
+					buffer[j+offset+2] = static_cast<uint8_t>(data.getAt(k,i).blue>>8);
+					j+=3;
+				}else if(colorType == PNG_GRAYSCALE || colorType == PNG_GRAYSCALE_A ) {
+					buffer[j+offset] = static_cast<uint8_t>((data.getAt(k,i).red>>8));
+					j++;
+				}
 				if(colorType == PNG_GRAYSCALE_A ||
 					colorType == PNG_TRUECOLOR_A) {
-					buffer[j+offset+3] = static_cast<uint8_t>(data.getAt(k,i).alpha>>8);
+					buffer[j+offset] = static_cast<uint8_t>(data.getAt(k,i).alpha>>8);
 					j++;
 				}
 			}
@@ -667,19 +629,15 @@ std::vector<uint8_t> PngImage::createPNG(image &data, bool Alpha, uint8_t _bitDe
 	uint8_t pixelWidth = 0;
 	if(colorType == PNG_GRAYSCALE){
 		pixelWidth = static_cast<uint8_t>(bitDepth/8);
-		//std::cout<<"color is Grayscale"<<std::endl;
 	}
 	else if(colorType == PNG_GRAYSCALE_A){
 		pixelWidth = static_cast<uint8_t>(bitDepth/4);
-		//std::cout<<"color is GrayscaleA"<<std::endl;
 	}
 	else if(colorType == PNG_TRUECOLOR_A){
 		pixelWidth = static_cast<uint8_t>(bitDepth/2);
-		//std::cout<<"color is TruecolorA"<<std::endl;
 	}
 	else if(colorType == PNG_TRUECOLOR){
 		pixelWidth = static_cast<uint8_t>(3*bitDepth/8);
-		//std::cout<<"color is Truecolor"<<std::endl;
 	}
 	else{
 		throw std::runtime_error("bad color type PngImage::createPNG");

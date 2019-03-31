@@ -11,11 +11,12 @@ std::chrono::system_clock::time_point SocketMessage::calculateTime()
 }
 
 
-void SocketMessage::setMessage(int _FD, uint32_t _type, uint32_t _priority, const ByteArray & _IP,
+void SocketMessage::setMessage(int _FD, uint8_t _opcode, uint32_t _type, uint32_t _priority, const ByteArray & _IP,
 						const ByteArray & _port, const ByteArray & _CSRFkey,
 						const ByteArray & _message)
 {
 	FD = _FD;
+	opcode = _opcode;
 	type = _type;
 	priority =_priority;
 	IP = _IP;
@@ -35,10 +36,11 @@ SocketMessage::SocketMessage() noexcept :
 	sentTime(calculateTime())
 {}
 
-SocketMessage::SocketMessage(int _FD, uint32_t _type, uint32_t _priority, const ByteArray _IP,
+SocketMessage::SocketMessage(int _FD, uint8_t _opcode, uint32_t _type, uint32_t _priority, const ByteArray _IP,
 						const ByteArray _port, const ByteArray _CSRFkey,
 						const ByteArray _message) noexcept :
 	FD(_FD),
+	opcode(_opcode),
 	type(_type),
 	priority(_priority),
 	sentTime(calculateTime()),
@@ -52,6 +54,7 @@ SocketMessage::SocketMessage(int _FD, uint32_t _type, uint32_t _priority, const 
 
 SocketMessage::SocketMessage(SocketMessage&& m) noexcept : //move constructor
 	FD(m.FD),
+	opcode(m.opcode),
 	type(m.type),
 	priority(m.priority),
 	sentTime(std::move(m.sentTime)),
@@ -68,6 +71,7 @@ SocketMessage& SocketMessage::operator=(const SocketMessage &m) noexcept  //copy
 {
 	if (this != &m){
 		FD = m.FD;
+		opcode = m.opcode;
 		type = m.type;
 		priority = m.priority;
 		sentTime = m.sentTime;

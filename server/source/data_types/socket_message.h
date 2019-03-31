@@ -8,7 +8,7 @@
 
 class SocketMessage{
 public:
-	void setMessage(int _FD, uint32_t _type, uint32_t _priority, const ByteArray &_IP,
+	void setMessage(int _FD, uint8_t _opcode, uint32_t _type, uint32_t _priority, const ByteArray &_IP,
 							const ByteArray &_port, const ByteArray &_CSRFkey,
 							const ByteArray &_message);
 
@@ -24,6 +24,16 @@ public:
 	void setFD( int _FD )
 	{
 		FD = _FD;
+	}
+
+	uint8_t getOpcode() const
+	{
+		return opcode;
+	}
+
+	void setOpcode( uint8_t _opcode )
+	{
+		opcode = _opcode;
 	}
 
 	uint32_t getType() const
@@ -154,7 +164,7 @@ public:
 	// constructors
 	SocketMessage() noexcept;
 
-	SocketMessage(int _FD, uint32_t _type, uint32_t _priority, const ByteArray _IP,
+	SocketMessage(int _FD, uint8_t _opcode, uint32_t _type, uint32_t _priority, const ByteArray _IP,
 							const ByteArray _port, const ByteArray _CSRFkey,
 							const ByteArray _message) noexcept;
 
@@ -169,6 +179,7 @@ private:
 	std::chrono::system_clock::time_point calculateTime();
 
 	int FD{-1};
+	uint8_t opcode{0};
 	uint32_t type{0};
 	uint32_t priority{0};
 	std::chrono::system_clock::time_point sentTime {};

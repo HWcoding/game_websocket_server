@@ -37,7 +37,7 @@ TestWarnings = " -Wall -Wno-odr"
 
 ReleaseOptimizations = " -Ofast -falign-functions=16 -falign-loops=16 -march=native"
 DebugBuild = "CFLAGS=-DDEBUG -O0 -g3 -coverage -fno-omit-frame-pointer -fno-inline -fprofile-arcs -ftest-coverage"
-ReleaseBuild = "CFLAGS=-DNDEBUG -flto " + ReleaseOptimizations
+ReleaseBuild = "CFLAGS=-DNDEBUG -flto -fPIE" + ReleaseOptimizations
 
 
 

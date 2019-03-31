@@ -13,10 +13,8 @@ class FileDescriptor{
 public:
 	FileDescriptor();
 	FileDescriptor(int _FD);
-	FileDescriptor(FileDescriptor&& f) noexcept;
-	FileDescriptor(const FileDescriptor& f) noexcept;
-	FileDescriptor& operator=(FileDescriptor&& f);
-	FileDescriptor& operator=(const FileDescriptor& f);
+	FileDescriptor(const FileDescriptor& f) = delete;
+	FileDescriptor& operator=(const FileDescriptor& f) = delete;
 	~FileDescriptor();
 
 	void stopPollingFD(int epoll);

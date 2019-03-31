@@ -14,7 +14,7 @@
 #include "source/logging/exception_handler.h"
 
 
-//cppcheck-suppress passedByValue
+
 SocketServerConnector::SocketServerConnector(std::string _port,
                                              SetOfFileDescriptors *FDs,
                                              std::atomic<bool>* run) : SocketNode(FDs, run),

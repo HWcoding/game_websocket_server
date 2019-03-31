@@ -12,7 +12,7 @@ struct epoll_event;
 class SocketNode {
 public:
 	void startPoll();
-	virtual void closeFD(int FD);
+	void closeFD(int FD);
 	virtual ~SocketNode();
 
 protected:

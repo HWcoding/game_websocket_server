@@ -12,10 +12,7 @@ class ThreadWrapper
 {
 public:
 	template< class Function, class... Args >
-	explicit ThreadWrapper( Function&& f, Args&&... args )
-	{
-		Thread = std::thread(f, args...);
-	}
+	explicit ThreadWrapper( Function&& f, Args&&... args ): Thread(f, args...){}
 
 	~ThreadWrapper()
 	{

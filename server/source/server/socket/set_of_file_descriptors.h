@@ -15,7 +15,7 @@ public:
 	void addCloseFDCallback(std::function<void(int)> callback);
 	void addNewConnectionCallback(std::function<void(int)> callback);
 	int  addFD(int FD);
-	bool  tellServerAboutNewConnection(int FD);
+	bool tellServerAboutNewConnection(int FD);
 	bool callCloseCallbacks(int FD);
 	int  removeFD(int FD);
 	bool isFDOpen(int FD);

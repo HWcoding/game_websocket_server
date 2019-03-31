@@ -127,7 +127,7 @@ TEST(WebsocketMessageSenderTest, writeData)
 	mess.appendWithNoSize("testing");
 
 	// create a message to add
-	SocketMessage testMessage(1, 1, 0, IP, Port, KEY, mess);
+	SocketMessage testMessage(1, 2, 1, 0, IP, Port, KEY, mess);
 
 	// create the expected buffer contents of the message.
 	// it should be a Frame Header followed by the message

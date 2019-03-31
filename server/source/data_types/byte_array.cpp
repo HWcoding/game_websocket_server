@@ -65,7 +65,7 @@ void ByteArray::seek(size_t pos) const
 	if( pos < std::vector<uint8_t>::size() ) currentIndex = pos;
 	else {
 		throw std::runtime_error(LOG_EXCEPTION(std::string() + "ByteArray::seek tried to seek to: " + \
-			std::to_string(pos) + ", which is past end of buffer with size: " + \
+			std::to_string(pos) + ", which is outside bounds of buffer with size: " + \
 			std::to_string(std::vector<uint8_t>::size())));
 	}
 }

@@ -148,7 +148,7 @@ struct MessageDispatcherTestListener : public MessageDispatcherListenersBase
 
 SocketMessage createTestMessage(MessageType type)
 {
-	return SocketMessage(1, type, 1,
+	return SocketMessage(1, 2, type, 1,
 				ByteArray(),
 				ByteArray(),
 				ByteArray(),

@@ -20,7 +20,7 @@ TEST(MessageQueueTest, getNextMessage)
 	ByteArray Message( std::string("testMessage") );
 
 
-	SocketMessage message(1, 2, 0, IP, Port, CSRFkey, Message);
+	SocketMessage message(1, 2, 2, 0, IP, Port, CSRFkey, Message);
 	MessageQueue testQueue(&running);
 	testQueue.pushMessage(message);
 
