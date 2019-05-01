@@ -64,7 +64,7 @@ int main()
 	config.port = std::string("5590");
 	Socket gameSocket(config, &run);
 
-
+	// totally insecure validator
 	class MyClientValidator : public ClientValidatorInterface
 	{
 	public:
@@ -75,9 +75,9 @@ int main()
 			//accept all connections
 			return true;
 		}
-		bool isClientIPValid(std::string &IP, std::string &port) override
+		bool isClientIPValid(std::string &ip, std::string &port) override
 		{
-			(void)IP;
+			(void)ip;
 			(void)port;
 			//accept all connections
 			return true;

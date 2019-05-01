@@ -18,7 +18,7 @@ class WebsocketAuthenticator : public AuthenticatorInterface
 public:
 	WebsocketAuthenticator(SetOfFileDescriptors*FDs);
 	~WebsocketAuthenticator() override = default;
-	void processHandshake(const ByteArray &in, int FD) override;
+	bool processHandshake(const ByteArray &in, int FD) override;
 	bool sendHandshake(int FD) override;
 	void closeFD(int FD) override;
 	bool isNotValidConnection(const ByteArray &IP, const ByteArray &port) const override;

@@ -1,3 +1,4 @@
+// list of comma separated files this test needs to be linked with; read by the build script
 #define TEST_FILE_LINK_DEPENDENCIES "source/server/socket/websocket/websocket_write_buffer.cpp, \
                                      source/data_types/byte_array.cpp"
 

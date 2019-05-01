@@ -9,6 +9,7 @@ namespace HeaderHelpers {
 	bool isSecWebSocketKeyHeader(const ByteArray &header);
 	bool isSecWebSocketProtocolHeader(const ByteArray &header);
 	bool isCookieHeader(const ByteArray &header);
+	bool isOriginHeader(const ByteArray &header);
 	bool getNextLine(size_t &index, const ByteArray &in, ByteArray &out);
 
 	ByteArray getHeader(const ByteArray &header, size_t headerBegin);
@@ -17,18 +18,20 @@ namespace HeaderHelpers {
 	ByteArray getSecWebSocketKeyHeader(const ByteArray &header);
 	ByteArray getSecWebSocketProtocolHeader(const ByteArray &header);
 	ByteArray getCookieHeader(const ByteArray &header);
+	ByteArray getOriginHeader(const ByteArray &header);
 
 	std::vector< ByteArray > splitStringIntoLines(const ByteArray &s);
 }// HeaderHelpers namespace
 
 
-HandshakeHeaders::HandshakeHeaders() : Connection(), Upgrade(), SecWebSocketKey(), SecWebSocketProtocol(), Cookie(){}
+HandshakeHeaders::HandshakeHeaders() : Connection(), Upgrade(), SecWebSocketKey(), SecWebSocketProtocol(), Cookie(), Origin() {}
 
 HandshakeHeaders::HandshakeHeaders(const HandshakeHeaders& h) noexcept : Connection(h.Connection),
 																		Upgrade(h.Upgrade),
 																		SecWebSocketKey(h.SecWebSocketKey),
 																		SecWebSocketProtocol(h.SecWebSocketProtocol),
-																		Cookie(h.Cookie) {} // copy constructor
+																		Cookie(h.Cookie),
+																		Origin(h.Origin) {} // copy constructor
 
 HandshakeHeaders& HandshakeHeaders::operator=(const HandshakeHeaders& h) noexcept
 {
@@ -37,6 +40,7 @@ HandshakeHeaders& HandshakeHeaders::operator=(const HandshakeHeaders& h) noexcep
 	SecWebSocketKey = h.SecWebSocketKey;
 	SecWebSocketProtocol = h.SecWebSocketProtocol;
 	Cookie = h.Cookie;
+	Origin = h.Origin;
 	return *this;
 }
 
@@ -47,6 +51,7 @@ HandshakeHeaders& HandshakeHeaders::operator=(HandshakeHeaders&& h) noexcept
 	SecWebSocketKey = std::move(h.SecWebSocketKey);
 	SecWebSocketProtocol = std::move(h.SecWebSocketProtocol);
 	Cookie = std::move(h.Cookie);
+	Origin = std::move(h.Origin);
 	return *this;
 }
 
@@ -76,6 +81,9 @@ bool HandshakeHeaders::fillHeaders(const ByteArray &input){
 
 		else if	( HeaderHelpers::isCookieHeader(headers[i])) {
 			Cookie = HeaderHelpers::getCookieHeader(headers[i]);
+		}
+		else if	( HeaderHelpers::isOriginHeader(headers[i])) {
+			Origin = HeaderHelpers::getOriginHeader(headers[i]);
 		}
 		else LOG_INFO("Unused header: "<<headers[i].toString());
 	}
@@ -121,6 +129,10 @@ bool HandshakeHeaders::checkHeaders() const{
 		LOG_ERROR("cookie too large");
 		return false;
 	}
+	else if(Origin.empty()){
+		LOG_ERROR("No Origin header");
+		return false;
+	}
 	return true;
 }
 
@@ -147,6 +159,10 @@ ByteArray HandshakeHeaders::getSecWebSocketKey() const{
 
 ByteArray HandshakeHeaders::getSecWebSocketProtocol() const{
 	return SecWebSocketProtocol;
+}
+
+ByteArray HandshakeHeaders::getOrigin() const{
+	return Origin;
 }
 
 
@@ -191,6 +207,10 @@ bool isCookieHeader(const ByteArray &header) {
 	return isHeaderValid(header, "Cookie");
 }
 
+bool isOriginHeader(const ByteArray &header) {
+	return isHeaderValid(header, "Origin");
+}
+
 ByteArray getUpgradeHeader(const ByteArray &header) {
 	return getHeader(header, 9);
 }
@@ -210,6 +230,10 @@ ByteArray getSecWebSocketProtocolHeader(const ByteArray &header) {
 
 ByteArray getCookieHeader(const ByteArray &header) {
 	return getHeader(header, 19);
+}
+
+ByteArray getOriginHeader(const ByteArray &header) {
+	return getHeader(header, 8);
 }
 
 bool isHeaderValid(const ByteArray &vec, const std::string &expectedValue){

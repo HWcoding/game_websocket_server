@@ -15,6 +15,7 @@ public:
 	ByteArray getUpgrade() const override;
 	ByteArray getSecWebSocketKey() const override;
 	ByteArray getSecWebSocketProtocol() const override;
+	ByteArray getOrigin() const override;
 
 	bool fillHeaders(const ByteArray &input) override;
 	bool areHeadersFilled() const override;
@@ -31,6 +32,7 @@ protected:
 	ByteArray SecWebSocketKey {};
 	ByteArray SecWebSocketProtocol {};
 	ByteArray Cookie {};
+	ByteArray Origin {};
 private:
 	bool filled {false};
 };

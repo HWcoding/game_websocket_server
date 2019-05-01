@@ -131,30 +131,27 @@ void FileDescriptor::setCSRFkey(ByteArray s){
 /**
  * @throws std::system_error if lock fails
  */
-void FileDescriptor::setIP(std::string s){
+void FileDescriptor::setIP(const std::string &s){
 	std::lock_guard<std::mutex> lck(mut);
-	IP.resize(s.size());
-	memcpy(&IP[0], &s[0], s.size());
+	IP = ByteArray(s);
 }
 
 
 /**
  * @throws std::system_error if lock fails
  */
-void FileDescriptor::setPort(std::string s){
+void FileDescriptor::setPort(const std::string &s){
 	std::lock_guard<std::mutex> lck(mut);
-	port.resize(s.size());
-	memcpy(&port[0], &s[0], s.size());
+	port = ByteArray(s);
 }
 
 
 /**
  * @throws std::system_error if lock fails
  */
-void FileDescriptor::setCSRFkey(std::string s){
+void FileDescriptor::setCSRFkey(const std::string &s){
 	std::lock_guard<std::mutex> lck(mut);
-	CSRFkey.resize(s.size());
-	memcpy(&CSRFkey[0], &s[0], s.size());
+	CSRFkey = ByteArray(s);
 }
 
 

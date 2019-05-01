@@ -4,9 +4,11 @@
 
 #include <vector>
 #include <unordered_map>
-#include <mutex>
+#include <shared_mutex>
 #include <functional>
+#include <atomic>
 
+#include "source/data_types/reader_writer_lockguard.h"
 #include "source/server/socket/file_descriptor.h"
 #include "source/data_types/byte_array.h"
 
@@ -34,12 +36,11 @@ public:
 	void setCSRFkey(int FD, ByteArray s);
 
 private:
-	bool unlockedIsFDOpen(int FD);
 	SetOfFileDescriptors& operator=(const SetOfFileDescriptors&) = delete;
 	SetOfFileDescriptors(const SetOfFileDescriptors&) = delete;
 
 	std::unordered_map<int, FileDescriptor> openFDs;	//holds list of File Descriptors for all socket connections
-	std::mutex FDmut; //OpenFD mutex
+	ReaderWriterLockState lockState;
 	std::vector<std::function<void(int)>> closeCallbacks; //array of functions to call when an FD is closed.  Each thread should add a callback so it can properly clean up when a connection is closed.
 	std::vector<std::function<void(int)>> newConnectionCallbacks; //array of functions to call when a new connection is made.
 };

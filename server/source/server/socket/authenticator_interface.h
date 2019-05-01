@@ -9,7 +9,7 @@ class HandshakeHeadersInterface;
 class AuthenticatorInterface
 {
 public:
-	virtual void processHandshake(const ByteArray &in, int FD) = 0;
+	virtual bool processHandshake(const ByteArray &in, int FD) = 0;
 	virtual bool sendHandshake(int FD) = 0;
 	virtual void closeFD(int FD) = 0;
 	virtual bool isNotValidConnection(const ByteArray &IP, const ByteArray &port) const = 0;

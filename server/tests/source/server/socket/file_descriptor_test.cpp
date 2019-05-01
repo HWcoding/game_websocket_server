@@ -1,3 +1,4 @@
+// list of comma separated files this test needs to be linked with; read by the build script
 #define TEST_FILE_LINK_DEPENDENCIES "source/data_types/byte_array.cpp, \
 									source/server/socket/file_descriptor.cpp"
 

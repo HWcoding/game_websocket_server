@@ -28,9 +28,9 @@ public:
 	void setIP(ByteArray s);
 	void setPort(ByteArray s);
 	void setCSRFkey(ByteArray s);
-	void setIP(std::string s);
-	void setPort(std::string s);
-	void setCSRFkey(std::string s);
+	void setIP(const std::string &s);
+	void setPort(const std::string &s);
+	void setCSRFkey(const std::string &s);
 
 private:
 	void pollForWrite(int epoll);

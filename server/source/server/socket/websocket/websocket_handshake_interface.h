@@ -13,6 +13,7 @@ public:
 	virtual ByteArray getUpgrade() const = 0;
 	virtual ByteArray getSecWebSocketKey() const = 0;
 	virtual ByteArray getSecWebSocketProtocol() const = 0;
+	virtual ByteArray getOrigin() const = 0;
 
 	virtual ~HandshakeHeadersInterface();
 protected:

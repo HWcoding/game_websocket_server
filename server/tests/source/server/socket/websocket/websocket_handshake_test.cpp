@@ -1,3 +1,4 @@
+// list of comma separated files this test needs to be linked with; read by the build script
 #define TEST_FILE_LINK_DEPENDENCIES "source/server/socket/websocket/websocket_handshake.cpp, \
                                      source/data_types/byte_array.cpp"
 
@@ -10,21 +11,21 @@
 ByteArray createTestHandshakeHeader(){
 	ByteArray output;
 
-	output.appendWithNoSize(std::string("GET /socket HTTP/1.1\r\n") );
-	output.appendWithNoSize(std::string("Host: localhost\r\n") );
-	output.appendWithNoSize(std::string("Connection: keep-alive, Upgrade\r\n") );
-	output.appendWithNoSize(std::string("Pragma: no-cache\r\n") );
-	output.appendWithNoSize(std::string("Cache-Control: no-cache\r\n") );
-	output.appendWithNoSize(std::string("Upgrade: websocket\r\n") );
-	output.appendWithNoSize(std::string("Origin: http://localhost:8080\r\n") );
-	output.appendWithNoSize(std::string("Sec-WebSocket-Version: 13\r\n") );
-	output.appendWithNoSize(std::string("User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.94 Safari/537.36\r\n") );
-	output.appendWithNoSize(std::string("Accept-Encoding: gzip, deflate, sdch\r\n") );
-	output.appendWithNoSize(std::string("Accept-Language: en-US,en;q=0.8\r\n") );
-	output.appendWithNoSize(std::string("Cookie: GameServer=CJP5G89v2O30Dx-StfclobgZ0AuIH8Nh74SEzHxvBJEZWG6yJ3smhW73TZgDMO0HEy8AvYhKgzxVry5Yby75oT-250dW6PTdm74rhmQyACSwbiAbvp67108QZid7KoPJjf-OuP1cf5Z31_eHimsW8JTIf9KINfG0yy31WuDb21XU-nH9EJcVKhdoXrQB_35DPIRymBxV85cENsxScjjMIBnI60mUR1koC5k_XcwSiTgnoT9ApEPwIX6Z9iw0tV2X7\r\n") );
-	output.appendWithNoSize(std::string("Sec-WebSocket-Key: +40NMxLMogWjfV/0HyjlxA==\r\n") );
-	output.appendWithNoSize(std::string("Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits\r\n") );
-	output.appendWithNoSize(std::string("Sec-WebSocket-Protocol: 05fcc56b7cb916d5e5a82081223b3357\r\n\r\n") );
+	output.appendWithNoSize("GET /socket HTTP/1.1\r\n");
+	output.appendWithNoSize("Host: localhost\r\n");
+	output.appendWithNoSize("Connection: keep-alive, Upgrade\r\n");
+	output.appendWithNoSize("Pragma: no-cache\r\n");
+	output.appendWithNoSize("Cache-Control: no-cache\r\n");
+	output.appendWithNoSize("Upgrade: websocket\r\n");
+	output.appendWithNoSize("Origin: http://localhost:8080\r\n");
+	output.appendWithNoSize("Sec-WebSocket-Version: 13\r\n");
+	output.appendWithNoSize("User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.94 Safari/537.36\r\n");
+	output.appendWithNoSize("Accept-Encoding: gzip, deflate, sdch\r\n");
+	output.appendWithNoSize("Accept-Language: en-US,en;q=0.8\r\n");
+	output.appendWithNoSize("Cookie: GameServer=CJP5G89v2O30Dx-StfclobgZ0AuIH8Nh74SEzHxvBJEZWG6yJ3smhW73TZgDMO0HEy8AvYhKgzxVry5Yby75oT-250dW6PTdm74rhmQyACSwbiAbvp67108QZid7KoPJjf-OuP1cf5Z31_eHimsW8JTIf9KINfG0yy31WuDb21XU-nH9EJcVKhdoXrQB_35DPIRymBxV85cENsxScjjMIBnI60mUR1koC5k_XcwSiTgnoT9ApEPwIX6Z9iw0tV2X7\r\n");
+	output.appendWithNoSize("Sec-WebSocket-Key: +40NMxLMogWjfV/0HyjlxA==\r\n");
+	output.appendWithNoSize("Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits\r\n");
+	output.appendWithNoSize("Sec-WebSocket-Protocol: 05fcc56b7cb916d5e5a82081223b3357\r\n\r\n");
 	return output;
 }
 
@@ -99,7 +100,7 @@ TEST(WebsocketHandshakeTest, checkHeaders){
 
 
 	ByteArray testTemp = testHeader.getUpgradeRef();
-	testHeader.getUpgradeRef() = ByteArray( std::string("testFail") );
+	testHeader.getUpgradeRef() = ByteArray("testFail");
 
 	// check returns false with empty Upgrade header
 	EXPECT_EQ(testHeader.checkHeaders(), false);
@@ -107,7 +108,7 @@ TEST(WebsocketHandshakeTest, checkHeaders){
 
 	testHeader.getUpgradeRef() = testTemp;
 	testTemp = testHeader.getConnectionRef();
-	testHeader.getConnectionRef() = ByteArray( std::string("testFail") );
+	testHeader.getConnectionRef() = ByteArray("testFail");
 
 	// check returns false with empty Connection header
 	EXPECT_EQ(testHeader.checkHeaders(), false);

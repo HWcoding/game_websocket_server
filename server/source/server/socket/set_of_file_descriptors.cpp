@@ -3,28 +3,103 @@
 #include "source/logging/exception_handler.h"
 
 
-SetOfFileDescriptors::SetOfFileDescriptors() : openFDs(), FDmut(), closeCallbacks(), newConnectionCallbacks(){}
 
+SetOfFileDescriptors::SetOfFileDescriptors() : openFDs(), lockState(), closeCallbacks(), newConnectionCallbacks(){}
+
+// writers
 /**
  * @throws std::system_error if lock fails
  */
 SetOfFileDescriptors::~SetOfFileDescriptors()
 {
-	std::lock_guard<std::mutex> lck(FDmut); //don't destroy while other threads are accessing this
+	WriterLockGuard lk(lockState);
+	// we are shutting down so we can't assume any of the objects
+	// the closeFDCallbacks use are still around. Just close the FD's
+	// without calling them.
 	for (auto& elem: openFDs){ //close remaining FDs
 		int FD = elem.second.getFD();
 		closeFD(FD);
 		LOG_INFO("removed FD "<<FD);
 	}
+	// clear all buffers incase something tries to read them
+	openFDs.clear();
+	closeCallbacks.clear();
+	newConnectionCallbacks.clear();
 }
 
+/**
+ * @throws std::system_error if lock fails
+ */
+void SetOfFileDescriptors::addCloseFDCallback(std::function<void(int)> callback)
+{
+	WriterLockGuard lk(lockState);
+	closeCallbacks.push_back(callback);
+}
+
+/**
+ * @throws std::system_error if lock fails
+ */
+void SetOfFileDescriptors::addNewConnectionCallback(std::function<void(int)> callback)
+{
+	WriterLockGuard lk(lockState);
+	newConnectionCallbacks.push_back(callback);
+}
+
+/**
+ * @throws std::system_error if lock fails
+ */
+int SetOfFileDescriptors::addFD(int FD)
+{
+	WriterLockGuard lk(lockState);
+	if(FD>0 && openFDs.count(FD)==0){ //a negative number is an error message passed through this function. Don't add to FDs. Just return the error.
+		openFDs.emplace(std::piecewise_construct,
+						std::forward_as_tuple(FD),
+						std::forward_as_tuple(FD));
+	} else {
+		FD = -1;
+	}
+	return FD;
+}
+
+int SetOfFileDescriptors::removeFD(int FD)
+{
+	int ret = 0;
+	bool callbackThrew = false;
+	try{
+		callbackThrew = callCloseCallbacks(FD);
+	}
+	catch(...) { //this function is called in destructors and should not throw
+		BACKTRACE_PRINT();
+		ret = -1;
+	}
+	WriterLockGuard lk(lockState);
+	if(openFDs.count(FD)>0){
+		closeFD(FD);
+		openFDs.erase(FD);
+	}
+	if(callbackThrew) ret = -1;
+	LOG_INFO("removed FD "<<FD);
+	return ret;
+}
+
+
+
+
+
+
+
+
+
+
+
+// readers
 /**
  * @throws std::runtime_error
  * @throws std::system_error if lock fails
  */
 ByteArray SetOfFileDescriptors::getIP(int FD)
 {
-	std::lock_guard<std::mutex> lck(FDmut);
+	ReaderLockGuard lk(lockState);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		return openFDs.at(FD).getIP();
 	}
@@ -38,7 +113,7 @@ ByteArray SetOfFileDescriptors::getIP(int FD)
  */
 ByteArray SetOfFileDescriptors::getPort(int FD)
 {
-	std::lock_guard<std::mutex> lck(FDmut);
+	ReaderLockGuard lk(lockState);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		return openFDs.at(FD).getPort();
 	}
@@ -51,7 +126,7 @@ ByteArray SetOfFileDescriptors::getPort(int FD)
  */
 ByteArray SetOfFileDescriptors::getCSRFkey(int FD)
 {
-	std::lock_guard<std::mutex> lck(FDmut);
+	ReaderLockGuard lk(lockState);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		return openFDs.at(FD).getCSRFkey();
 	}
@@ -64,7 +139,7 @@ ByteArray SetOfFileDescriptors::getCSRFkey(int FD)
  */
 void SetOfFileDescriptors::setIP(int FD, ByteArray s)
 {
-	std::lock_guard<std::mutex> lck(FDmut);
+	ReaderLockGuard lk(lockState);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		openFDs.at(FD).setIP(s);
 	}
@@ -79,7 +154,7 @@ void SetOfFileDescriptors::setIP(int FD, ByteArray s)
  */
 void SetOfFileDescriptors::setPort(int FD, ByteArray s)
 {
-	std::lock_guard<std::mutex> lck(FDmut);
+	ReaderLockGuard lk(lockState);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		openFDs.at(FD).setPort(s);
 	}
@@ -94,7 +169,7 @@ void SetOfFileDescriptors::setPort(int FD, ByteArray s)
  */
 void SetOfFileDescriptors::setCSRFkey(int FD, ByteArray s)
 {
-	std::lock_guard<std::mutex> lck(FDmut);
+	ReaderLockGuard lk(lockState);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list
 		openFDs.at(FD).setCSRFkey(s);
 	}
@@ -103,38 +178,7 @@ void SetOfFileDescriptors::setCSRFkey(int FD, ByteArray s)
 	}
 }
 
-/**
- * @throws std::system_error if lock fails
- */
-void SetOfFileDescriptors::addCloseFDCallback(std::function<void(int)> callback)
-{
-	std::lock_guard<std::mutex> lck(FDmut);
-	closeCallbacks.push_back(callback);
-}
 
-/**
- * @throws std::system_error if lock fails
- */
-void SetOfFileDescriptors::addNewConnectionCallback(std::function<void(int)> callback)
-{
-	std::lock_guard<std::mutex> lck(FDmut);
-	newConnectionCallbacks.push_back(callback);
-}
-
-/**
- * @throws std::system_error if lock fails
- */
-int SetOfFileDescriptors::addFD(int FD)
-{
-	std::lock_guard<std::mutex> lck(FDmut);
-	if(FD>0 && openFDs.count(FD)==0){ //a negative number is an error message passed through this function. Don't add to FDs. Just return the error.
-		openFDs.emplace(std::piecewise_construct,
-						std::forward_as_tuple(FD),
-						std::forward_as_tuple(FD));
-	}
-	else return -1;
-	return FD;
-}
 
 /**
  * @throws std::system_error if lock fails
@@ -144,8 +188,8 @@ bool SetOfFileDescriptors::tellServerAboutNewConnection(int FD)
 	bool callbackThrew = false;
 	std::vector<std::function<void(int)>> callbacks;
 	{//lock
-		std::lock_guard<std::mutex> lck(FDmut);
-		if(unlockedIsFDOpen(FD)){ //check to see if FD is in list of open FD's.
+		ReaderLockGuard lk(lockState);
+		if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.
 			callbacks = newConnectionCallbacks;
 		}
 	}//unlock
@@ -170,8 +214,8 @@ bool SetOfFileDescriptors::callCloseCallbacks(int FD)
 	std::vector<std::function<void(int)>> callbacks;
 	bool callbackThrew = false;
 	{//lock
-		std::lock_guard<std::mutex> lck(FDmut);
-		if(unlockedIsFDOpen(FD)){
+		ReaderLockGuard lk(lockState);
+		if(openFDs.count(FD)>0){
 			callbacks = closeCallbacks;
 		}
 		else {
@@ -191,47 +235,14 @@ bool SetOfFileDescriptors::callCloseCallbacks(int FD)
 
 }
 
-int SetOfFileDescriptors::removeFD(int FD)
-{
-	int ret = 0;
-	bool callbackThrew = false;
-	try{
-		callbackThrew = callCloseCallbacks(FD);
-		{
-			std::lock_guard<std::mutex> lock_FD(FDmut);
-			if(unlockedIsFDOpen(FD)){
-				closeFD(FD);
-				openFDs.erase(FD);
-			}
-		}
-	}
-	catch(...) { //this function is called in destructors and should not throw
-		BACKTRACE_PRINT();
-		ret = -1;
-	}
-	if(callbackThrew) ret = -1;
-	LOG_INFO("removed FD "<<FD);
-	return ret;
-}
-
 /**
  * @throws std::system_error if lock fails
  */
 bool SetOfFileDescriptors::isFDOpen(int FD)
 {
-	std::lock_guard<std::mutex> lock_FD(FDmut);
-	return unlockedIsFDOpen(FD);
+	ReaderLockGuard lk(lockState);
+	return openFDs.count(FD)>0;
 }
-
-
-bool SetOfFileDescriptors::unlockedIsFDOpen(int FD)
-{
-	if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.
-		return true;
-	}
-	return false;
-}
-
 
 /**
  * @throws std::runtime_error
@@ -239,7 +250,7 @@ bool SetOfFileDescriptors::unlockedIsFDOpen(int FD)
  */
 void SetOfFileDescriptors::stopPollingFD(int epoll, int FD)
 {
-	std::lock_guard<std::mutex> lck(FDmut);
+	ReaderLockGuard lk(lockState);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.
 		openFDs.at(FD).stopPollingFD(epoll);
 	}
@@ -254,7 +265,7 @@ void SetOfFileDescriptors::stopPollingFD(int epoll, int FD)
  */
 void SetOfFileDescriptors::startPollingForWrite(int epoll, int FD)
 {
-	std::lock_guard<std::mutex> lck(FDmut);
+	ReaderLockGuard lk(lockState);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.
 		openFDs.at(FD).startPollingForWrite(epoll);
 	}
@@ -269,7 +280,7 @@ void SetOfFileDescriptors::startPollingForWrite(int epoll, int FD)
  */
 void SetOfFileDescriptors::startPollingForRead(int epoll, int FD)
 {
-	std::lock_guard<std::mutex> lck(FDmut);
+	ReaderLockGuard lk(lockState);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.
 		openFDs.at(FD).startPollingForRead(epoll);
 	}
@@ -284,7 +295,7 @@ void SetOfFileDescriptors::startPollingForRead(int epoll, int FD)
  */
 void SetOfFileDescriptors::makeNonblocking(int FD)
 {
-	std::lock_guard<std::mutex> lck(FDmut);
+	ReaderLockGuard lk(lockState);
 	if(openFDs.count(FD)>0){ //check to see if FD is in list of open FD's.
 		openFDs.at(FD).makeNonblocking();
 	}

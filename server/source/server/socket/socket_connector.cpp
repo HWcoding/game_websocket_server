@@ -253,7 +253,6 @@ void SocketServerConnector::waitForHandshake(int FD) {
 	}
 }
 
-
 void SocketServerConnector::readHandshake(int FD){
 	const size_t buffSize = 2049;
 	ByteArray buffer;
@@ -279,16 +278,21 @@ void SocketServerConnector::readHandshake(int FD){
 
 
 void SocketServerConnector::handshakeComplete(int FD){
+	// we are done with the connection
 	fileDescriptors->stopPollingFD(epollFD, FD);
+	// calls callbacks registered with fileDescriptors, letting other threads
+	// know a new client is connected
+	// and they should start reading/writing to it
 	fileDescriptors->tellServerAboutNewConnection(FD);
 	LOG_INFO("Handshake Complete");
 }
 
 
 void SocketServerConnector::processHandshake(ByteArray &in, int FD){
-	Authenticator->processHandshake(in, FD);
-	fileDescriptors->startPollingForWrite(epollFD, FD);//switch from reading to writing
-	LOG_INFO("Handshake processed");
+	if(Authenticator->processHandshake(in, FD)) {
+		fileDescriptors->startPollingForWrite(epollFD, FD);//switch from reading to writing
+		LOG_INFO("Handshake processed");
+	}
 }
 
 

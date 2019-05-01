@@ -1,8 +1,10 @@
+// list of comma separated files this test needs to be linked with; read by the build script
 #define TEST_FILE_LINK_DEPENDENCIES "source/server/socket/websocket/websocket_message_processor.cpp, \
                                      source/data_types/byte_array.cpp, \
                                      source/server/socket/websocket/websocket_read_buffer.cpp, \
                                      source/data_types/socket_message.cpp, \
                                      source/server/socket/set_of_file_descriptors.cpp, \
+                                     source/data_types/reader_writer_lockguard.cpp, \
                                      source/server/socket/message_queue.cpp, \
                                      source/server/socket/file_descriptor.cpp, \
                                      source/logging/exception_handler.cpp"

@@ -1,7 +1,7 @@
+// list of comma separated files this test needs to be linked with; read by the build script
 #define TEST_FILE_LINK_DEPENDENCIES "source/data_types/byte_array.cpp, \
 									source/data_types/socket_message.cpp, \
-									source/server/socket/message_queue.cpp, \
-									source/logging/exception_handler.cpp"
+									source/server/socket/message_queue.cpp"
 
 #include "source/data_types/socket_message.h"
 #include "source/server/socket/message_queue.h"
@@ -10,14 +10,20 @@
 #include "tests/test.h"
 
 
+// mock of debug function used by message_queue.cpp
+namespace DEBUG_BACKTRACE {
+	void debugBackTrace(){}
+}
+
+
 TEST(MessageQueueTest, getNextMessage)
 {
 	std::atomic<bool> running;
 	running.store(true);
-	ByteArray IP( std::string("testIP") );
-	ByteArray Port( std::string("testPort") );
-	ByteArray CSRFkey( std::string("testCSRFkey") );
-	ByteArray Message( std::string("testMessage") );
+	ByteArray IP("testIP");
+	ByteArray Port("testPort");
+	ByteArray CSRFkey("testCSRFkey");
+	ByteArray Message("testMessage");
 
 
 	SocketMessage message(1, 2, 2, 0, IP, Port, CSRFkey, Message);

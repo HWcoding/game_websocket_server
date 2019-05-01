@@ -16,7 +16,7 @@
 #define LOG_LOCATION                    std::string()+" in "+"\033[35m "+__PRETTY_FUNCTION__+"\033[0m"+" in file "+"\033[36m"+__FILE__+"\033[0m"+" line: "+std::to_string(__LINE__)
 #define LOG_FUNCTION					std::string()+" in "+"\033[35m "+__PRETTY_FUNCTION__+"\033[0m"+" line: "+std::to_string(__LINE__)
 
-#define LOG_EXCEPTION(text)             std::string()+"[\033[1;37;41mEXCEPTION\033[0m]: "+text+LOG_FUNCTION
+#define LOG_EXCEPTION(text)             ((PRINT_ERROR("[\033[1;37;41mEXCEPTION\033[0m]: ",std::string()+text+LOG_FUNCTION)), (std::string()+text+LOG_FUNCTION))
 #define LOG_ERROR(text)                 PRINT_ERROR("\033[31m[ERROR]:\033[0m ",text)
 
 #ifdef DEBUG

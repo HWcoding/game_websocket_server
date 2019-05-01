@@ -98,9 +98,9 @@ WebsocketAuthenticator::WebsocketAuthenticator(SetOfFileDescriptors*FDs) :
 }
 
 
-bool WebsocketAuthenticator::isNotValidConnection(const ByteArray &IP, const ByteArray &port) const
+bool WebsocketAuthenticator::isNotValidConnection(const ByteArray &ip, const ByteArray &port) const
 {
-	std::string address = IP.toString();
+	std::string address = ip.toString();
 	std::string portNum = port.toString();
 	return ! ClientValidator->isClientIPValid(address, portNum);
 }
@@ -116,10 +116,11 @@ void WebsocketAuthenticator::checkForValidHeaders(int FD, const HandshakeHeaders
 {
 	ConnectionHeaders connectionHeaders;
 
-	connectionHeaders.IP = fileDescriptors->getIP(FD).toString();
+	connectionHeaders.ip = fileDescriptors->getIP(FD).toString();
 	connectionHeaders.port = fileDescriptors->getPort(FD).toString();
-	connectionHeaders.SecWebSocketProtocol = headers.getSecWebSocketProtocol().toString();
-	connectionHeaders.Cookie = headers.getCookie().toString();
+	connectionHeaders.secWebSocketProtocol = headers.getSecWebSocketProtocol().toString();
+	connectionHeaders.cookie = headers.getCookie().toString();
+	connectionHeaders.origin = headers.getOrigin().toString();
 
 	if( ! ClientValidator->areClientHeadersValid(connectionHeaders) ) {
 		throw std::runtime_error(LOG_EXCEPTION("Client headers were not valid"));
@@ -127,7 +128,7 @@ void WebsocketAuthenticator::checkForValidHeaders(int FD, const HandshakeHeaders
 }
 
 
-void WebsocketAuthenticator::processHandshake(const ByteArray &in, int FD)
+bool WebsocketAuthenticator::processHandshake(const ByteArray &in, int FD)
 {
 	if(in.size()+handshakeReadBuffer[FD].size() > maxHandshakeSize){
 		throw std::runtime_error(LOG_EXCEPTION("Client sent too much data.  Size: "+std::to_string(in.size()+handshakeReadBuffer[FD].size()) ));
@@ -141,14 +142,20 @@ void WebsocketAuthenticator::processHandshake(const ByteArray &in, int FD)
 		}
 	}
 
-	if(!isCompleteHandshake(handshakeReadBuffer[FD])) return;
+	if(!isCompleteHandshake(handshakeReadBuffer[FD])) return false;
 	const HandshakeHeadersInterface &headers = getHandshakeHeaders(handshakeReadBuffer[FD]);
 
-	checkForValidHeaders(FD, headers);
+	try{
+		checkForValidHeaders(FD, headers);
+	} catch (std::runtime_error e) {
+		handshakeReadBuffer.erase(FD);
+		throw;
+	}
 
 	fileDescriptors->setCSRFkey(FD, headers.getSecWebSocketProtocol() );//move this outside this class
 	handshakeWriteBuffer[FD] = createHandshake(headers);
 	handshakeReadBuffer.erase(FD);
+	return true;
 }
 
 
@@ -194,11 +201,11 @@ ByteArray WebsocketAuthenticator::createHandshake(const HandshakeHeadersInterfac
 	ByteArray output;
 	output.reserve(195);
 
-	output.appendWithNoSize( std::string("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ", 97) );
+	output.appendWithNoSize( "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: " );
 	output.append( createSecWebSocketAccept( headers.getSecWebSocketKey() ) );
-	output.appendWithNoSize( std::string("\r\nSec-WebSocket-Protocol: ",26) );
+	output.appendWithNoSize( "\r\nSec-WebSocket-Protocol: " );
 	output.append( headers.getSecWebSocketProtocol() ); //b89b73c543d8375331366338079f5e7c
-	output.appendWithNoSize( std::string("\r\n\r\n", 4) );
+	output.appendWithNoSize( "\r\n\r\n" );
 
 	return output;
 }
@@ -207,7 +214,7 @@ ByteArray WebsocketAuthenticator::createHandshake(const HandshakeHeadersInterfac
 ByteArray WebsocketAuthenticator::createSecWebSocketAccept(const ByteArray &SecWebSocketKey)
 {
 	ByteArray magicKey = SecWebSocketKey;
-	magicKey.appendWithNoSize( std::string("258EAFA5-E914-47DA-95CA-C5AB0DC85B11", 36) ); //append magic number spec requires
+	magicKey.appendWithNoSize( "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" ); //append magic number spec requires
 
 	ByteArray EncryptSocketKey;		//make a buffer to store the hashed data
 	EncryptSocketKey.resize(20);				//sha1 is 20bytes
