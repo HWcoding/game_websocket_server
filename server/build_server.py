@@ -137,6 +137,7 @@ def compileCppcheck():
 		command.append("cppcheck")
 		command.append("-Iexternals/simplecpp")
 		command.append("-Iexternals/tinyxml")
+		command.append("-Iexternals")
 		command.append("-Ilib")
 
 		for item in cppFileslist:
